@@ -1,0 +1,30 @@
+<?php
+// database/migrations/2024_XX_XX_XXXXXX_create_sizes_table.php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    public function up(): void
+    {
+        Schema::create('sizes', function (Blueprint $table) {
+            $table->id();
+            $table->string('name');
+            $table->string('category_type')->default('general'); // clothing, shoes, books, etc.
+            $table->boolean('is_active')->default(true);
+            $table->integer('sort_order')->default(0);
+            $table->timestamps();
+
+            $table->index('category_type');
+            $table->index('is_active');
+            $table->index('sort_order');
+        });
+    }
+
+    public function down(): void
+    {
+        Schema::dropIfExists('sizes');
+    }
+};
