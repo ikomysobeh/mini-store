@@ -234,11 +234,11 @@ const logFormData = () => {
         title="Orders Management"
         :breadcrumbs="breadcrumbs"
     >
-    <div class="min-h-screen bg-muted/20">
+    <div class="min-h-screen bg-background text-foreground">
         <Head :title="`Edit ${category.name}`" />
 
         <!-- Header -->
-        <div class="border-b bg-background">
+        <div class="border-b bg-card">
             <div class="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div class="flex items-center justify-between h-16">
                     <div class="flex items-center space-x-4">
@@ -246,8 +246,8 @@ const logFormData = () => {
                             <ArrowLeft class="h-5 w-5" />
                         </Button>
                         <div class="flex items-center space-x-3">
-                            <div class="p-2 bg-blue-100 rounded-lg">
-                                <FolderEdit class="h-6 w-6 text-blue-600" />
+                            <div class="p-2 bg-primary/10 rounded-lg">
+                                <FolderEdit class="h-6 w-6 text-primary" />
                             </div>
                             <div>
                                 <h1 class="text-2xl font-bold text-foreground">Edit Category</h1>
@@ -289,11 +289,11 @@ const logFormData = () => {
         <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
             <!-- Status Alert -->
-            <Card v-if="!category.is_active" class="mb-6 border-orange-200 bg-orange-50">
+            <Card v-if="!category.is_active" class="mb-6 bg-destructive/20 border-destructive/50">
                 <CardContent class="p-4">
                     <div class="flex items-center space-x-2">
-                        <Info class="h-4 w-4 text-orange-600" />
-                        <p class="text-sm text-orange-700 font-medium">
+                        <Info class="h-4 w-4 text-destructive" />
+                        <p class="text-sm text-destructive font-medium">
                             This category is currently inactive and not visible to customers.
                         </p>
                     </div>
@@ -301,11 +301,11 @@ const logFormData = () => {
             </Card>
 
             <!-- Unsaved Changes Alert -->
-            <Card v-if="hasUnsavedChanges" class="mb-6 border-blue-200 bg-blue-50">
+            <Card v-if="hasUnsavedChanges" class="mb-6 bg-primary/10 border-primary/20">
                 <CardContent class="p-4">
                     <div class="flex items-center space-x-2">
-                        <Info class="h-4 w-4 text-blue-600" />
-                        <p class="text-sm text-blue-700 font-medium">
+                        <Info class="h-4 w-4 text-primary" />
+                        <p class="text-sm text-primary font-medium">
                             You have unsaved changes. Don't forget to update the category.
                         </p>
                     </div>

@@ -174,11 +174,11 @@ const getNotificationIcon = (type) => {
 
 const getNotificationColor = (type) => {
     switch (type) {
-        case 'new_order': return 'bg-blue-100 text-blue-600';
-        case 'new_donation': return 'bg-green-100 text-green-600';
-        case 'low_stock': return 'bg-orange-100 text-orange-600';
-        case 'order_cancelled': return 'bg-red-100 text-red-600';
-        default: return 'bg-gray-100 text-gray-600';
+        case 'new_order': return 'bg-primary/20 text-primary';
+        case 'new_donation': return 'bg-accent/20 text-accent-foreground';
+        case 'low_stock': return 'bg-warning/20 text-warning-foreground';
+        case 'order_cancelled': return 'bg-destructive/20 text-destructive';
+        default: return 'bg-muted/50 text-muted-foreground';
     }
 };
 
@@ -218,9 +218,9 @@ watch(hasSelected, (value) => {
                 <Card>
                     <CardContent class="p-4">
                         <div class="flex items-center space-x-2">
-                            <Bell class="h-5 w-5 text-blue-600" />
+                            <Bell class="h-5 w-5 text-primary" />
                             <div>
-                                <p class="text-2xl font-bold">{{ stats.total }}</p>
+                                <p class="text-2xl font-bold text-foreground">{{ stats.total }}</p>
                                 <p class="text-sm text-muted-foreground">Total</p>
                             </div>
                         </div>
@@ -230,9 +230,9 @@ watch(hasSelected, (value) => {
                 <Card>
                     <CardContent class="p-4">
                         <div class="flex items-center space-x-2">
-                            <div class="w-3 h-3 bg-red-500 rounded-full"></div>
+                            <div class="w-3 h-3 bg-destructive rounded-full"></div>
                             <div>
-                                <p class="text-2xl font-bold">{{ stats.unread }}</p>
+                                <p class="text-2xl font-bold text-foreground">{{ stats.unread }}</p>
                                 <p class="text-sm text-muted-foreground">Unread</p>
                             </div>
                         </div>
@@ -242,9 +242,9 @@ watch(hasSelected, (value) => {
                 <Card>
                     <CardContent class="p-4">
                         <div class="flex items-center space-x-2">
-                            <Calendar class="h-5 w-5 text-green-600" />
+                            <Calendar class="h-5 w-5 text-accent" />
                             <div>
-                                <p class="text-2xl font-bold">{{ stats.today }}</p>
+                                <p class="text-2xl font-bold text-foreground">{{ stats.today }}</p>
                                 <p class="text-sm text-muted-foreground">Today</p>
                             </div>
                         </div>
@@ -254,9 +254,9 @@ watch(hasSelected, (value) => {
                 <Card>
                     <CardContent class="p-4">
                         <div class="flex items-center space-x-2">
-                            <Calendar class="h-5 w-5 text-purple-600" />
+                            <Calendar class="h-5 w-5 text-secondary" />
                             <div>
-                                <p class="text-2xl font-bold">{{ stats.this_week }}</p>
+                                <p class="text-2xl font-bold text-foreground">{{ stats.this_week }}</p>
                                 <p class="text-sm text-muted-foreground">This Week</p>
                             </div>
                         </div>
@@ -354,7 +354,7 @@ watch(hasSelected, (value) => {
                             :key="notification.id"
                             :class="[
                                 'flex items-start space-x-3 p-4 rounded-lg hover:bg-muted/50 transition-colors',
-                                !notification.read_at ? 'bg-dark border-l-4 border-blue-500' : ''
+                                !notification.read_at ? 'bg-card border-l-4 border-primary' : ''
                             ]"
                         >
                             <!-- Checkbox -->
@@ -393,7 +393,7 @@ watch(hasSelected, (value) => {
                                     </div>
 
                                     <!-- Unread Badge -->
-                                    <div v-if="!notification.read_at" class="w-2 h-2 bg-blue-600 rounded-full flex-shrink-0"></div>
+                                    <div v-if="!notification.read_at" class="w-2 h-2 bg-primary rounded-full flex-shrink-0"></div>
                                 </div>
                             </div>
 

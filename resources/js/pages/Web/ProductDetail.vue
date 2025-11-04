@@ -33,7 +33,7 @@ const breadcrumbItems = [
 </script>
 
 <template>
-    <div class="min-h-screen">
+    <div class="min-h-screen bg-background text-foreground">
         <Head :title="product.name" />
 
         <!-- Navbar -->

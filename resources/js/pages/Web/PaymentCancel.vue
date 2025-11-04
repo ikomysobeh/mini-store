@@ -53,8 +53,8 @@ const goHome = () => {
                 <CardContent class="py-12">
 
                     <!-- Simple Icon -->
-                    <div class="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                        <XCircle class="h-8 w-8 text-orange-600" />
+                    <div class="w-16 h-16 bg-destructive/20 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <XCircle class="h-8 w-8 text-destructive" />
                     </div>
 
                     <!-- Simple Message -->

@@ -250,7 +250,7 @@ watch([selectedCategory, selectedStatus], () => {
             title="Products"
             description="Manage your product catalog"
             :icon="Package"
-            icon-color="text-blue-600"
+            icon-color="text-primary"
             :actions="headerActions"
         />
 
@@ -266,12 +266,12 @@ watch([selectedCategory, selectedStatus], () => {
                 <Card>
                     <CardContent class="p-6">
                         <div class="flex items-center">
-                            <div class="p-2 bg-blue-100 rounded-lg">
-                                <Package class="h-6 w-6 text-blue-600" />
+                            <div class="p-2 bg-primary/20 rounded-lg">
+                                <Package class="h-6 w-6 text-primary" />
                             </div>
                             <div class="ml-4">
-                                <p class="text-2xl font-bold text-gray-900">{{ stats.total || 0 }}</p>
-                                <p class="text-sm text-gray-600">Total Products</p>
+                                <p class="text-2xl font-bold">{{ stats.total || 0 }}</p>
+                                <p class="text-sm text-muted-foreground">Total Products</p>
                             </div>
                         </div>
                     </CardContent>
@@ -280,12 +280,12 @@ watch([selectedCategory, selectedStatus], () => {
                 <Card>
                     <CardContent class="p-6">
                         <div class="flex items-center">
-                            <div class="p-2 bg-green-100 rounded-lg">
-                                <Package class="h-6 w-6 text-green-600" />
+                            <div class="p-2 bg-secondary/20 rounded-lg">
+                                <Package class="h-6 w-6 text-secondary" />
                             </div>
                             <div class="ml-4">
-                                <p class="text-2xl font-bold text-gray-900">{{ stats.active || 0 }}</p>
-                                <p class="text-sm text-gray-600">Active Products</p>
+                                <p class="text-2xl font-bold">{{ stats.active || 0 }}</p>
+                                <p class="text-sm text-muted-foreground">Active Products</p>
                             </div>
                         </div>
                     </CardContent>
@@ -294,12 +294,12 @@ watch([selectedCategory, selectedStatus], () => {
                 <Card>
                     <CardContent class="p-6">
                         <div class="flex items-center">
-                            <div class="p-2 bg-purple-100 rounded-lg">
-                                <Package class="h-6 w-6 text-purple-600" />
+                            <div class="p-2 bg-accent/20 rounded-lg">
+                                <Package class="h-6 w-6 text-accent" />
                             </div>
                             <div class="ml-4">
-                                <p class="text-2xl font-bold text-gray-900">{{ stats.with_variants || 0 }}</p>
-                                <p class="text-sm text-gray-600">With Variants</p>
+                                <p class="text-2xl font-bold">{{ stats.with_variants || 0 }}</p>
+                                <p class="text-sm text-muted-foreground">With Variants</p>
                             </div>
                         </div>
                     </CardContent>
@@ -308,12 +308,12 @@ watch([selectedCategory, selectedStatus], () => {
                 <Card>
                     <CardContent class="p-6">
                         <div class="flex items-center">
-                            <div class="p-2 bg-yellow-100 rounded-lg">
-                                <Package class="h-6 w-6 text-yellow-600" />
+                            <div class="p-2 bg-warning/20 rounded-lg">
+                                <Package class="h-6 w-6 text-warning" />
                             </div>
                             <div class="ml-4">
-                                <p class="text-2xl font-bold text-gray-900">{{ formatCurrency(stats.total_value || 0) }}</p>
-                                <p class="text-sm text-gray-600">Total Value</p>
+                                <p class="text-2xl font-bold">{{ formatCurrency(stats.total_value || 0) }}</p>
+                                <p class="text-sm text-muted-foreground">Total Value</p>
                             </div>
                         </div>
                     </CardContent>
@@ -341,7 +341,7 @@ watch([selectedCategory, selectedStatus], () => {
                     <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
                         <!-- Search -->
                         <div class="relative">
-                            <Search class="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                            <Search class="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                             <Input
                                 v-model="searchTerm"
                                 placeholder="Search products..."
@@ -472,7 +472,7 @@ watch([selectedCategory, selectedStatus], () => {
                                             class="w-full h-full object-cover"
                                         />
                                         <div v-else class="w-full h-full flex items-center justify-center">
-                                            <Package class="h-6 w-6 text-gray-400" />
+                                            <Package class="h-6 w-6 text-muted-foreground" />
                                         </div>
                                     </div>
                                 </td>
@@ -483,7 +483,7 @@ watch([selectedCategory, selectedStatus], () => {
                                     </div>
                                 </td>
                                 <td class="p-4">
-                                    <span class="text-sm">{{ product.category?.name || 'N/A' }}</span>
+                                    <span class="text-sm text-muted-foreground">{{ product.category?.name || 'N/A' }}</span>
                                 </td>
                                 <td class="p-4">
                                     <div v-if="product.has_variants && product.price_range">
@@ -501,12 +501,12 @@ watch([selectedCategory, selectedStatus], () => {
                                 <td class="p-4">
                                     <div v-if="product.has_variants">
                                         <Badge class="mb-1">{{ product.variants_count }} variants</Badge>
-                                        <div class="text-xs text-gray-600">
+                                        <div class="text-xs text-muted-foreground">
                                             <div>Colors: {{ product.available_colors?.join(', ') || 'None' }}</div>
                                             <div>Sizes: {{ product.available_sizes?.join(', ') || 'None' }}</div>
                                         </div>
                                     </div>
-                                    <span v-else class="text-sm text-gray-400">No variants</span>
+                                    <span v-else class="text-sm text-muted-foreground">No variants</span>
                                 </td>
                                 <td class="p-4">
                                     <Badge :class="getStatusBadgeColor(product)">

@@ -197,7 +197,7 @@ const deleteProduct = () => {
             :title="`Edit Product: ${product.name}`"
             description="Update product information and manage variants"
             :icon="Package"
-            icon-color="text-blue-600"
+            icon-color="text-primary"
             :actions="headerActions"
         />
 
@@ -212,10 +212,10 @@ const deleteProduct = () => {
                             <div>
                                 <CardTitle>Basic Product Information</CardTitle>
                                 <div class="flex items-center gap-2 mt-2">
-                                    <Badge :class="product.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'">
+                                    <Badge :variant="product.is_active ? 'secondary' : 'destructive'">
                                         {{ product.is_active ? 'Active' : 'Inactive' }}
                                     </Badge>
-                                    <Badge v-if="product.is_donatable" class="bg-blue-100 text-blue-800">
+                                    <Badge v-if="product.is_donatable" variant="primary">
                                         Donatable
                                     </Badge>
                                 </div>

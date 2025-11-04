@@ -38,7 +38,7 @@ const hasContent = description || specifications || features?.length;
                     <h4 class="font-semibold mb-3">Key Features</h4>
                     <ul class="space-y-2">
                         <li v-for="(feature, index) in features" :key="index" class="flex items-start space-x-2">
-                            <div class="w-1.5 h-1.5 bg-primary rounded-full mt-2 flex-shrink-0"></div>
+                            <div class="w-1.5 h-1.5 bg-primary/80 rounded-full mt-2 flex-shrink-0"></div>
                             <span class="text-muted-foreground">{{ feature }}</span>
                         </li>
                     </ul>

@@ -48,13 +48,13 @@ const formatPrice = (amount: number) => {
                     <div class="flex items-center space-x-3 mb-3">
                         <div :class="[
                             'p-2 rounded-lg',
-                            selectedType === 'purchase' ? 'bg-primary text-primary-foreground' : 'bg-blue-100 text-blue-600'
+                            selectedType === 'purchase' ? 'bg-primary text-primary-foreground' : 'bg-primary/20 text-primary'
                         ]">
                             <ShoppingCart class="h-5 w-5" />
                         </div>
                         <div>
-                            <h4 class="font-semibold">Purchase</h4>
-                            <Badge v-if="selectedType === 'purchase'" class="mt-1">Selected</Badge>
+                            <h4 class="font-semibold ">Purchase</h4>
+                            <Badge v-if="selectedType === 'purchase'" class="mt-1 bg-primary">Selected</Badge>
                         </div>
                     </div>
                     <p class="text-sm text-muted-foreground mb-3">
@@ -70,9 +70,9 @@ const formatPrice = (amount: number) => {
                 :class="[
                     'cursor-pointer transition-all border-2',
                     selectedType === 'donation'
-                        ? 'border-red-500 bg-red-50'
+                        ? 'border-destructive bg-destructive/10'
                         : hasDonationItems
-                            ? 'border-muted hover:border-red-300'
+                            ? 'border-muted hover:border-destructive/50'
                             : 'border-muted opacity-50 cursor-not-allowed'
                 ]"
                 @click="hasDonationItems && emit('update:selectedType', 'donation')"
@@ -81,13 +81,13 @@ const formatPrice = (amount: number) => {
                     <div class="flex items-center space-x-3 mb-3">
                         <div :class="[
                             'p-2 rounded-lg',
-                            selectedType === 'donation' ? 'bg-red-500 text-white' : 'bg-red-100 text-red-600'
+                            selectedType === 'donation' ? 'bg-destructive text-destructive-foreground' : 'bg-destructive/20 text-destructive'
                         ]">
                             <Heart class="h-5 w-5" />
                         </div>
                         <div>
                             <h4 class="font-semibold">Donation</h4>
-                            <Badge v-if="selectedType === 'donation'" class="mt-1 bg-red-100 text-red-800">Selected</Badge>
+                            <Badge v-if="selectedType === 'donation'" variant="destructive" class="mt-1">Selected</Badge>
                             <Badge v-else-if="!hasDonationItems" variant="outline" class="mt-1">Not Available</Badge>
                         </div>
                     </div>
@@ -106,10 +106,10 @@ const formatPrice = (amount: number) => {
         </div>
 
         <!-- Info Box -->
-        <div v-if="selectedType === 'donation'" class="bg-orange-50 border border-orange-200 rounded-lg p-4">
+        <div v-if="selectedType === 'donation'" class="bg-warning/10 border border-warning/20 rounded-lg p-4">
             <div class="flex items-start space-x-3">
-                <Gift class="h-5 w-5 text-orange-600 mt-0.5" />
-                <div class="text-sm text-orange-700">
+                <Gift class="h-5 w-5 text-warning mt-0.5" />
+                <div class="text-sm text-warning">
                     <p class="font-medium">Donation Mode Benefits:</p>
                     <ul class="list-disc list-inside mt-1 space-y-1">
                         <li>Tax-exempt contribution</li>

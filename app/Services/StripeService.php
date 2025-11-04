@@ -105,7 +105,7 @@ class StripeService
 
             return $session->payment_status === 'paid';
         } catch (\Exception $e) {
-            \Log::error('Stripe verification error: ' . $e->getMessage());
+            Log::error('Stripe verification error: ' . $e->getMessage());
             return false;
         }
     }
@@ -115,7 +115,7 @@ class StripeService
         try {
             return $this->stripe->checkout->sessions->retrieve($sessionId);
         } catch (\Exception $e) {
-            \Log::error('Stripe session retrieval error: ' . $e->getMessage());
+            Log::error('Stripe session retrieval error: ' . $e->getMessage());
             return null;
         }
     }

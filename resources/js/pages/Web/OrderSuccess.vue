@@ -55,8 +55,8 @@ const contactUs = () => {
                 <CardContent class="py-12">
 
                     <!-- Success Icon -->
-                    <div class="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                        <CheckCircle class="h-12 w-12 text-green-600" />
+                    <div class="w-20 h-20 bg-accent/20 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <CheckCircle class="h-12 w-12 text-accent-foreground" />
                     </div>
 
                     <!-- Success Message -->

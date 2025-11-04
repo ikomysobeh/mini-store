@@ -113,18 +113,18 @@ const addToCart = (productId: number) => {
 
                     <!-- Badges -->
                     <div class="absolute top-3 left-3 flex flex-col space-y-2">
-                        <Badge v-if="product.is_donatable" class="bg-orange-500 text-white">
+                        <Badge v-if="product.is_donatable" variant="secondary" class="bg-warning text-warning-foreground">
                             <Gift class="h-3 w-3 mr-1" />
                             Donation
                         </Badge>
-                        <Badge v-if="product.is_featured" class="bg-blue-500 text-white">
+                        <Badge v-if="product.is_featured" variant="secondary" class="bg-info text-info-foreground">
                             <Star class="h-3 w-3 mr-1" />
                             Featured
                         </Badge>
                         <Badge v-if="product.stock < 10 && product.stock > 0" variant="destructive">
                             Only {{ product.stock }} left
                         </Badge>
-                        <Badge v-if="product.original_price && product.original_price > product.price" class="bg-red-500 text-white">
+                        <Badge v-if="product.original_price && product.original_price > product.price" variant="secondary" class="bg-destructive/80 text-destructive-foreground">
                             {{ Math.round(((product.original_price - product.price) / product.original_price) * 100) }}% OFF
                         </Badge>
                     </div>
@@ -143,7 +143,7 @@ const addToCart = (productId: number) => {
                     <div class="flex items-center space-x-1" v-if="product.rating">
                         <div class="flex items-center">
                             <Star v-for="i in 5" :key="i"
-                                  :class="i <= (product.rating || 0) ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'"
+                                  :class="i <= (product.rating || 0) ? 'fill-warning text-warning' : 'text-muted-foreground/30'"
                                   class="h-3 w-3" />
                         </div>
                         <span class="text-xs text-muted-foreground">({{ product.reviews_count || 0 }})</span>

@@ -84,13 +84,13 @@ const addToCart = (event) => {
 
             <!-- Badges -->
             <div class="absolute top-2 left-2 space-y-1">
-                <span v-if="product.is_donatable" class="bg-blue-600 text-white px-2 py-1 rounded text-xs">
+                <span v-if="product.is_donatable" class="bg-info text-info-foreground px-2 py-1 rounded text-xs">
                     Donatable
                 </span>
-                <span v-if="product.total_stock === 0" class="bg-red-600 text-white px-2 py-1 rounded text-xs">
+                <span v-if="product.total_stock === 0" class="bg-destructive text-destructive-foreground px-2 py-1 rounded text-xs">
                     Out of Stock
                 </span>
-                <span v-else-if="product.total_stock <= 10" class="bg-yellow-600 text-white px-2 py-1 rounded text-xs">
+                <span v-else-if="product.total_stock <= 10" class="bg-warning text-warning-foreground px-2 py-1 rounded text-xs">
                     Low Stock
                 </span>
             </div>
@@ -115,13 +115,13 @@ const addToCart = (event) => {
             <div v-if="product.has_variants" class="mb-3 space-y-2">
                 <!-- Colors -->
                 <div v-if="product.available_colors && product.available_colors.length > 0" class="flex items-center space-x-1">
-                    <span class="text-xs text-gray-600">Colors:</span>
+                    <span class="text-xs text-muted-foreground">Colors:</span>
                     <div class="flex space-x-1">
                         <div
                             v-for="color in product.available_colors.slice(0, 4)"
                             :key="color.id"
                             :style="{ backgroundColor: color.hex_code }"
-                            class="w-4 h-4 rounded-full border border-gray-300"
+                            class="w-4 h-4 rounded-full border border-border"
                             :title="color.name"
                         />
                         <span v-if="product.available_colors.length > 4" class="text-xs text-gray-500">
@@ -150,10 +150,10 @@ const addToCart = (event) => {
 
             <!-- Stock Info -->
             <div class="text-sm text-gray-600 mb-3">
-                <span v-if="product.total_stock > 0">
+                <span v-if="product.total_stock > 0" class="text-success">
                     {{ product.total_stock }} in stock
                 </span>
-                <span v-else class="text-red-600">Out of stock</span>
+                <span v-else class="text-destructive">Out of stock</span>
             </div>
 
             <!-- Add to Cart Button -->

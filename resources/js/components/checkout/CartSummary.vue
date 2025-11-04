@@ -47,7 +47,7 @@ const subtotal = props.items.reduce((sum, item) => sum + (item.price * item.quan
                             <p class="text-sm font-medium">{{ item.product.name }}</p>
                             <p class="text-xs text-muted-foreground">Qty: {{ item.quantity }}</p>
                             <Badge v-if="isDonation && item.product.is_donatable"
-                                   class="bg-red-100 text-red-800 text-xs mt-1">
+                                   variant="destructive" class="text-xs mt-1">
                                 <Heart class="h-3 w-3 mr-1" />
                                 Donation Item
                             </Badge>
@@ -76,7 +76,7 @@ const subtotal = props.items.reduce((sum, item) => sum + (item.price * item.quan
                     <span>{{ shippingCost === 0 ? 'FREE' : formatPrice(shippingCost) }}</span>
                 </div>
 
-                <div v-if="isDonation" class="flex justify-between text-sm text-green-600">
+                <div v-if="isDonation" class="flex justify-between text-sm text-primary">
                     <span>Tax Benefit</span>
                     <span>Tax Exempt</span>
                 </div>
@@ -90,9 +90,9 @@ const subtotal = props.items.reduce((sum, item) => sum + (item.price * item.quan
             </div>
 
             <!-- Donation Notice -->
-            <div v-if="isDonation" class="bg-red-50 border border-red-200 rounded-lg p-3 text-sm text-red-700">
+            <div v-if="isDonation" class="bg-destructive/10 border border-destructive/20 rounded-lg p-3 text-sm text-destructive">
                 <p class="font-medium mb-1">🎁 Thank you for your donation!</p>
-                <p class="text-xs">You'll receive a tax-exempt receipt via email.</p>
+                <p class="text-xs text-destructive/90">You'll receive a tax-exempt receipt via email.</p>
             </div>
 
         </CardContent>

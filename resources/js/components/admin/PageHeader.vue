@@ -39,14 +39,14 @@ const props = withDefaults(defineProps<Props>(), {
 });
 
 const getStatusColor = (color: string, active: boolean) => {
-    if (!active) return 'bg-gray-300';
+    if (!active) return 'bg-muted';
 
     const colors = {
-        green: 'bg-green-500',
-        red: 'bg-red-500',
-        blue: 'bg-blue-500',
-        orange: 'bg-orange-500',
-        gray: 'bg-gray-500'
+        green: 'bg-primary',
+        red: 'bg-destructive',
+        blue: 'bg-accent',
+        orange: 'bg-warning',
+        gray: 'bg-muted-foreground'
     };
 
     return colors[color] || 'bg-gray-500';
@@ -75,7 +75,7 @@ const getStatusColor = (color: string, active: boolean) => {
                     </Button>
 
                     <!-- Icon -->
-                    <div v-if="icon" class="p-2 bg-purple-100 rounded-lg shrink-0">
+                    <div v-if="icon" class="p-2 bg-primary/20 rounded-lg shrink-0">
                         <component :is="icon" :class="`h-6 w-6 ${iconColor}`" />
                     </div>
 

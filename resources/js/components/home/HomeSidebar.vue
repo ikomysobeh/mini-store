@@ -118,7 +118,7 @@ const formatPrice = (price: number) => {
                         </div>
                         <div class="flex justify-between items-center text-sm">
                             <span>Shipping:</span>
-                            <span class="font-medium" :class="{ 'text-emerald-600': shippingCost === 0 }">
+                            <span class="font-medium" :class="{ 'text-success': shippingCost === 0 }">
                                 {{ shippingCost === 0 ? 'Free' : `$${formatPrice(shippingCost)}` }}
                             </span>
                         </div>
@@ -128,9 +128,9 @@ const formatPrice = (price: number) => {
                             <div class="flex items-center justify-between mb-1">
                                 <span class="text-muted-foreground">Add ${{ formatPrice(50 - cartTotal) }} more for free shipping!</span>
                             </div>
-                            <div class="w-full bg-muted-foreground/20 rounded-full h-1.5">
+                                <div class="w-full bg-muted-foreground/20 rounded-full h-1.5">
                                 <div
-                                    class="bg-green-600 h-1.5 rounded-full transition-all duration-300"
+                                    class="bg-success h-1.5 rounded-full transition-all duration-300"
                                     :style="{ width: Math.min((cartTotal / 50) * 100, 100) + '%' }"
                                 ></div>
                             </div>
@@ -173,7 +173,7 @@ const formatPrice = (price: number) => {
                             {{ currentProduct.category?.name || 'Uncategorized' }}
                         </Badge>
                         <div class="flex items-center space-x-1" v-if="currentProduct.rating">
-                            <Star class="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                            <Star class="h-4 w-4 fill-warning text-warning" />
                             <span class="text-sm">{{ currentProduct.rating }} ({{ currentProduct.reviews_count || 0 }} reviews)</span>
                         </div>
                     </div>

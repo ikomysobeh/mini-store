@@ -116,7 +116,7 @@ const pageDescription = computed(() => {
         title="Orders Management"
         :breadcrumbs="breadcrumbs"
     >
-    <div class="min-h-screen bg-muted/20">
+    <div class="min-h-screen bg-background text-foreground">
         <Head :title="pageTitle" />
 
         <!-- Form Header Component -->

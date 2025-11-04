@@ -152,7 +152,7 @@ const submitForm = () => {
             title="Create New Product"
             description="Add a new product with colors and sizes"
             :icon="Package"
-            icon-color="text-green-600"
+            icon-color="text-primary"
             :actions="headerActions"
         />
 
@@ -250,7 +250,7 @@ const submitForm = () => {
                 <Card v-else-if="colors.length === 0 && sizes.length === 0">
                     <CardContent class="text-center py-8">
                         <div class="text-gray-500">
-                            <Package class="mx-auto h-12 w-12 mb-4" />
+                            <Package class="mx-auto h-12 w-12 mb-4 text-muted-foreground" />
                             <h3 class="text-lg font-medium mb-2">Single Product</h3>
                             <p class="text-sm">This product will be created without variants. The base price and stock will be used.</p>
                         </div>

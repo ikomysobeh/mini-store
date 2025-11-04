@@ -207,16 +207,16 @@ const hasActiveFilters = () => {
                 <div class="flex items-center space-x-2 text-sm text-muted-foreground">
                     <span>Active filters:</span>
                     <div class="flex flex-wrap gap-2">
-                        <span v-if="localSearch" class="px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs">
+                        <span v-if="localSearch" class="px-2 py-1 bg-info/20 text-info rounded text-xs">
                             Search: "{{ localSearch }}"
                         </span>
-                        <span v-if="localStatus" class="px-2 py-1 bg-green-100 text-green-800 rounded text-xs">
+                        <span v-if="localStatus" class="px-2 py-1 bg-success/20 text-success rounded text-xs">
                             Status: {{ localStatus.charAt(0).toUpperCase() + localStatus.slice(1) }}
                         </span>
-                        <span v-if="localType" class="px-2 py-1 bg-purple-100 text-purple-800 rounded text-xs">
+                        <span v-if="localType" class="px-2 py-1 bg-primary/20 text-primary rounded text-xs">
                             Type: {{ localType.charAt(0).toUpperCase() + localType.slice(1) }}
                         </span>
-                        <span v-if="localDateRange" class="px-2 py-1 bg-orange-100 text-orange-800 rounded text-xs">
+                        <span v-if="localDateRange" class="px-2 py-1 bg-warning/20 text-warning rounded text-xs">
                             Range: {{ localDateRange.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase()) }}
                         </span>
                     </div>

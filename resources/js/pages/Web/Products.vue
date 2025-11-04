@@ -149,7 +149,7 @@ watch([selectedCategory, onlyDonatable, sortBy], ([newCategory, newDonatable, ne
 </script>
 
 <template>
-    <div class="min-h-screen">
+    <div class="min-h-screen bg-background text-foreground">
         <Head title="Products" />
 
         <!-- Navbar -->
