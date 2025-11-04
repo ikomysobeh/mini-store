@@ -98,24 +98,24 @@ const isMenuExpanded = (itemName: string) => {
 <template>
     <!-- Sidebar -->
     <div :class="[
-        'fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-lg transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0',
+        'fixed inset-y-0 left-0 z-50 w-64 bg-background shadow-lg transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0',
         isOpen ? 'translate-x-0' : '-translate-x-full'
     ]">
         <div class="flex flex-col h-full">
 
             <!-- Logo/Brand -->
-            <div class="flex items-center justify-between h-16 px-4 border-b border-gray-200">
+            <div class="flex items-center justify-between h-16 px-4 border-b">
                 <div class="flex items-center space-x-3">
-                    <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-                        <Heart class="h-5 w-5 text-white" />
+                    <div class="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+                        <Heart class="h-5 w-5 text-primary-foreground" />
                     </div>
-                    <h1 class="text-xl font-bold text-gray-900">Admin Panel</h1>
+                    <h1 class="text-xl font-bold text-foreground">Admin Panel</h1>
                 </div>
 
                 <!-- Close button (mobile only) -->
                 <button
                     @click="emit('close')"
-                    class="lg:hidden p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100"
+                    class="lg:hidden p-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-accent/50"
                 >
                     <X class="h-5 w-5" />
                 </button>
@@ -132,8 +132,8 @@ const isMenuExpanded = (itemName: string) => {
                             :class="[
                                 'group flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors',
                                 item.current.value
-                                    ? 'bg-blue-100 text-blue-700'
-                                    : 'text-gray-700 hover:text-gray-900 hover:bg-gray-100'
+                                    ? 'bg-primary/10 text-primary'
+                                    : 'text-muted-foreground hover:text-foreground hover:bg-accent/50'
                             ]"
                             @click="emit('close')"
                         >
@@ -141,7 +141,7 @@ const isMenuExpanded = (itemName: string) => {
                                 :is="item.icon"
                                 :class="[
                                     'mr-3 h-5 w-5',
-                                    item.current.value ? 'text-blue-500' : 'text-gray-400 group-hover:text-gray-500'
+                                    item.current.value ? 'text-primary' : 'text-muted-foreground group-hover:text-foreground'
                                 ]"
                             />
                             {{ item.name }}
@@ -155,8 +155,8 @@ const isMenuExpanded = (itemName: string) => {
                             :class="[
                                 'group w-full flex items-center justify-between px-3 py-2 text-sm font-medium rounded-md transition-colors',
                                 item.current.value
-                                    ? 'bg-blue-100 text-blue-700'
-                                    : 'text-gray-700 hover:text-gray-900 hover:bg-gray-100'
+                                    ? 'bg-primary/10 text-primary'
+                                    : 'text-muted-foreground hover:text-foreground hover:bg-accent/50'
                             ]"
                         >
                             <div class="flex items-center">
@@ -183,7 +183,7 @@ const isMenuExpanded = (itemName: string) => {
                                 v-for="subItem in item.children"
                                 :key="subItem.name"
                                 :href="subItem.href"
-                                class="block px-3 py-2 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-md transition-colors"
+                                class="block px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-accent/50 rounded-md transition-colors"
                                 @click="emit('close')"
                             >
                                 {{ subItem.name }}
@@ -196,12 +196,12 @@ const isMenuExpanded = (itemName: string) => {
             <!-- User info -->
             <div class="p-4 border-t border-gray-200">
                 <div class="flex items-center space-x-3">
-                    <div class="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center">
-                        <Users class="h-4 w-4 text-gray-600" />
+                    <div class="w-8 h-8 bg-muted rounded-full flex items-center justify-center">
+                        <Users class="h-4 w-4 text-muted-foreground" />
                     </div>
                     <div>
-                        <p class="text-sm font-medium text-gray-900">Admin User</p>
-                        <p class="text-xs text-gray-500">Administrator</p>
+                        <p class="text-sm font-medium text-foreground">Admin User</p>
+                        <p class="text-xs text-muted-foreground">Administrator</p>
                     </div>
                 </div>
             </div>

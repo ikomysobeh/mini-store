@@ -33,31 +33,31 @@ const getMessageConfig = (type: string) => {
     const configs = {
         success: {
             icon: CheckCircle,
-            bgClass: 'bg-green-50',
-            borderClass: 'border-green-200',
-            iconClass: 'text-green-600',
-            textClass: 'text-green-700'
+            bgClass: 'bg-primary/10',
+            borderClass: 'border-primary/20',
+            iconClass: 'text-primary',
+            textClass: 'text-primary-foreground'
         },
         error: {
             icon: XCircle,
-            bgClass: 'bg-red-50',
-            borderClass: 'border-red-200',
-            iconClass: 'text-red-600',
-            textClass: 'text-red-700'
+            bgClass: 'bg-destructive/10',
+            borderClass: 'border-destructive/20',
+            iconClass: 'text-destructive',
+            textClass: 'text-destructive'
         },
         warning: {
             icon: AlertTriangle,
-            bgClass: 'bg-orange-50',
-            borderClass: 'border-orange-200',
-            iconClass: 'text-orange-600',
-            textClass: 'text-orange-700'
+            bgClass: 'bg-warning/10',
+            borderClass: 'border-warning/20',
+            iconClass: 'text-warning',
+            textClass: 'text-warning'
         },
         info: {
             icon: Info,
-            bgClass: 'bg-blue-50',
-            borderClass: 'border-blue-200',
-            iconClass: 'text-blue-600',
-            textClass: 'text-blue-700'
+            bgClass: 'bg-secondary/10',
+            borderClass: 'border-secondary/20',
+            iconClass: 'text-secondary',
+            textClass: 'text-secondary'
         }
     };
     return configs[type] || configs.info;

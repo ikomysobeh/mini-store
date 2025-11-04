@@ -160,8 +160,8 @@ const completeOrder = async () => {
                             :class="[
                 'relative cursor-pointer rounded-xl border-2 p-6 focus:outline-none transition-all hover:shadow-md',
                 purchaseType === 'purchase'
-                    ? 'border-blue-500 bg-blue-500 shadow-md'
-                    : 'border-gray-200 hover:border-blue-300 bg-white'
+                    ? 'border-primary bg-primary shadow-md'
+                    : 'border-border hover:border-primary/50 bg-background'
             ]"
                         >
                             <input
@@ -174,23 +174,23 @@ const completeOrder = async () => {
                             <div class="flex flex-col items-center text-center space-y-4">
                                 <div :class="[
                     'p-4 rounded-full',
-                    purchaseType === 'purchase' ? 'bg-blue-600' : 'bg-blue-100'
+                    purchaseType === 'purchase' ? 'bg-primary' : 'bg-primary/20'
                 ]">
                                     <ShoppingCart :class="[
                         'h-8 w-8',
-                        purchaseType === 'purchase' ? 'text-white' : 'text-blue-600'
+                        purchaseType === 'purchase' ? 'text-primary-foreground' : 'text-primary'
                     ]" />
                                 </div>
                                 <div>
                                     <h3 :class="[
                         'font-bold text-lg transition-colors',
-                        purchaseType === 'purchase' ? 'text-yellow-100' : 'text-gray-900'
+                        purchaseType === 'purchase' ? 'text-primary-foreground' : 'text-foreground'
                     ]">
                                         Purchase Items
                                     </h3>
                                     <p :class="[
                         'text-sm transition-colors',
-                        purchaseType === 'purchase' ? 'text-yellow-100' : 'text-gray-600'
+                        purchaseType === 'purchase' ? 'text-primary-foreground/90' : 'text-muted-foreground'
                     ]">
                                         Get the actual products delivered
                                     </p>
@@ -207,7 +207,7 @@ const completeOrder = async () => {
                             </div>
 
                             <div v-if="purchaseType === 'purchase'" class="absolute top-3 right-3">
-                                <Badge class="bg-yellow-200 text-blue-800 border border-yellow-300">Selected ✓</Badge>
+                                <Badge variant="destructive">Selected ✓</Badge>
                             </div>
                         </label>
 
@@ -216,8 +216,8 @@ const completeOrder = async () => {
                             :class="[
                 'relative cursor-pointer rounded-xl border-2 p-6 focus:outline-none transition-all hover:shadow-md',
                 purchaseType === 'donation'
-                    ? 'border-red-500 bg-red-500 shadow-md'
-                    : 'border-gray-200 hover:border-red-300 bg-white'
+                    ? 'border-destructive bg-destructive shadow-md'
+                    : 'border-border hover:border-destructive/50 bg-background'
             ]"
                         >
                             <input
@@ -230,17 +230,17 @@ const completeOrder = async () => {
                             <div class="flex flex-col items-center text-center space-y-4">
                                 <div :class="[
                     'p-4 rounded-full',
-                    purchaseType === 'donation' ? 'bg-red-600' : 'bg-red-100'
+                    purchaseType === 'donation' ? 'bg-destructive' : 'bg-destructive/20'
                 ]">
                                     <Heart :class="[
                         'h-8 w-8',
-                        purchaseType === 'donation' ? 'text-white' : 'text-red-600'
+                        purchaseType === 'donation' ? 'text-destructive-foreground' : 'text-destructive'
                     ]" />
                                 </div>
                                 <div>
                                     <h3 :class="[
                         'font-bold text-lg transition-colors',
-                        purchaseType === 'donation' ? 'text-yellow-100' : 'text-gray-900'
+                        purchaseType === 'donation' ? 'text-destructive-foreground' : 'text-foreground'
                     ]">
                                         Donate Amount
                                     </h3>
@@ -263,7 +263,7 @@ const completeOrder = async () => {
                             </div>
 
                             <div v-if="purchaseType === 'donation'" class="absolute top-3 right-3">
-                                <Badge class="bg-yellow-200 text-red-800 border border-yellow-300">Selected ✓</Badge>
+                                <Badge variant="destructive">Selected ✓</Badge>
                             </div>
                         </label>
                     </div>
@@ -322,7 +322,7 @@ const completeOrder = async () => {
                             placeholder="Your address in Suwayda (neighborhood like Al-Nahdah, Al-Shuhada, street & building number)"
                             class="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                         ></textarea>
-                        <p class="text-sm text-blue-600 flex items-center">
+                        <p class="text-sm text-primary flex items-center">
                             📞 Our admin will contact you to coordinate the delivery
                         </p>
                     </div>
@@ -389,14 +389,13 @@ const completeOrder = async () => {
                         </div>
 
                         <!-- Special Message -->
-                        <div v-if="purchaseType === 'donation'" class="bg-gradient-to-r from-red-50 to-pink-50 border border-red-200 rounded-lg p-4 text-center">
-                            <p class="text-sm text-red-700 font-medium">🙏 Thank you for supporting our cause!</p>
-                            <p class="text-xs text-red-600 mt-1">Tax-exempt receipt will be emailed to you</p>
+                        <div v-if="purchaseType === 'donation'" class="bg-destructive/10 border border-destructive/20 rounded-lg p-4 text-center">
+                            <p class="text-sm text-destructive font-medium">🙏 Thank you for supporting our cause!</p>
+                            <p class="text-xs text-destructive/90 mt-1">Tax-exempt receipt will be emailed to you</p>
                         </div>
 
-                        <div v-else class="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-4 text-center">
-                            <p class="text-sm text-blue-700 font-medium">📦 Free delivery coordination</p>
-                            <p class="text-xs text-blue-600 mt-1">Admin will contact you within 24-48 hours</p>
+                        <div v-else class="bg-primary/10 border border-primary/20 rounded-lg p-4 text-center">
+                            <p class="text-xs text-primary/90 mt-1">Admin will contact you within 24-48 hours</p>
                         </div>
 
                         <!-- Complete Order Button -->

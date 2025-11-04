@@ -16,31 +16,31 @@ const statsConfig = [
         label: 'Total Orders',
         value: stats.total_orders,
         icon: ShoppingCart,
-        color: 'text-blue-600'
+        color: 'text-info'
     },
     {
         label: 'Purchases',
         value: stats.total_purchases,
         icon: ShoppingCart,
-        color: 'text-green-600'
+        color: 'text-success'
     },
     {
         label: 'Donations',
         value: stats.total_donations,
         icon: Heart,
-        color: 'text-red-600'
+        color: 'text-warning'
     },
     {
         label: 'Total Spent',
         value: formatPrice(stats.total_spent),
         icon: DollarSign,
-        color: 'text-purple-600'
+        color: 'text-primary'
     },
     {
         label: 'This Year',
         value: formatPrice(stats.this_year_spent),
         icon: TrendingUp,
-        color: 'text-orange-600'
+        color: 'text-secondary'
     }
 ];
 </script>

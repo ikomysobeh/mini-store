@@ -72,7 +72,7 @@ const chartTimeframe = ref('7d');
         title="Orders Management"
         :breadcrumbs="breadcrumbs"
     >
-    <div class="min-h-screen bg-muted/20">
+    <div class="min-h-screen bg-background text-foreground">
         <Head title="Admin Dashboard" />
 
         <!-- Header -->
@@ -91,14 +91,14 @@ const chartTimeframe = ref('7d');
                                     {{ formatPrice(stats.total_revenue) }}
                                 </p>
                             </div>
-                            <div class="p-3 bg-green-100 rounded-full">
-                                <DollarSign class="h-6 w-6 text-green-600" />
+                            <div class="p-3 bg-accent/20 rounded-full">
+                                <DollarSign class="h-6 w-6 text-accent-foreground" />
                             </div>
                         </div>
                         <div class="flex items-center mt-4 space-x-2">
                             <div class="flex items-center space-x-1">
-                                <ArrowUpRight class="h-4 w-4 text-green-600" />
-                                <span class="text-sm font-medium text-green-600">
+                                <ArrowUpRight class="h-4 w-4 text-accent-foreground" />
+                                <span class="text-sm font-medium text-accent-foreground">
                                     +{{ revenueGrowth }}%
                                 </span>
                             </div>
@@ -117,14 +117,14 @@ const chartTimeframe = ref('7d');
                                     {{ stats.total_orders.toLocaleString() }}
                                 </p>
                             </div>
-                            <div class="p-3 bg-blue-100 rounded-full">
-                                <ShoppingCart class="h-6 w-6 text-blue-600" />
+                            <div class="p-3 bg-primary/10 rounded-full">
+                                <ShoppingCart class="h-6 w-6 text-primary" />
                             </div>
                         </div>
                         <div class="flex items-center mt-4 space-x-2">
                             <div class="flex items-center space-x-1">
-                                <ArrowUpRight class="h-4 w-4 text-green-600" />
-                                <span class="text-sm font-medium text-green-600">
+                                <ArrowUpRight class="h-4 w-4 text-accent-foreground" />
+                                <span class="text-sm font-medium text-accent-foreground">
                                     +{{ ordersGrowth }}%
                                 </span>
                             </div>
@@ -150,14 +150,14 @@ const chartTimeframe = ref('7d');
                                     {{ formatPrice(stats.total_donations) }}
                                 </p>
                             </div>
-                            <div class="p-3 bg-red-100 rounded-full">
-                                <Heart class="h-6 w-6 text-red-600" />
+                            <div class="p-3 bg-destructive/20 rounded-full">
+                                <Heart class="h-6 w-6 text-destructive" />
                             </div>
                         </div>
                         <div class="flex items-center mt-4 space-x-2">
                             <div class="flex items-center space-x-1">
-                                <ArrowUpRight class="h-4 w-4 text-green-600" />
-                                <span class="text-sm font-medium text-green-600">
+                                <ArrowUpRight class="h-4 w-4 text-accent-foreground" />
+                                <span class="text-sm font-medium text-accent-foreground">
                                     +{{ donationsGrowth }}%
                                 </span>
                             </div>
@@ -181,14 +181,14 @@ const chartTimeframe = ref('7d');
                                     {{ stats.total_customers.toLocaleString() }}
                                 </p>
                             </div>
-                            <div class="p-3 bg-purple-100 rounded-full">
-                                <Users class="h-6 w-6 text-purple-600" />
+                            <div class="p-3 bg-secondary/20 rounded-full">
+                                <Users class="h-6 w-6 text-secondary-foreground" />
                             </div>
                         </div>
                         <div class="flex items-center mt-4 space-x-2">
                             <div class="flex items-center space-x-1">
-                                <ArrowUpRight class="h-4 w-4 text-green-600" />
-                                <span class="text-sm font-medium text-green-600">
+                                <ArrowUpRight class="h-4 w-4 text-accent-foreground" />
+                                <span class="text-sm font-medium text-accent-foreground">
                                     +{{ customersGrowth }}%
                                 </span>
                             </div>
@@ -330,14 +330,14 @@ const chartTimeframe = ref('7d');
 
                                 <!-- Trending Icon -->
                                 <div class="flex items-center space-x-1">
-                                    <TrendingUp class="h-4 w-4 text-green-600" />
+                                    <TrendingUp class="h-4 w-4 text-accent-foreground" />
                                 </div>
                             </div>
                         </CardContent>
                     </Card>
 
                     <!-- Quick Actions -->
-                    <Card class="shadow-sm">
+                    <Card class="shadow-sm hover:shadow-md transition-all">
                         <CardHeader class="pb-4">
                             <CardTitle class="text-lg font-semibold">Quick Actions</CardTitle>
                         </CardHeader>
@@ -369,10 +369,10 @@ const chartTimeframe = ref('7d');
                         <CardContent class="space-y-4">
                             <div class="flex items-center justify-between">
                                 <div class="flex items-center space-x-2">
-                                    <div class="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
+                                    <div class="w-3 h-3 bg-accent rounded-full animate-pulse"></div>
                                     <span class="text-sm">Server Status</span>
                                 </div>
-                                <Badge variant="outline" class="bg-green-50 text-green-700 border-green-200">
+                                <Badge variant="outline" class="bg-accent/20 text-accent-foreground border-accent">
                                     Online
                                 </Badge>
                             </div>

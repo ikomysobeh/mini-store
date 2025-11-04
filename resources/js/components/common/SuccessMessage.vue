@@ -36,19 +36,19 @@ const getIcon = (iconType: string) => {
 
 <template>
     <div v-if="isVisible && (message || $page.props.flash?.success)" :class="className">
-        <Card class="border-green-200 bg-green-50">
+        <Card class="border-primary/20 bg-primary/10">
             <CardContent class="p-4">
                 <div class="flex items-center justify-between">
                     <div class="flex items-center space-x-2">
-                        <component :is="getIcon(icon)" class="h-4 w-4 text-green-600" />
-                        <p class="text-sm text-green-700 font-medium">
+                        <component :is="getIcon(icon)" class="h-4 w-4 text-primary" />
+                        <p class="text-sm text-primary font-medium">
                             {{ message || $page.props.flash?.success }}
                         </p>
                     </div>
                     <button
                         v-if="dismissible"
                         @click="dismiss"
-                        class="text-green-600 hover:text-green-800 transition-colors"
+                        class="text-primary hover:text-primary/80 transition-colors"
                     >
                         <X class="h-4 w-4" />
                     </button>

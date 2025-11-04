@@ -36,7 +36,7 @@ const submit = () => {
 </script>
 
 <template>
-    <div class="flex min-h-screen flex-col items-center justify-center p-6 md:p-10">
+    <div class="flex min-h-screen flex-col items-center justify-center bg-background text-foreground p-6 md:p-10">
         <Head title="Register" />
 
         <div class="w-full max-w-sm">
@@ -58,8 +58,9 @@ const submit = () => {
             </div>
 
             <!-- Form -->
-            <div class="grid gap-6">
-                <form @submit.prevent="submit" class="grid gap-4">
+            <Card>
+                <CardContent class="p-6">
+                    <form @submit.prevent="submit" class="grid gap-4">
                     <!-- Name -->
                     <div class="grid gap-2">
                         <Label for="name">Full Name</Label>
@@ -161,14 +162,15 @@ const submit = () => {
                         Create account
                     </Button>
                 </form>
+                </CardContent>
+            </Card>
 
-                <!-- Login Link -->
-                <div class="text-center text-sm text-muted-foreground">
-                    Already have an account?
-                    <a href="/login" class="underline underline-offset-4 hover:text-primary">
-                        Sign in
-                    </a>
-                </div>
+            <!-- Login Link -->
+            <div class="mt-4 text-center text-sm text-muted-foreground">
+                Already have an account?
+                <a href="/login" class="underline underline-offset-4 hover:text-primary">
+                    Sign in
+                </a>
             </div>
         </div>
     </div>

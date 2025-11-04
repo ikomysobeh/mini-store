@@ -159,11 +159,11 @@ const getDiscountPercentage = (original: number, current: number) => {
 
                     <!-- Badges -->
                     <div class="absolute top-3 left-3 flex flex-col space-y-2">
-                        <Badge v-if="product.is_donatable" class="bg-orange-500 text-white">
+                        <Badge v-if="product.is_donatable" class="bg-warning text-warning-foreground">
                             <Gift class="h-3 w-3 mr-1" />
                             Donation
                         </Badge>
-                        <Badge v-if="product.is_featured" class="bg-blue-500 text-white">
+                        <Badge v-if="product.is_featured" class="bg-info text-info-foreground">
                             <Star class="h-3 w-3 mr-1" />
                             Featured
                         </Badge>
@@ -173,7 +173,7 @@ const getDiscountPercentage = (original: number, current: number) => {
                         <Badge v-if="product.stock === 0 && !product.is_donatable" variant="destructive">
                             Out of Stock
                         </Badge>
-                        <Badge v-if="product.original_price && product.original_price > product.price" class="bg-red-500 text-white">
+                        <Badge v-if="product.original_price && product.original_price > product.price" class="bg-destructive/80 text-destructive-foreground">
                             {{ getDiscountPercentage(product.original_price, product.price) }}% OFF
                         </Badge>
                     </div>
@@ -224,7 +224,7 @@ const getDiscountPercentage = (original: number, current: number) => {
                             </a>
                         </h3>
                         <div class="flex items-center space-x-1 ml-2" v-if="product.rating">
-                            <Star class="h-3 w-3 fill-yellow-400 text-yellow-400" />
+                            <Star class="h-3 w-3 fill-warning text-warning" />
                             <span class="text-xs text-muted-foreground">{{ product.rating }}</span>
                         </div>
                     </div>
@@ -235,13 +235,13 @@ const getDiscountPercentage = (original: number, current: number) => {
 
                     <!-- Stock Status -->
                     <div class="text-xs">
-                        <span v-if="product.stock > 0" class="text-green-600 font-medium">
+                        <span v-if="product.stock > 0" class="text-success font-medium">
                             {{ product.stock }} in stock
                         </span>
-                        <span v-else-if="!product.is_donatable" class="text-red-600 font-medium">
+                        <span v-else-if="!product.is_donatable" class="text-destructive font-medium">
                             Out of stock
                         </span>
-                        <span v-else class="text-blue-600 font-medium">
+                        <span v-else class="text-info font-medium">
                             Available for donation
                         </span>
                     </div>

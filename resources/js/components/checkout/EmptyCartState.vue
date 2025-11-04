@@ -40,7 +40,7 @@ const { className = '', showDonationOption = false } = defineProps<Props>();
                 as="a"
                 href="/products?type=donation"
                 size="lg"
-                class="border-orange-200 text-orange-700 hover:bg-orange-50"
+                class="text-warning hover:bg-warning/10"
             >
                 <Gift class="h-5 w-5 mr-2" />
                 Make a Donation
@@ -49,25 +49,25 @@ const { className = '', showDonationOption = false } = defineProps<Props>();
 
         <!-- Quick Info Cards -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-3xl mx-auto">
-            <div class="text-center p-6 bg-blue-50 rounded-xl">
-                <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <ShoppingCart class="h-6 w-6 text-blue-600" />
+            <div class="text-center p-6 bg-primary/10 rounded-xl">
+                <div class="w-12 h-12 bg-primary/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <ShoppingCart class="h-6 w-6 text-primary" />
                 </div>
                 <h3 class="font-semibold mb-2">Browse Products</h3>
                 <p class="text-sm text-muted-foreground">Discover our wide range of quality products and amazing deals</p>
             </div>
 
-            <div class="text-center p-6 bg-red-50 rounded-xl">
-                <div class="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <Heart class="h-6 w-6 text-red-600" />
+            <div class="text-center p-6 bg-destructive/10 rounded-xl">
+                <div class="w-12 h-12 bg-destructive/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Heart class="h-6 w-6 text-destructive" />
                 </div>
                 <h3 class="font-semibold mb-2">Check Wishlist</h3>
                 <p class="text-sm text-muted-foreground">Items you've saved for later are waiting for you</p>
             </div>
 
-            <div class="text-center p-6 bg-green-50 rounded-xl">
-                <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <Star class="h-6 w-6 text-green-600" />
+            <div class="text-center p-6 bg-secondary/10 rounded-xl">
+                <div class="w-12 h-12 bg-secondary/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Star class="h-6 w-6 text-secondary" />
                 </div>
                 <h3 class="font-semibold mb-2">Featured Items</h3>
                 <p class="text-sm text-muted-foreground">Our handpicked recommendations just for you</p>

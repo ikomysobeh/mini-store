@@ -243,7 +243,7 @@ const clearFilters = () => {
                         variant="outline"
                         size="sm"
                         @click="handleDonatableChange(!onlyDonatable)"
-                        :class="{ 'bg-orange-100 text-orange-800': onlyDonatable }"
+                        :class="{ 'bg-warning/10 text-warning': onlyDonatable }"
                     >
                         Donations
                     </Button>
@@ -251,7 +251,7 @@ const clearFilters = () => {
                         variant="outline"
                         size="sm"
                         @click="handleSortChange('price_asc')"
-                        :class="{ 'bg-green-100 text-green-800': sortBy === 'price_asc' }"
+                        :class="{ 'bg-success/10 text-success': sortBy === 'price_asc' }"
                     >
                         Low Price
                     </Button>
@@ -259,7 +259,7 @@ const clearFilters = () => {
                         variant="outline"
                         size="sm"
                         @click="handleSortChange('newest')"
-                        :class="{ 'bg-blue-100 text-blue-800': sortBy === 'newest' }"
+                        :class="{ 'bg-info/10 text-info': sortBy === 'newest' }"
                     >
                         New Arrivals
                     </Button>

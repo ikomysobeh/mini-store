@@ -142,9 +142,9 @@ const goToPage = (url) => {
 
             <!-- Orders List -->
             <div class="space-y-6">
-                <div v-if="orders.data.length === 0" class="text-center py-12">
+                <div v-if="orders.data.length === 0" class="text-center py-12 bg-card rounded-lg border border-border">
                     <Package class="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-                    <h3 class="text-lg font-medium text-foreground mb-2">No Orders Found</h3>
+                    <h3 class="text-lg font-medium text-card-foreground mb-2">No Orders Found</h3>
                     <p class="text-muted-foreground mb-4">
                         {{ Object.values(filters).some(f => f) ? 'No orders match your current filters.' : "You haven't placed any orders yet." }}
                     </p>

@@ -75,7 +75,7 @@ const visibleProducts = products.slice(0, maxItems);
 
                     <!-- Badges -->
                     <div class="absolute top-3 left-3">
-                        <Badge v-if="product.is_donatable" class="bg-orange-500 text-white">
+                        <Badge v-if="product.is_donatable" class="bg-warning text-warning-foreground">
                             Donation
                         </Badge>
                         <Badge v-else-if="product.stock < 10 && product.stock > 0" variant="destructive">
@@ -84,7 +84,7 @@ const visibleProducts = products.slice(0, maxItems);
                         <Badge v-else-if="product.stock === 0" variant="destructive">
                             Out of Stock
                         </Badge>
-                        <Badge v-else-if="product.original_price && product.original_price > product.price" class="bg-red-500 text-white">
+                        <Badge v-else-if="product.original_price && product.original_price > product.price" class="bg-destructive/80 text-destructive-foreground">
                             {{ Math.round(((product.original_price - product.price) / product.original_price) * 100) }}% OFF
                         </Badge>
                     </div>

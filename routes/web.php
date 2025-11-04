@@ -18,8 +18,7 @@ use Illuminate\Support\Facades\Route;
 
 // Public routes
 Route::get('/', [HomeController::class, 'index'])->name('home');
-Route::get('/payment/success', [App\Http\Controllers\Web\OrderController::class, 'paymentSuccess'])->name('payment.success');
-Route::get('/payment/cancel', [App\Http\Controllers\Web\OrderController::class, 'paymentCancel'])->name('payment.cancel');
+
 // Products
 Route::get('/products', [ProductController::class, 'index'])->name('products.index');
 Route::get('/products/{product:slug}', [ProductController::class, 'show'])->name('products.show');
@@ -54,6 +53,8 @@ Route::middleware(['auth'])->group(function () {
 //    Route::get('/orders/{order}', [\App\Http\Controllers\Web\OrderController::class, 'show'])->name('orders.show');
 //});
 
+Route::get('/payment/success', [App\Http\Controllers\Web\OrderController::class, 'paymentSuccess'])->name('payment.success');
+Route::get('/payment/cancel', [App\Http\Controllers\Web\OrderController::class, 'paymentCancel'])->name('payment.cancel');
 
 
 Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {

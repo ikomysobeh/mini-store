@@ -211,7 +211,7 @@ watch([selectedStatus, selectedType, dateRange], () => {
             title="Orders"
             description="Manage customer orders and donations"
             :icon="ShoppingCart"
-            icon-color="text-blue-600"
+            icon-color="text-primary"
             :actions="headerActions"
         />
 

@@ -182,12 +182,12 @@ const goBack = () => {
             title="Create New Category"
             description="Add a new category to organize your products"
             :icon="Package"
-            icon-color="text-purple-600"
+            icon-color="text-primary"
             :actions="headerActions"
         />
         <!-- Main Content -->
         <div class="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 bg-background text-foreground">
 
                 <!-- Main Form Column -->
                 <div class="lg:col-span-2 space-y-8">

@@ -20,7 +20,7 @@ const user = auth.user;
 </script>
 
 <template>
-    <div class="min-h-screen">
+    <div class="min-h-screen bg-background text-foreground">
         <Head :title="siteName" />
 
         <!-- Navbar -->
@@ -36,8 +36,8 @@ const user = auth.user;
 
             <!-- Success Message -->
             <div v-if="$page.props.flash?.success" class="mb-6">
-                <div class="p-4 bg-green-50 border border-green-200 rounded-lg">
-                    <p class="text-sm text-green-700 font-medium">
+                <div class="p-4 bg-accent text-accent-foreground border border-border rounded-lg">
+                    <p class="text-sm font-medium">
                         {{ $page.props.flash.success }}
                     </p>
                 </div>

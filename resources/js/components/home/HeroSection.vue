@@ -44,7 +44,7 @@ const defaultSubtitle = heroSubtitle || 'Premium quality items with modern desig
                 <Button
                     size="lg"
                     variant="outline"
-                    class="border-primary-foreground/20 text-primary-foreground hover:bg-primary-foreground/10"
+                    class="hover:scale-105 transition-all duration-300 shadow-lg"
                     as="a"
                     href="#featured"
                 >

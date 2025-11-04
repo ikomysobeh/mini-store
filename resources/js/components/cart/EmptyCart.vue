@@ -35,24 +35,24 @@ const { className = '' } = defineProps<Props>();
         <!-- Quick Actions -->
         <div class="mt-12 grid grid-cols-1 md:grid-cols-3 gap-6 max-w-2xl mx-auto">
             <div class="text-center p-4">
-                <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                    <ShoppingCart class="h-6 w-6 text-blue-600" />
+                <div class="w-12 h-12 bg-primary/20 rounded-full flex items-center justify-center mx-auto mb-3">
+                    <ShoppingCart class="h-6 w-6 text-primary" />
                 </div>
                 <h3 class="font-semibold mb-1">Browse Products</h3>
                 <p class="text-sm text-muted-foreground">Discover our wide range of quality products</p>
             </div>
 
             <div class="text-center p-4">
-                <div class="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                    <Heart class="h-6 w-6 text-red-600" />
+                <div class="w-12 h-12 bg-destructive/20 rounded-full flex items-center justify-center mx-auto mb-3">
+                    <Heart class="h-6 w-6 text-destructive" />
                 </div>
                 <h3 class="font-semibold mb-1">Check Wishlist</h3>
                 <p class="text-sm text-muted-foreground">Items you've saved for later</p>
             </div>
 
             <div class="text-center p-4">
-                <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                    <Star class="h-6 w-6 text-green-600" />
+                <div class="w-12 h-12 bg-secondary/20 rounded-full flex items-center justify-center mx-auto mb-3">
+                    <Star class="h-6 w-6 text-secondary" />
                 </div>
                 <h3 class="font-semibold mb-1">Featured Items</h3>
                 <p class="text-sm text-muted-foreground">Our handpicked recommendations</p>

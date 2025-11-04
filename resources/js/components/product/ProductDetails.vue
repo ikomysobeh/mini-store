@@ -1,10 +1,53 @@
 <script setup lang="ts">
-import { router } from '@inertiajs/vue3';
+import { router, usePage } from '@inertiajs/vue3'; // Added usePage import
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { ShoppingCart, Plus, Minus, CheckCircle, XCircle, AlertCircle } from 'lucide-vue-next';
 import { ref, computed, watch } from 'vue';
+
+// ============== INLINE AUTHENTICATION LOGIC ==============
+const page = usePage()
+
+const isAuthenticated = computed(() => {
+  return !!(
+    page.props.auth?.user || 
+    page.props.user || 
+    page.props.auth_user ||
+    page.props.authUser
+  )
+})
+
+const currentUser = computed(() => {
+  return page.props.auth?.user || 
+         page.props.user || 
+         page.props.auth_user ||
+         page.props.authUser ||
+         null
+})
+
+const redirectToLogin = (returnUrl?: string) => {
+  const currentPath = returnUrl || window.location.pathname
+  const query = `?redirect=${encodeURIComponent(currentPath)}`
+  router.visit(`/login${query}`)
+}
+
+const requireAuth = (callback: () => void, returnUrl?: string) => {
+  if (!isAuthenticated.value) {
+    redirectToLogin(returnUrl)
+    return false
+  }
+  
+  if (typeof callback === 'function') {
+    callback()
+  }
+  return true
+}
+
+const can = (permission: string) => {
+  return page.props.can?.[permission] || false
+}
+// ============== END AUTHENTICATION LOGIC ==============
 
 const { product, user } = defineProps({
     product: { type: Object, required: true },
@@ -161,10 +204,10 @@ const getMessageIcon = computed(() => {
 const getMessageClasses = computed(() => {
     const baseClasses = 'flex items-center space-x-2 p-3 rounded-lg text-sm font-medium';
     switch (messageType.value) {
-        case 'success': return baseClasses + ' bg-green-50 text-green-800 border border-green-200';
-        case 'error': return baseClasses + ' bg-red-50 text-red-800 border border-red-200';
-        case 'warning': return baseClasses + ' bg-orange-50 text-orange-800 border border-orange-200';
-        default: return baseClasses + ' bg-blue-50 text-blue-800 border border-blue-200';
+        case 'success': return baseClasses + ' bg-success/10 text-success border border-success/20';
+        case 'error': return baseClasses + ' bg-destructive/10 text-destructive border border-destructive/20';
+        case 'warning': return baseClasses + ' bg-warning/10 text-warning border border-warning/20';
+        default: return baseClasses + ' bg-info/10 text-info border border-info/20';
     }
 });
 
@@ -210,51 +253,55 @@ const showMessage = (message, type) => {
     }
 };
 
-// FIXED: Enhanced add to cart with error handling
+// MODIFIED: Enhanced add to cart with authentication check
 const addToCart = () => {
-    if (product.has_variants && !selectedVariant.value) {
-        showMessage('Please select both color and size before adding to cart.', 'warning');
-        return;
-    }
+    // Check authentication before proceeding
+    requireAuth(() => {
+        // Original add to cart logic
+        if (product.has_variants && !selectedVariant.value) {
+            showMessage('Please select both color and size before adding to cart.', 'warning');
+            return;
+        }
 
-    isAddingToCart.value = true;
-    cartMessage.value = '';
+        isAddingToCart.value = true;
+        cartMessage.value = '';
 
-    const data = {
-        quantity: quantity.value
-    };
+        const data = {
+            quantity: quantity.value
+        };
 
-    if (selectedVariant.value) {
-        data.variant_id = selectedVariant.value.id;
-    }
+        if (selectedVariant.value) {
+            data.variant_id = selectedVariant.value.id;
+        }
 
-    // FIXED: Using fetch for better JSON error handling
-    fetch(`/cart/add/${product.id}`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content,
-            'X-Requested-With': 'XMLHttpRequest',
-        },
-        body: JSON.stringify(data)
-    })
-        .then(async response => {
-            const jsonData = await response.json();
-
-            if (response.ok && jsonData.success) {
-                showMessage(jsonData.message || 'Item added to cart successfully!', 'success');
-            } else {
-                // Handle error responses
-                showMessage(jsonData.message || 'Failed to add item to cart.', 'error');
-            }
+        // FIXED: Using fetch for better JSON error handling
+        fetch(`/cart/add/${product.id}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content,
+                'X-Requested-With': 'XMLHttpRequest',
+            },
+            body: JSON.stringify(data)
         })
-        .catch(error => {
-            console.error('Error:', error);
-            showMessage('Something went wrong. Please try again.', 'error');
-        })
-        .finally(() => {
-            isAddingToCart.value = false;
-        });
+            .then(async response => {
+                const jsonData = await response.json();
+
+                if (response.ok && jsonData.success) {
+                    showMessage(jsonData.message || 'Item added to cart successfully!', 'success');
+                } else {
+                    // Handle error responses
+                    showMessage(jsonData.message || 'Failed to add item to cart.', 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showMessage('Something went wrong. Please try again.', 'error');
+            })
+            .finally(() => {
+                isAddingToCart.value = false;
+            });
+    }, window.location.pathname); // Pass current path for redirect after login
 };
 </script>
 
@@ -269,7 +316,7 @@ const addToCart = () => {
                     :alt="product.name"
                     class="w-full h-full object-cover"
                 />
-                <Badge v-if="product.is_donatable" class="absolute top-4 right-4 bg-orange-100 text-orange-800">
+                <Badge v-if="product.is_donatable" class="absolute top-4 right-4 bg-warning/20 text-warning">
                     Donation
                 </Badge>
             </div>
@@ -305,6 +352,14 @@ const addToCart = () => {
                 >
                     <XCircle class="h-4 w-4" />
                 </button>
+            </div>
+
+            <!-- Authentication Status Info -->
+            <div v-if="!isAuthenticated" class="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                <p class="text-sm text-blue-800">
+                    <span class="font-medium">Not signed in.</span> 
+                    You'll be redirected to login when adding items to cart.
+                </p>
             </div>
 
             <!-- Color Selection -->
@@ -355,28 +410,28 @@ const addToCart = () => {
             <div class="space-y-2">
                 <div
                     v-if="stockStatusMessage.type === 'in-stock' || stockStatusMessage.type === 'variants-available'"
-                    class="flex items-center space-x-2 text-green-600"
+                    class="flex items-center space-x-2 text-success"
                 >
-                    <div class="w-2 h-2 bg-green-600 rounded-full"></div>
+                    <div class="w-2 h-2 bg-success rounded-full"></div>
                     <span class="text-sm font-medium">{{ stockStatusMessage.message }}</span>
                 </div>
                 <div
                     v-else-if="stockStatusMessage.type === 'donation'"
-                    class="flex items-center space-x-2 text-blue-600"
+                    class="flex items-center space-x-2 text-info"
                 >
-                    <div class="w-2 h-2 bg-blue-600 rounded-full"></div>
+                    <div class="w-2 h-2 bg-info rounded-full"></div>
                     <span class="text-sm font-medium">{{ stockStatusMessage.message }}</span>
                 </div>
                 <div
                     v-else-if="stockStatusMessage.type === 'out-of-stock'"
-                    class="flex items-center space-x-2 text-red-600"
+                    class="flex items-center space-x-2 text-destructive"
                 >
-                    <div class="w-2 h-2 bg-red-600 rounded-full"></div>
+                    <div class="w-2 h-2 bg-destructive rounded-full"></div>
                     <span class="text-sm font-medium">{{ stockStatusMessage.message }}</span>
                 </div>
-
+                
                 <!-- Variant selection reminder -->
-                <div v-if="product.has_variants && (!selectedColor || !selectedSize)" class="text-orange-600 text-sm">
+                <div v-if="product.has_variants && (!selectedColor || !selectedSize)" class="text-warning text-sm">
                     Please select {{ !selectedColor ? 'color' : '' }}{{ !selectedColor && !selectedSize ? ' and ' : '' }}{{ !selectedSize ? 'size' : '' }}
                 </div>
             </div>
@@ -437,8 +492,8 @@ const addToCart = () => {
             </div>
 
             <!-- Selection Required Message -->
-            <div v-else-if="product.has_variants && stockStatusMessage.type === 'variants-available'" class="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                <p class="text-blue-700 font-medium">Please select color and size to continue</p>
+            <div v-else-if="product.has_variants && stockStatusMessage.type === 'variants-available'" class="p-4 bg-info/10 border border-info/20 rounded-lg">
+                <p class="text-info font-medium">Please select color and size to continue</p>
             </div>
 
         </div>

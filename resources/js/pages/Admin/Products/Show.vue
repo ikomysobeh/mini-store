@@ -54,7 +54,7 @@ function formatDate(date) {
             :title="product.name"
             :description="`Product ID: ${product.id}`"
             :icon="Package"
-            icon-color="text-blue-600"
+            icon-color="text-primary"
             :actions="headerActions"
         />
 
@@ -76,7 +76,7 @@ function formatDate(date) {
                                     class="w-full h-full object-cover"
                                 />
                                 <div v-else class="w-full h-full flex items-center justify-center">
-                                    <Package class="h-16 w-16 text-gray-400" />
+                                    <Package class="h-16 w-16 text-muted-foreground" />
                                 </div>
                             </div>
                         </CardContent>
@@ -94,26 +94,26 @@ function formatDate(date) {
                         <CardContent class="space-y-4">
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
-                                    <label class="text-sm font-medium text-gray-600">Name</label>
-                                    <p class="text-lg font-semibold">{{ product.name }}</p>
+                                    <label class="text-sm font-medium text-muted-foreground">Name</label>
+                                    <p class="text-lg font-semibold text-foreground">{{ product.name }}</p>
                                 </div>
                                 <div>
-                                    <label class="text-sm font-medium text-gray-600">Slug</label>
-                                    <p class="text-gray-900">{{ product.slug }}</p>
+                                    <label class="text-sm font-medium text-muted-foreground">Slug</label>
+                                    <p class="text-foreground">{{ product.slug }}</p>
                                 </div>
                                 <div>
-                                    <label class="text-sm font-medium text-gray-600">Category</label>
-                                    <p class="text-gray-900">{{ product.category?.name || 'N/A' }}</p>
+                                    <label class="text-sm font-medium text-muted-foreground">Category</label>
+                                    <p class="text-foreground">{{ product.category?.name || 'N/A' }}</p>
                                 </div>
                                 <div>
-                                    <label class="text-sm font-medium text-gray-600">Price</label>
-                                    <p class="text-lg font-bold text-green-600">{{ formatCurrency(product.price) }}</p>
+                                    <label class="text-sm font-medium text-muted-foreground">Price</label>
+                                    <p class="text-lg font-bold text-primary">{{ formatCurrency(product.price) }}</p>
                                 </div>
                             </div>
 
                             <div v-if="product.description">
-                                <label class="text-sm font-medium text-gray-600">Description</label>
-                                <p class="text-gray-900 mt-1">{{ product.description }}</p>
+                                <label class="text-sm font-medium text-muted-foreground">Description</label>
+                                <p class="text-foreground mt-1">{{ product.description }}</p>
                             </div>
                         </CardContent>
                     </Card>
@@ -126,27 +126,27 @@ function formatDate(date) {
                         <CardContent>
                             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                                 <div>
-                                    <label class="text-sm font-medium text-gray-600">Stock Quantity</label>
+                                    <label class="text-sm font-medium text-muted-foreground">Stock Quantity</label>
                                     <p class="text-2xl font-bold" :class="{
-                                        'text-red-600': product.stock === 0,
-                                        'text-yellow-600': product.stock <= 10 && product.stock > 0,
-                                        'text-green-600': product.stock > 10
+                                        'text-destructive': product.stock === 0,
+                                        'text-warning': product.stock <= 10 && product.stock > 0,
+                                        'text-primary': product.stock > 10
                                     }">
                                         {{ product.stock }}
                                     </p>
                                 </div>
                                 <div>
-                                    <label class="text-sm font-medium text-gray-600">Status</label>
+                                    <label class="text-sm font-medium text-muted-foreground">Status</label>
                                     <div class="mt-1">
-                                        <Badge :class="product.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'">
+                                        <Badge :variant="product.is_active ? 'secondary' : 'destructive'">
                                             {{ product.is_active ? 'Active' : 'Inactive' }}
                                         </Badge>
                                     </div>
                                 </div>
                                 <div>
-                                    <label class="text-sm font-medium text-gray-600">Donatable</label>
+                                    <label class="text-sm font-medium text-muted-foreground">Donatable</label>
                                     <div class="mt-1">
-                                        <Badge :class="product.is_donatable ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'">
+                                        <Badge :variant="product.is_donatable ? 'primary' : 'secondary'">
                                             {{ product.is_donatable ? 'Yes' : 'No' }}
                                         </Badge>
                                     </div>
@@ -163,12 +163,12 @@ function formatDate(date) {
                         <CardContent>
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
-                                    <label class="text-sm font-medium text-gray-600">Created At</label>
-                                    <p class="text-gray-900">{{ formatDate(product.created_at) }}</p>
+                                    <label class="text-sm font-medium text-muted-foreground">Created At</label>
+                                    <p class="text-foreground">{{ formatDate(product.created_at) }}</p>
                                 </div>
                                 <div>
-                                    <label class="text-sm font-medium text-gray-600">Last Updated</label>
-                                    <p class="text-gray-900">{{ formatDate(product.updated_at) }}</p>
+                                    <label class="text-sm font-medium text-muted-foreground">Last Updated</label>
+                                    <p class="text-foreground">{{ formatDate(product.updated_at) }}</p>
                                 </div>
                             </div>
                         </CardContent>

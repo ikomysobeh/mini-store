@@ -61,11 +61,11 @@ const formatDate = (date: string) => {
 
 const getStatusColor = (status: string) => {
     const colors = {
-        pending: 'bg-yellow-100 text-yellow-800',
-        processing: 'bg-blue-100 text-blue-800',
-        shipped: 'bg-purple-100 text-purple-800',
-        delivered: 'bg-green-100 text-green-800',
-        cancelled: 'bg-red-100 text-red-800'
+        pending: 'bg-warning/20 text-warning',
+        processing: 'bg-info/20 text-info',
+        shipped: 'bg-purple-500/20 text-purple-700 dark:text-purple-400',
+        delivered: 'bg-success/20 text-success',
+        cancelled: 'bg-destructive/20 text-destructive'
     };
     return colors[status] || 'bg-gray-100 text-gray-800';
 };
@@ -108,7 +108,7 @@ const totalQuantity = order.items.reduce((sum, item) => sum + item.quantity, 0);
                         <Badge :class="getStatusColor(order.status)">
                             {{ order.status.charAt(0).toUpperCase() + order.status.slice(1) }}
                         </Badge>
-                        <Badge v-if="order.is_donation" class="bg-red-100 text-red-800">
+                        <Badge v-if="order.is_donation" class="bg-warning/20 text-warning">
                             <Heart class="h-3 w-3 mr-1" />
                             Donation
                         </Badge>
@@ -217,13 +217,13 @@ const totalQuantity = order.items.reduce((sum, item) => sum + item.quantity, 0);
             </div>
 
             <!-- Variant Summary (if order has variants) -->
-            <div v-if="variantItemsCount > 0" class="mb-4 p-3 bg-blue-50 rounded-lg">
-                <h5 class="text-sm font-medium text-blue-900 mb-2">Variant Summary:</h5>
+            <div v-if="variantItemsCount > 0" class="mb-4 p-3 bg-info/10 rounded-lg">
+                <h5 class="text-sm font-medium text-info mb-2">Variant Summary:</h5>
                 <div class="flex flex-wrap gap-2">
                     <div
                         v-for="item in order.items.filter(i => i.variant_display)"
                         :key="item.id"
-                        class="flex items-center space-x-2 bg-white px-2 py-1 rounded text-xs"
+                        class="flex items-center space-x-2 bg-card px-2 py-1 rounded text-xs"
                     >
                         <!-- Color dot -->
                         <div
@@ -232,11 +232,11 @@ const totalQuantity = order.items.reduce((sum, item) => sum + item.quantity, 0);
                             :style="{ backgroundColor: item.variant_display.color.hex_code }"
                         ></div>
                         <!-- Variant text -->
-                        <span class="text-blue-800">
+                        <span class="text-info">
                             {{ item.variant_display?.color?.name || 'No Color' }} /
                             {{ item.variant_display?.size?.name || 'No Size' }}
                         </span>
-                        <span class="text-blue-600">(×{{ item.quantity }})</span>
+                        <span class="text-info/80">(×{{ item.quantity }})</span>
                     </div>
                 </div>
             </div>

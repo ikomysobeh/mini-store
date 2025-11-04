@@ -141,7 +141,7 @@ const applyPromoCode = (code) => {
 </script>
 
 <template>
-    <div class="min-h-screen">
+    <div class="min-h-screen bg-background text-foreground">
         <Head title="Shopping Cart" />
 
         <Navbar
@@ -158,7 +158,9 @@ const applyPromoCode = (code) => {
             <FlashMessages :dismissible="true" />
 
             <!-- Breadcrumb Component -->
-            <Breadcrumb :items="breadcrumbItems" />
+            <div class="text-muted-foreground">
+                <Breadcrumb :items="breadcrumbItems" />
+            </div>
 
             <!-- Page Header Component -->
             <CartPageHeader :itemCount="cartItems.length" :isEmpty="isEmpty" />
@@ -170,19 +172,22 @@ const applyPromoCode = (code) => {
             <div v-else class="grid grid-cols-1 lg:grid-cols-3 gap-8">
 
                 <!-- Cart Items List Component -->
-                <CartItemsList
-                    :cartItems="cartItems"
-                    :quantities="quantities"
-                    :updatingItems="updatingItems"
-                    @incrementQuantity="incrementQuantity"
-                    @decrementQuantity="decrementQuantity"
-                    @updateQuantity="updateQuantity"
-                    @removeItem="removeItem"
-                    @clearCart="clearCart"
-                />
+                <div class="bg-card text-card-foreground p-6 rounded-lg border border-border lg:col-span-2">
+                    <CartItemsList
+                        :cartItems="cartItems"
+                        :quantities="quantities"
+                        :updatingItems="updatingItems"
+                        @incrementQuantity="incrementQuantity"
+                        @decrementQuantity="decrementQuantity"
+                        @updateQuantity="updateQuantity"
+                        @removeItem="removeItem"
+                        @clearCart="clearCart"
+                    />
+                </div>
 
                 <!-- Order Summary Component -->
-                <OrderSummary
+                <div class="bg-card text-card-foreground p-6 rounded-lg border border-border">
+                    <OrderSummary
                     :subtotal="subtotal"
                     :shipping="shipping"
                     :total="total"
@@ -196,4 +201,6 @@ const applyPromoCode = (code) => {
             </div>
         </div>
     </div>
+    </div>
+
 </template>

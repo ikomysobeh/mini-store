@@ -146,7 +146,7 @@ const cancelBulkSelection = () => {
         title="Orders Management"
         :breadcrumbs="breadcrumbs"
     >
-    <div class="min-h-screen bg-muted/20">
+    <div class="min-h-screen bg-background text-foreground">
         <Head title="Categories Management" />
 
         <!-- Page Header Component -->
@@ -154,7 +154,7 @@ const cancelBulkSelection = () => {
             title="Categories"
             description="Manage product categories"
             :icon="FolderOpen"
-            icon-color="text-purple-600"
+            icon-color="text-primary"
             :actions="headerActions"
         />
 
