@@ -1,5 +1,4 @@
 @import 'tailwindcss';
-
 @import 'tw-animate-css';
 
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
@@ -19,31 +18,29 @@
 
     --color-background: var(--background);
     --color-foreground: var(--foreground);
-
     --color-card: var(--card);
     --color-card-foreground: var(--card-foreground);
-
     --color-popover: var(--popover);
     --color-popover-foreground: var(--popover-foreground);
-
     --color-primary: var(--primary);
     --color-primary-foreground: var(--primary-foreground);
-
     --color-secondary: var(--secondary);
     --color-secondary-foreground: var(--secondary-foreground);
-
     --color-muted: var(--muted);
     --color-muted-foreground: var(--muted-foreground);
-
     --color-accent: var(--accent);
     --color-accent-foreground: var(--accent-foreground);
-
     --color-destructive: var(--destructive);
     --color-destructive-foreground: var(--destructive-foreground);
-
     --color-border: var(--border);
     --color-input: var(--input);
     --color-ring: var(--ring);
+
+    /* Custom colors from your image */
+    --color-cream: var(--cream);
+    --color-sage: var(--sage);  
+    --color-warm-brown: var(--warm-brown);
+    --color-dark-brown: var(--dark-brown);
 
     --color-chart-1: var(--chart-1);
     --color-chart-2: var(--chart-2);
@@ -61,14 +58,6 @@
     --color-sidebar-ring: var(--sidebar-ring);
 }
 
-/*
-  The default border color has changed to `currentColor` in Tailwind CSS v4,
-  so we've added these compatibility styles to make sure everything still
-  looks the same as it did with Tailwind CSS v3.
-
-  If we ever want to remove these styles, we need to add an explicit border
-  color utility to any element that depends on these defaults.
-*/
 @layer base {
     *,
     ::after,
@@ -109,10 +98,17 @@
     --border: hsl(0 0% 92.8%);
     --input: hsl(0 0% 89.8%);
     --ring: hsl(0 0% 3.9%);
-    --chart-1: hsl(12 76% 61%);
-    --chart-2: hsl(173 58% 39%);
-    --chart-3: hsl(197 37% 24%);
-    --chart-4: hsl(43 74% 66%);
+
+    /* Custom colors from your image */
+    --cream: #f9f5ec;
+    --sage: #95b36b;
+    --warm-brown: #be8b59;
+    --dark-brown: #4c3b29;
+
+    --chart-1: var(--sage);
+    --chart-2: var(--warm-brown);
+    --chart-3: var(--dark-brown);
+    --chart-4: var(--cream);
     --chart-5: hsl(27 87% 67%);
     --radius: 0.5rem;
     --sidebar-background: hsl(0 0% 98%);
@@ -127,39 +123,42 @@
 }
 
 .dark {
-    --background: hsl(0 0% 3.9%);
-    --foreground: hsl(0 0% 98%);
-    --card: hsl(0 0% 3.9%);
-    --card-foreground: hsl(0 0% 98%);
-    --popover: hsl(0 0% 3.9%);
-    --popover-foreground: hsl(0 0% 98%);
-    --primary: hsl(0 0% 98%);
-    --primary-foreground: hsl(0 0% 9%);
-    --secondary: hsl(0 0% 14.9%);
-    --secondary-foreground: hsl(0 0% 98%);
-    --muted: hsl(0 0% 16.08%);
-    --muted-foreground: hsl(0 0% 63.9%);
-    --accent: hsl(0 0% 14.9%);
-    --accent-foreground: hsl(0 0% 98%);
+    --background: var(--dark-brown);
+    --foreground: var(--cream);
+    --card: var(--dark-brown);
+    --card-foreground: var(--cream);
+    --popover: var(--dark-brown);
+    --popover-foreground: var(--cream);
+    --primary: var(--cream);
+    --primary-foreground: var(--dark-brown);
+    --secondary: var(--warm-brown);
+    --secondary-foreground: var(--cream);
+    --muted: #3a2f24;
+    --muted-foreground: #a69080;
+    --accent: var(--sage);
+    --accent-foreground: var(--cream);
     --destructive: hsl(0 84% 60%);
-    --destructive-foreground: hsl(0 0% 98%);
-    --border: hsl(0 0% 14.9%);
-    --input: hsl(0 0% 14.9%);
-    --ring: hsl(0 0% 83.1%);
-    --chart-1: hsl(220 70% 50%);
-    --chart-2: hsl(160 60% 45%);
-    --chart-3: hsl(30 80% 55%);
-    --chart-4: hsl(280 65% 60%);
-    --chart-5: hsl(340 75% 55%);
-    --sidebar-background: hsl(0 0% 7%);
-    --sidebar-foreground: hsl(0 0% 95.9%);
-    --sidebar-primary: hsl(360, 100%, 100%);
-    --sidebar-primary-foreground: hsl(0 0% 100%);
-    --sidebar-accent: hsl(0 0% 15.9%);
-    --sidebar-accent-foreground: hsl(240 4.8% 95.9%);
-    --sidebar-border: hsl(0 0% 15.9%);
-    --sidebar-ring: hsl(217.2 91.2% 59.8%);
-    --sidebar: hsl(240 5.9% 10%);
+    --destructive-foreground: var(--cream);
+    --border: #5a4a3a;
+    --input: #5a4a3a;
+    --ring: var(--sage);
+
+    /* Dark theme variations of your custom colors */
+    --chart-1: var(--sage);
+    --chart-2: var(--warm-brown);
+    --chart-3: #6b4f35;
+    --chart-4: #2e251c;
+    --chart-5: var(--cream);
+
+    --sidebar-background: var(--dark-brown);
+    --sidebar-foreground: var(--cream);
+    --sidebar-primary: var(--cream);
+    --sidebar-primary-foreground: var(--dark-brown);
+    --sidebar-accent: var(--warm-brown);
+    --sidebar-accent-foreground: var(--cream);
+    --sidebar-border: #5a4a3a;
+    --sidebar-ring: var(--sage);
+    --sidebar: var(--dark-brown);
 }
 
 @layer base {
