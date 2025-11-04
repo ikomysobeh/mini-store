@@ -80,44 +80,13 @@ class OrderController extends Controller
             return redirect('/')->with('error', 'Order not found');
         }
 
-        if ($this->stripeService->verifyPayment($sessionId)) {
-            DB::transaction(function () use ($order) {
-                $order->update([
-                    'paid_at' => now(),
-                    'status' => Order::STATUS_PROCESSING
-                ]);
-
-                // NEW: DECREMENT STOCK for variants or regular products
-                foreach ($order->items as $orderItem) {
-                    if ($orderItem->variant_id) {
-                        // Handle variant stock
-                        $variant = ProductVariant::find($orderItem->variant_id);
-                        if ($variant && $variant->stock >= $orderItem->quantity) {
-                            $variant->decrement('stock', $orderItem->quantity);
-
-                            Log::info("Variant stock decremented: Variant {$variant->id}, -{$orderItem->quantity}, new stock: {$variant->stock}");
-                        } else {
-                            Log::warning("Insufficient variant stock during payment success: Variant {$orderItem->variant_id}");
-                        }
-                    } elseif ($orderItem->product) {
-                        // Handle regular product stock (existing logic)
-                        $product = $orderItem->product;
-                        if ($product->stock >= $orderItem->quantity) {
-                            $product->decrement('stock', $orderItem->quantity);
-                            Log::info("Product stock decremented: Product {$product->id}, -{$orderItem->quantity}");
-                        }
-                    }
-                }
-
-                // Clear cart
-                $this->cartService->getCart(auth()->user())?->items()?->delete();
-            });
-
-            return Inertia::render('Web/OrderSuccess', [
+        return Inertia::render('Web/OrderSuccess', [
                 'order' => $order->load(['items.product', 'items.variant.color', 'items.variant.size'])
             ]);
-        }
+    }
 
-        return redirect('/')->with('error', 'Payment verification failed');
+     public function paymentCancel()
+    {
+        return Inertia::render('Web/PaymentCancel');
     }
 }
