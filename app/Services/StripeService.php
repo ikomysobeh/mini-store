@@ -14,41 +14,39 @@ class StripeService
     }
 
     public function createCheckoutSession(Order $order)
-    {
-        // Build line items from database data only (never trust frontend)
-        $lineItems = $this->buildSecureLineItems($order);
+{
+    $lineItems = $this->buildSecureLineItems($order);
 
-        // Create session with server-side validation
-        $session = $this->stripe->checkout->sessions->create([
-            'payment_method_types' => ['card'],
-            'line_items' => $lineItems,
-            'mode' => 'payment',
-            'success_url' => route('payment.success') . '?session_id={CHECKOUT_SESSION_ID}',
-            'cancel_url' => route('payment.cancel'),
+    $session = $this->stripe->checkout->sessions->create([
+        'payment_method_types' => ['card'],
+        'line_items' => $lineItems,
+        'mode' => 'payment',
+        'success_url' => route('payment.success'), // no session_id logic needed in URL now
+        'cancel_url' => route('payment.cancel'),
+        'metadata' => [
+            'order_id'    => $order->id,
+            'customer_id' => $order->customer_id,
+            'is_donation' => $order->is_donation ? 'true' : 'false',
+        ],
+        'customer_email' => $order->customer->user->email,
+        'client_reference_id' => (string) $order->id,
+        'payment_intent_data' => [
             'metadata' => [
-                'order_id' => $order->id,
-                'customer_id' => $order->customer_id,
-                'is_donation' => $order->is_donation ? 'true' : 'false',
-            ],
-            'customer_email' => $order->customer->user->email,
-            // Additional security features
-            'payment_intent_data' => [
-                'metadata' => [
-                    'order_id' => $order->id,
-                    'timestamp' => now()->timestamp,
-                ]
-            ],
-            'expires_at' => now()->addHour()->timestamp, // Session expires in 1 hour
-        ]);
+                'order_id'  => $order->id,
+                'timestamp' => now()->timestamp,
+            ]
+        ],
+        'expires_at' => now()->addHour()->timestamp,
+    ]);
 
-        // Save session ID to order for verification
-        $order->update([
-            'payment_id' => $session->id,
-            'stripe_session_expires_at' => now()->addHour()
-        ]);
+    $order->update([
+        'payment_id' => $session->id,
+        'stripe_session_expires_at' => now()->addHour(),
+    ]);
 
-        return $session->url;
-    }
+    return $session->url;
+}
+
 
     private function buildSecureLineItems(Order $order)
     {
