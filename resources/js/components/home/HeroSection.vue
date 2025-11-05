@@ -37,7 +37,7 @@ const heroStyles = computed(() => {
     if (useBackground.value && heroBackgroundUrl) {
         return {
             backgroundImage: `url(${heroBackgroundUrl})`,
-            backgroundSize: 'contain',           // Covers entire area
+            backgroundSize: 'cover',           // Covers entire area
             backgroundPosition: 'center', // Centers the image
             backgroundRepeat: 'no-repeat',     // No repetition
 

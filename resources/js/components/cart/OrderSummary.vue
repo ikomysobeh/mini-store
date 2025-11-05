@@ -80,15 +80,6 @@ const proceedToCheckout = () => {
                         <span class="font-medium">${{ formatPrice(subtotal) }}</span>
                     </div>
 
-                    <!-- Shipping -->
-                    <div class="flex justify-between text-base">
-                        <span>Shipping</span>
-                        <span :class="{ 'text-green-600 font-medium': shipping === 0 }">
-                            {{ shipping === 0 ? 'Free' : `$${formatPrice(shipping)}` }}
-                        </span>
-                    </div>
-
-
 
                     <Separator />
 

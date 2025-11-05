@@ -419,13 +419,13 @@ const completeOrder = async () => {
                             <div class="flex items-start space-x-3">
                                 <Truck class="h-5 w-5 text-blue-600 mt-0.5" />
                                 <div>
-                                    <h4 class="text-sm font-medium text-blue-800">Delivery Information</h4>
+                                    <h4 class="text-sm font-medium text-blue-800">Some Information</h4>
                                     <div class="mt-2 space-y-1 text-sm text-blue-700">
                                         <p class="flex items-center space-x-2">
                                             <Clock class="h-3 w-3" />
-                                            <span><strong>Delivery Time:</strong> 1 day to 1 week</span>
+                                            <span>The delivery will be coordinated either at one of our centers or through another suitable method.</span>
                                         </p>
-                                        <p>📞 Our admin will contact you within 24-48 hours to coordinate delivery</p>
+                                        <p>📞 We will contact the number you provided within a week. </p>
                                     </div>
                                 </div>
                             </div>
@@ -471,7 +471,23 @@ const completeOrder = async () => {
                             <ChevronDown v-if="!showBeneficiaryForm" class="h-4 w-4" />
                             <ChevronUp v-else class="h-4 w-4" />
                         </Button>
+
                     </CardTitle>
+                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                        <div class="flex items-start space-x-3">
+                            <Truck class="h-5 w-5 text-blue-600 mt-0.5" />
+                            <div>
+                                <h4 class="text-sm font-medium text-blue-800">Some Information</h4>
+                                <div class="mt-2 space-y-1 text-sm text-blue-700">
+                                    <p class="flex items-center space-x-2">
+                                        <Clock class="h-3 w-3" />
+                                        <span>The delivery will be coordinated either at one of our centers or through another suitable method.</span>
+                                    </p>
+                                    <p>📞 We will contact the number you provided within a week. </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </CardHeader>
 
                 <CardContent v-if="showBeneficiaryForm" class="space-y-4">
@@ -629,26 +645,9 @@ const completeOrder = async () => {
                         <!-- Special Message -->
                         <div v-if="purchaseType === 'donation'" class="bg-destructive/10 border border-destructive/20 rounded-lg p-4 text-center">
                             <p class="text-sm text-destructive font-medium">🙏 Thank you for supporting our cause!</p>
-                            <p class="text-xs text-destructive/90 mt-1">Tax-exempt receipt will be emailed to you</p>
                         </div>
 
-                        <div v-else class="bg-primary/10 border border-primary/20 rounded-lg p-4">
-                            <div class="text-center mb-3">
-                                <p class="text-xs text-primary/90">Admin will contact you within 24-48 hours</p>
-                            </div>
-                            <div class="bg-white rounded-md p-3">
-                                <div class="flex items-center space-x-2 mb-2">
-                                    <Truck class="h-4 w-4 text-blue-600" />
-                                    <span class="text-sm font-medium text-gray-800">Delivery Timeline</span>
-                                </div>
-                                <div class="space-y-1 text-xs text-gray-600">
-                                    <p class="flex items-center space-x-2">
-                                        <Clock class="h-3 w-3" />
-                                        <span><strong>Expected:</strong> 1 day to 1 week</span>
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
+
 
                         <!-- Complete Order Button -->
                         <Button
