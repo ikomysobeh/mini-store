@@ -8,7 +8,6 @@ use App\Models\Category;
 use App\Models\Setting;
 use App\Services\CartService;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 
 class HomeController extends Controller
@@ -46,7 +45,7 @@ class HomeController extends Controller
             $settings['logo_url'] = asset('storage/' . $settings['logo']);
         }
 
-        // FIXED: Convert boolean settings from string to actual boolean
+        // Convert boolean settings from string to actual boolean
         $settings['hero_use_background_image'] = filter_var($settings['hero_use_background_image'] ?? false, FILTER_VALIDATE_BOOLEAN);
 
         // Add hero background URL if it exists and is enabled
@@ -54,17 +53,9 @@ class HomeController extends Controller
             $settings['hero_background_url'] = asset('storage/' . $settings['hero_background_image']);
         }
 
-        // DEBUG: Log the settings to see what's being sent
-        Log::info('Hero Settings Debug:', [
-            'hero_background_image' => $settings['hero_background_image'] ?? 'NOT SET',
-            'hero_use_background_image' => $settings['hero_use_background_image'] ?? 'NOT SET',
-            'hero_background_url' => $settings['hero_background_url'] ?? 'NOT SET',
-            'hero_background_overlay' => $settings['hero_background_overlay'] ?? 'NOT SET',
-        ]);
-
         // Get user and cart
         $user = Auth::user();
-        $cartItems = [];
+        $cartItems = collect([]); // Initialize as collection
 
         if ($user) {
             $cart = $this->cartService->getCart($user);
@@ -95,9 +86,9 @@ class HomeController extends Controller
         return Inertia::render('Web/Home', [
             'featuredProducts' => $featuredProducts,
             'categories' => $categories,
-            'settings' => $settings->toArray(), // Convert to array for Inertia
+            'settings' => $settings, // ✅ Already an array - don't call toArray()
             'user' => $user,
-            'cartItems' => $cartItems->toArray(), // Convert to array for Inertia
+            'cartItems' => $cartItems, // ✅ Already an array - don't call toArray()
         ]);
     }
 }
