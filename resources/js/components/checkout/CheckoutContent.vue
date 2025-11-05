@@ -345,7 +345,7 @@ const completeOrder = async () => {
                 'mt-4 space-y-1 text-sm transition-colors',
                 purchaseType === 'donation' ? 'text-yellow-100' : 'text-gray-600'
             ]">
-                                <p>❤️ Receive it from one of our centers</p>
+                                <p>❤️ Donate to one of the displaced families</p>
                                 <p>❤️ Contributed to warming a family</p>
                             </div>
 
