@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Color;
 use App\Models\Product;
 use App\Models\Category;
+use App\Models\ProductImage;
 use App\Models\ProductVariant;
 use App\Models\Size;
 use Illuminate\Http\Request;
@@ -62,9 +63,10 @@ class ProductController extends Controller
                         break;
                     case 'low_stock':
                         $query->where(function($q) {
-                            $q->where('stock', '<=', 10)
+                            $q->where('stock', '>', 0)
+                                ->where('stock', '<=', 10)
                                 ->orWhereHas('variants', function($vq) {
-                                    $vq->where('stock', '<=', 10)->where('stock', '>', 0);
+                                    $vq->where('stock', '>', 0)->where('stock', '<=', 10);
                                 });
                         });
                         break;
@@ -88,8 +90,8 @@ class ProductController extends Controller
             // Sorting
             $sortBy = $request->get('sort', 'created_at');
             $direction = $request->get('direction', 'desc');
-
             $allowedSorts = ['name', 'price', 'stock', 'created_at', 'updated_at'];
+
             if (in_array($sortBy, $allowedSorts)) {
                 $query->orderBy($sortBy, $direction);
             } else {
@@ -103,11 +105,16 @@ class ProductController extends Controller
             $products->getCollection()->transform(function ($product) {
                 $productArray = $product->toArray();
 
-                // Add image URL
+                // Add image URL (keep existing functionality)
                 if ($product->image) {
                     $productArray['image'] = asset('storage/' . $product->image);
                     $productArray['image_url'] = asset('storage/' . $product->image);
                 }
+
+                // NEW: Add multiple images data
+                $productArray['images_count'] = $product->images()->count();
+                $productArray['primary_image'] = $product->best_image; // Uses our new accessor
+                $productArray['all_images'] = $product->all_images; // Uses our new accessor
 
                 // Add variant information
                 $productArray['has_variants'] = $product->variants->count() > 0;
@@ -152,7 +159,6 @@ class ProductController extends Controller
             ]);
         }
     }
-
     // Export products to Excel
     public function export(Request $request)
     {
@@ -204,18 +210,20 @@ class ProductController extends Controller
 
             // Low stock calculation (considering variants)
             $lowStockProducts = Product::where(function($query) {
-                $query->where('stock', '<=', 10)
-                    ->where('stock', '>', 0)
-                    ->doesntHave('variants');
-            })->orWhereHas('variants', function($query) {
-                $query->where('stock', '<=', 10)->where('stock', '>', 0);
+                $query->where('stock', '>', 0)
+                    ->where('stock', '<=', 10)
+                    ->doesntHave('variants')
+                    ->orWhereHas('variants', function($query) {
+                        $query->where('stock', '>', 0)->where('stock', '<=', 10);
+                    });
             })->count();
 
             // Out of stock calculation
             $outOfStockProducts = Product::where(function($query) {
-                $query->where('stock', 0)->doesntHave('variants');
-            })->orWhereHas('variants', function($query) {
-                $query->where('stock', 0);
+                $query->where('stock', 0)->doesntHave('variants')
+                    ->orWhereHas('variants', function($query) {
+                        $query->where('stock', 0);
+                    });
             })->count();
 
             // Total value calculation
@@ -241,6 +249,7 @@ class ProductController extends Controller
                 'out_of_stock' => $outOfStockProducts,
                 'total_value' => $totalValue,
             ];
+
         } catch (Exception $e) {
             Log::error('Stats calculation failed: ' . $e->getMessage());
             return [
@@ -274,32 +283,36 @@ class ProductController extends Controller
     public function store(Request $request)
     {
         try {
+            Log::info('DEBUG: Admin Product Store Request', [
+                'all_data' => $request->all(),
+                'has_images' => $request->hasFile('images'),
+                'images_count' => $request->hasFile('images') ? count($request->file('images')) : 0,
+                'has_image' => $request->hasFile('image'),
+                'files' => $request->allFiles(),
+            ]);
             // DEBUG: Log what we're receiving
-            Log::info('Store method - Request data:', [
+            Log::info('Store method - Request data', [
                 'all_data' => $request->all(),
                 'has_colors' => $request->has('colors'),
                 'colors_data' => $request->input('colors'),
                 'has_sizes' => $request->has('sizes'),
                 'sizes_data' => $request->input('sizes'),
                 'has_variants' => $request->has('variants'),
-                'variants_data' => $request->input('variants')
+                'variants_data' => $request->input('variants'),
             ]);
 
             $validated = $request->validate([
-                'name' => [
-                    'required',
-                    'string',
-                    'max:255',
-                    'unique:products,name',
-                ],
+                'name' => 'required|string|max:255|unique:products,name',
                 'description' => 'nullable|string',
                 'price' => 'required|numeric|min:0',
                 'stock' => 'required|integer|min:0',
                 'category_id' => 'required|exists:categories,id',
                 'is_active' => 'nullable|boolean',
                 'is_donatable' => 'nullable|boolean',
-                'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-
+                'image' => 'nullable|image|mimes:jpeg,png,jpg,gif',
+                // NEW: Add images validation
+                'images' => 'nullable|array',
+                'images.*' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
                 // FIXED: Properly validate colors, sizes, variants arrays
                 'colors' => 'nullable|array',
                 'colors.*' => 'nullable|array',
@@ -324,7 +337,7 @@ class ProductController extends Controller
                     'is_donatable' => $request->boolean('is_donatable', false),
                 ];
 
-                // Handle image upload
+                // Handle single image upload (keep existing functionality)
                 if ($request->hasFile('image')) {
                     try {
                         $productData['image'] = $request->file('image')->store('products', 'public');
@@ -333,8 +346,24 @@ class ProductController extends Controller
                     }
                 }
 
+                // Create the product
                 $product = Product::create($productData);
                 Log::info('Product created with ID: ' . $product->id);
+
+                // NEW: Handle multiple image uploads
+                if ($request->hasFile('images')) {
+                    $this->handleMultipleImageUploads($product, $request->file('images'));
+                }
+
+                // If single image was uploaded and no multiple images, create ProductImage record for backward compatibility
+                if (isset($productData['image']) && !$request->hasFile('images')) {
+                    ProductImage::create([
+                        'product_id' => $product->id,
+                        'image_path' => $productData['image'],
+                        'sort_order' => 1,
+                        'is_primary' => true,
+                    ]);
+                }
 
                 // FIXED: Handle variants creation with proper data structure
                 $colorsData = $request->input('colors', []);
@@ -358,23 +387,23 @@ class ProductController extends Controller
                 ->with('success', 'Product created successfully!');
 
         } catch (\Illuminate\Validation\ValidationException $e) {
-            Log::error('Product creation validation failed:', $e->errors());
+            Log::error('Product creation validation failed', ['errors' => $e->errors()]);
             return back()
                 ->withErrors($e->errors())
                 ->withInput()
                 ->with('error', 'Please fix the validation errors and try again.');
 
-        } catch (\Illuminate\Database\QueryException $e) {
+        } catch (\Exception $e) {
             Log::error('Database error during product creation: ' . $e->getMessage());
 
-            if (strpos($e->getMessage(), 'products_name_unique') !== false) {
+            if (str_contains($e->getMessage(), 'products_name_unique')) {
                 return back()
                     ->withErrors(['name' => 'A product with this name already exists.'])
                     ->withInput()
                     ->with('error', 'Product name must be unique.');
             }
 
-            if (strpos($e->getMessage(), 'products_slug_unique') !== false) {
+            if (str_contains($e->getMessage(), 'products_slug_unique')) {
                 return back()
                     ->withErrors(['name' => 'A product with a similar name already exists. Please choose a different name.'])
                     ->withInput()
@@ -597,9 +626,11 @@ class ProductController extends Controller
         $slug = $baseSlug;
         $counter = 1;
 
-        while (Product::where('slug', $slug)->when($ignoreId, function($query, $id) {
-            return $query->where('id', '!=', $id);
-        })->exists()) {
+        while (Product::where('slug', $slug)
+            ->when($ignoreId, function($query, $id) {
+                return $query->where('id', '!=', $id);
+            })
+            ->exists()) {
             $slug = $baseSlug . '-' . $counter;
             $counter++;
         }
@@ -631,11 +662,14 @@ class ProductController extends Controller
     public function edit(Product $product)
     {
         try {
-            $product->load(['category', 'variants.color', 'variants.size']);
+            // Load relationships including images
+            $product->load(['category', 'variants.color', 'variants.size', 'images' => function($query) {
+                $query->orderBy('sort_order', 'asc');
+            }]);
 
             $categories = Category::active()->ordered()->get();
 
-            // FIXED: Use the safer methods without DISTINCT issues
+            // Get available colors and sizes
             $availableColors = $product->getAllAvailableColors();
             $availableSizes = $product->getAllAvailableSizes();
 
@@ -643,10 +677,23 @@ class ProductController extends Controller
             $existingVariants = $product->variants()->with(['color', 'size'])->get();
 
             $productData = $product->toArray();
+
             if ($product->image) {
                 $productData['image'] = asset('storage/' . $product->image);
                 $productData['image_url'] = asset('storage/' . $product->image);
             }
+
+            // NEW: Add images data
+            $productData['images'] = $product->images->map(function($image) {
+                return [
+                    'id' => $image->id,
+                    'url' => $image->image_url,
+                    'path' => $image->image_path,
+                    'is_primary' => $image->is_primary,
+                    'sort_order' => $image->sort_order,
+                ];
+            });
+
             $productData['available_colors'] = $availableColors;
             $productData['available_sizes'] = $availableSizes;
 
@@ -655,7 +702,7 @@ class ProductController extends Controller
                 'categories' => $categories,
                 'existingVariants' => $existingVariants,
             ]);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             Log::error('Product edit failed: ' . $e->getMessage());
             return redirect()->route('admin.products.index')
                 ->with('error', 'Unable to load product for editing: ' . $e->getMessage());
@@ -673,17 +720,24 @@ class ProductController extends Controller
                 'category_id' => 'required|exists:categories,id',
                 'is_active' => 'boolean',
                 'is_donatable' => 'boolean',
+                'image' => 'nullable|image|mimes:jpeg,png,jpg,gif',
+                // NEW: Add images validation
+                'images' => 'nullable|array',
+                'images.*' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+                'delete_images' => 'nullable|array',
+                'delete_images.*' => 'integer|exists:product_images,id',
+                'primary_image_id' => 'nullable|integer|exists:product_images,id',
                 'variants' => 'nullable|array',
                 'colors' => 'nullable|array',
                 'sizes' => 'nullable|array',
             ]);
 
-            Log::info('Product update request data:', [
+            Log::info('Product update request data', [
                 'all_data' => $request->all(),
                 'has_name' => $request->has('name'),
                 'name_value' => $request->get('name'),
                 'method' => $request->method(),
-                'content_type' => $request->header('Content-Type')
+                'content_type' => $request->header('Content-Type'),
             ]);
 
             DB::beginTransaction();
@@ -699,237 +753,46 @@ class ProductController extends Controller
                 'is_donatable' => $validated['is_donatable'] ?? false,
             ]);
 
-            // Handle image upload if present
+            // Handle single image upload (keep existing functionality)
             if ($request->hasFile('image')) {
+                // Delete old image
                 if ($product->image) {
                     Storage::disk('public')->delete($product->image);
                 }
 
                 $path = $request->file('image')->store('products', 'public');
                 $product->update(['image' => $path]);
+
+                // Update or create primary ProductImage record for backward compatibility
+                $primaryImage = $product->images()->where('is_primary', true)->first();
+                if ($primaryImage) {
+                    $primaryImage->update(['image_path' => $path]);
+                } else {
+                    ProductImage::create([
+                        'product_id' => $product->id,
+                        'image_path' => $path,
+                        'sort_order' => 1,
+                        'is_primary' => true,
+                    ]);
+                }
             }
 
-            // FIXED: Handle variants with proper duplicate checking
-            if ($request->has('variants') && is_array($request->variants)) {
-
-                // Step 1: FIXED - Handle colors with duplicate checking
-                $colorIdMap = [];
-                if ($request->has('colors') && is_array($request->colors)) {
-                    foreach ($request->colors as $colorData) {
-                        if (isset($colorData['id']) && str_starts_with($colorData['id'], 'temp_')) {
-                            $colorName = $colorData['name'];
-                            $colorHex = $colorData['hex'] ?? $colorData['hex_code'] ?? '#000000';
-
-                            // FIXED: Check if color already exists by name OR hex
-                            $existingColor = Color::where('name', $colorName)
-                                ->orWhere('hex_code', $colorHex)
-                                ->first();
-
-                            if ($existingColor) {
-                                // Use existing color
-                                $colorIdMap[$colorData['id']] = $existingColor->id;
-
-                                Log::info('Using existing color:', [
-                                    'temp_id' => $colorData['id'],
-                                    'existing_id' => $existingColor->id,
-                                    'name' => $existingColor->name
-                                ]);
-                            } else {
-                                // Create new color only if it doesn't exist
-                                try {
-                                    $newColor = Color::create([
-                                        'name' => $colorName,
-                                        'hex_code' => $colorHex,
-                                        'is_active' => $colorData['is_active'] ?? true,
-                                        'sort_order' => $colorData['sort_order'] ?? 0,
-                                    ]);
-                                    $colorIdMap[$colorData['id']] = $newColor->id;
-
-                                    Log::info('Created new color:', [
-                                        'temp_id' => $colorData['id'],
-                                        'new_id' => $newColor->id,
-                                        'name' => $newColor->name
-                                    ]);
-                                } catch (\Illuminate\Database\QueryException $e) {
-                                    // If still duplicate (race condition), find the existing one
-                                    if ($e->getCode() == 23000) { // Integrity constraint violation
-                                        $existingColor = Color::where('name', $colorName)->first();
-                                        if ($existingColor) {
-                                            $colorIdMap[$colorData['id']] = $existingColor->id;
-                                            Log::info('Used existing color after duplicate error:', [
-                                                'temp_id' => $colorData['id'],
-                                                'existing_id' => $existingColor->id
-                                            ]);
-                                        } else {
-                                            throw $e; // Re-throw if it's a different error
-                                        }
-                                    } else {
-                                        throw $e;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-
-                // Step 2: FIXED - Handle sizes with duplicate checking
-                $sizeIdMap = [];
-                if ($request->has('sizes') && is_array($request->sizes)) {
-                    foreach ($request->sizes as $sizeData) {
-                        if (isset($sizeData['id']) && str_starts_with($sizeData['id'], 'temp_')) {
-                            $sizeName = $sizeData['name'];
-                            $categoryType = $sizeData['category_type'] ?? 'general';
-
-                            // FIXED: Check if size already exists by name and category
-                            $existingSize = Size::where('name', $sizeName)
-                                ->where('category_type', $categoryType)
-                                ->first();
-
-                            if ($existingSize) {
-                                // Use existing size
-                                $sizeIdMap[$sizeData['id']] = $existingSize->id;
-
-                                Log::info('Using existing size:', [
-                                    'temp_id' => $sizeData['id'],
-                                    'existing_id' => $existingSize->id,
-                                    'name' => $existingSize->name
-                                ]);
-                            } else {
-                                // Create new size only if it doesn't exist
-                                try {
-                                    $newSize = Size::create([
-                                        'name' => $sizeName,
-                                        'category_type' => $categoryType,
-                                        'is_active' => $sizeData['is_active'] ?? true,
-                                        'sort_order' => $sizeData['sort_order'] ?? 0,
-                                    ]);
-                                    $sizeIdMap[$sizeData['id']] = $newSize->id;
-
-                                    Log::info('Created new size:', [
-                                        'temp_id' => $sizeData['id'],
-                                        'new_id' => $newSize->id,
-                                        'name' => $newSize->name
-                                    ]);
-                                } catch (\Illuminate\Database\QueryException $e) {
-                                    // If still duplicate (race condition), find the existing one
-                                    if ($e->getCode() == 23000) { // Integrity constraint violation
-                                        $existingSize = Size::where('name', $sizeName)
-                                            ->where('category_type', $categoryType)
-                                            ->first();
-                                        if ($existingSize) {
-                                            $sizeIdMap[$sizeData['id']] = $existingSize->id;
-                                            Log::info('Used existing size after duplicate error:', [
-                                                'temp_id' => $sizeData['id'],
-                                                'existing_id' => $existingSize->id
-                                            ]);
-                                        } else {
-                                            throw $e;
-                                        }
-                                    } else {
-                                        throw $e;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-
-                // Step 3: Update/create variants with mapped IDs
-                $variantIds = [];
-                foreach ($request->variants as $variantData) {
-                    // Map temporary IDs to real IDs
-                    $colorId = $variantData['color_id'];
-                    $sizeId = $variantData['size_id'];
-
-                    // Replace temp IDs with real IDs
-                    if (isset($colorIdMap[$colorId])) {
-                        $colorId = $colorIdMap[$colorId];
-                    }
-                    if (isset($sizeIdMap[$sizeId])) {
-                        $sizeId = $sizeIdMap[$sizeId];
-                    }
-
-                    // Skip if IDs are still temporary
-                    if (is_string($colorId) && str_starts_with($colorId, 'temp_')) {
-                        Log::warning('Skipping variant with unmapped color ID:', ['color_id' => $colorId]);
-                        continue;
-                    }
-                    if (is_string($sizeId) && str_starts_with($sizeId, 'temp_')) {
-                        Log::warning('Skipping variant with unmapped size ID:', ['size_id' => $sizeId]);
-                        continue;
-                    }
-
-                    // Convert to integers
-                    $colorId = (int) $colorId;
-                    $sizeId = (int) $sizeId;
-
-                    // FIXED: Check for duplicate variants
-                    $existingVariant = null;
-                    if (isset($variantData['id']) && is_numeric($variantData['id'])) {
-                        // Update existing variant
-                        $existingVariant = ProductVariant::where('id', $variantData['id'])
-                            ->where('product_id', $product->id)
-                            ->first();
-                    }
-
-                    if ($existingVariant) {
-                        // Update existing variant
-                        $existingVariant->update([
-                            'color_id' => $colorId,
-                            'size_id' => $sizeId,
-                            'stock' => (int) $variantData['stock'],
-                            'price_adjustment' => (float) ($variantData['price_adjustment'] ?? 0),
-                            'is_active' => $variantData['is_active'] ?? true,
-                            'sku' => $variantData['sku'] ?? null,
-                        ]);
-                        $variantIds[] = $existingVariant->id;
-
-                        Log::info('Updated existing variant:', ['variant_id' => $existingVariant->id]);
-                    } else {
-                        // Check if variant with same color/size combo already exists
-                        $duplicateVariant = ProductVariant::where('product_id', $product->id)
-                            ->where('color_id', $colorId)
-                            ->where('size_id', $sizeId)
-                            ->first();
-
-                        if ($duplicateVariant) {
-                            // Update the duplicate instead of creating new
-                            $duplicateVariant->update([
-                                'stock' => (int) $variantData['stock'],
-                                'price_adjustment' => (float) ($variantData['price_adjustment'] ?? 0),
-                                'is_active' => $variantData['is_active'] ?? true,
-                                'sku' => $variantData['sku'] ?? $duplicateVariant->sku,
-                            ]);
-                            $variantIds[] = $duplicateVariant->id;
-
-                            Log::info('Updated duplicate variant:', ['variant_id' => $duplicateVariant->id]);
-                        } else {
-                            // Create new variant
-                            $variant = ProductVariant::create([
-                                'product_id' => $product->id,
-                                'color_id' => $colorId,
-                                'size_id' => $sizeId,
-                                'stock' => (int) $variantData['stock'],
-                                'price_adjustment' => (float) ($variantData['price_adjustment'] ?? 0),
-                                'is_active' => $variantData['is_active'] ?? true,
-                                'sku' => $this->generateSku($product->name, $colorId, $sizeId, $product->id),
-                            ]);
-                            $variantIds[] = $variant->id;
-
-                            Log::info('Created new variant:', ['variant_id' => $variant->id]);
-                        }
-                    }
-                }
-
-                // Step 4: Delete removed variants
-                $product->variants()->whereNotIn('id', $variantIds)->delete();
-
-                Log::info('Variants update completed:', [
-                    'kept_variant_ids' => $variantIds,
-                    'color_mappings' => $colorIdMap,
-                    'size_mappings' => $sizeIdMap,
-                ]);
+            // NEW: Handle multiple image uploads
+            if ($request->hasFile('images')) {
+                $this->handleMultipleImageUploads($product, $request->file('images'));
             }
+
+            // NEW: Handle image deletions
+            if ($request->has('delete_images')) {
+                $this->handleImageDeletions($request->input('delete_images'));
+            }
+
+            // NEW: Handle primary image updates
+            if ($request->has('primary_image_id')) {
+                $this->updatePrimaryImage($product, $request->input('primary_image_id'));
+            }
+
+
 
             DB::commit();
 
@@ -938,7 +801,6 @@ class ProductController extends Controller
 
         } catch (\Exception $e) {
             DB::rollback();
-
             Log::error('Product update failed: ' . $e->getMessage(), [
                 'product_id' => $product->id,
                 'request_data' => $request->all(),
@@ -1074,5 +936,68 @@ class ProductController extends Controller
             Log::error('Variant update failed: ' . $e->getMessage());
             throw new Exception('Failed to update product variants');
         }
+    }
+
+    private function handleMultipleImageUploads($product, $images)
+    {
+        $sortOrder = $product->images()->max('sort_order') ?? 0;
+
+        foreach ($images as $image) {
+            try {
+                $path = $image->store('products', 'public');
+                $sortOrder++;
+
+                ProductImage::create([
+                    'product_id' => $product->id,
+                    'image_path' => $path,
+                    'sort_order' => $sortOrder,
+                    'is_primary' => $product->images()->count() == 0, // First image is primary
+                ]);
+
+                Log::info('Image uploaded successfully', ['product_id' => $product->id, 'path' => $path]);
+            } catch (Exception $e) {
+                Log::error('Failed to upload product image: ' . $e->getMessage());
+            }
+        }
+    }
+
+    /**
+     * NEW: Handle image deletions
+     */
+    private function handleImageDeletions($imageIds)
+    {
+        if (!is_array($imageIds)) {
+            return;
+        }
+
+        $images = ProductImage::whereIn('id', $imageIds)->get();
+
+        foreach ($images as $image) {
+            try {
+                // Delete file from storage
+                Storage::disk('public')->delete($image->image_path);
+
+                // Delete database record
+                $image->delete();
+
+                Log::info('Image deleted successfully', ['image_id' => $image->id]);
+            } catch (Exception $e) {
+                Log::error('Failed to delete product image: ' . $e->getMessage());
+            }
+        }
+    }
+
+    /**
+     * NEW: Update primary image for a product
+     */
+    private function updatePrimaryImage($product, $imageId)
+    {
+        // Remove primary status from all images
+        $product->images()->update(['is_primary' => false]);
+
+        // Set new primary image
+        $product->images()->where('id', $imageId)->update(['is_primary' => true]);
+
+        Log::info('Primary image updated', ['product_id' => $product->id, 'primary_image_id' => $imageId]);
     }
 }
