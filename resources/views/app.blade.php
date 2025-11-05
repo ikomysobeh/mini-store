@@ -4,8 +4,13 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
-    {{-- ADD THIS LINE - CSRF Token --}}
+    {{-- CSRF Token --}}
     <meta name="csrf-token" content="{{ csrf_token() }}">
+
+    {{-- ENHANCED: Add theme colors for better favicon support --}}
+    <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+    <meta name="theme-color" content="#0a0a0a" media="(prefers-color-scheme: dark)">
+    <meta name="msapplication-TileColor" content="#ffffff">
 
     {{-- Inline script to detect system dark mode preference and apply it immediately --}}
     <script>
@@ -35,9 +40,14 @@
 
     <title inertia>{{ config('app.name', 'Laravel') }}</title>
 
-    <link rel="icon" href="/favicon.ico" sizes="any">
+    <!-- ENHANCED: Complete Favicon Set -->
+    <link rel="icon" href="/favicon.ico" sizes="32x32">
     <link rel="icon" href="/favicon.svg" type="image/svg+xml">
     <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+    <link rel="manifest" href="/site.webmanifest">
+
+    {{-- OPTIONAL: Add description meta tag --}}
+    <meta name="description" content="3lmni al9aid - The best website for shopping. Life is an interesting journey.">
 
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=instrument-sans:400,500,600" rel="stylesheet" />
