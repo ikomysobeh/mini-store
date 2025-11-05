@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Services\AdminNotificationService;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
 
 class Order extends Model
 {
@@ -12,6 +13,7 @@ class Order extends Model
 
     protected $fillable = [
         'customer_id',
+        'beneficiary_id',  // ADD THIS LINE
         'total',
         'shipping',
         'status',
@@ -76,7 +78,7 @@ class Order extends Model
 
     public function getSubtotalAttribute()
     {
-        return $this->items()->sum(\DB::raw('quantity * price'));
+        return $this->items()->sum(DB::raw('quantity * price'));
     }
 
     public function isPaid()
@@ -125,5 +127,29 @@ class Order extends Model
             $notificationService->createOrderNotification($order);
         });
 
+    }
+
+    // Add this relationship method
+    public function beneficiary()
+    {
+        return $this->belongsTo(DonationBeneficiary::class, 'beneficiary_id');
+    }
+
+// Add this scope for orders with beneficiaries
+    public function scopeWithBeneficiary($query)
+    {
+        return $query->whereNotNull('beneficiary_id');
+    }
+
+// Add this scope for orders without beneficiaries
+    public function scopeWithoutBeneficiary($query)
+    {
+        return $query->whereNull('beneficiary_id');
+    }
+
+// Add this accessor to check if order has beneficiary
+    public function getHasBeneficiaryAttribute()
+    {
+        return !is_null($this->beneficiary_id);
     }
 }

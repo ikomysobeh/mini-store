@@ -3,9 +3,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { CreditCard, Heart, ShoppingCart, User, MessageSquare } from 'lucide-vue-next';
-import { ref, computed } from 'vue';
+import { CreditCard, Heart, ShoppingCart, User, MessageSquare, Users, ChevronDown, ChevronUp, Clock, Truck } from 'lucide-vue-next';
+import { ref, computed, watch } from 'vue';
 
 interface CartItem {
     id: number;
@@ -27,6 +26,7 @@ interface Customer {
     last_name?: string;
     phone?: string;
     address?: string;
+    has_existing_data?: boolean;
 }
 
 interface Props {
@@ -35,24 +35,82 @@ interface Props {
     user?: any;
     shippingMethods?: any[];
     paymentMethods?: any[];
+    existingCustomerData?: Customer | null;
 }
 
 const props = withDefaults(defineProps<Props>(), {
     customer: null,
     user: null,
     shippingMethods: () => [],
-    paymentMethods: () => []
+    paymentMethods: () => [],
+    existingCustomerData: null
 });
 
 // State
 const isProcessing = ref(false);
 const purchaseType = ref<'purchase' | 'donation'>('purchase');
+
+// Beneficiary form state
+const showBeneficiaryForm = ref(false);
+const beneficiaryIsOrganization = ref(false);
+
+// SIMPLIFIED: Form data with reduced beneficiary fields
 const formData = ref({
-    first_name: props.customer?.first_name || '',
-    last_name: props.customer?.last_name || '',
-    phone: props.customer?.phone || '',
-    address: props.customer?.address || '',
-    notes: ''
+    // Customer/Donor Information (pre-populate from existing data)
+    first_name: props.existingCustomerData?.first_name || props.customer?.first_name || '',
+    last_name: props.existingCustomerData?.last_name || props.customer?.last_name || '',
+    phone: props.existingCustomerData?.phone || props.customer?.phone || '',
+    address: props.existingCustomerData?.address || props.customer?.address || '',
+    notes: '',
+
+    // SIMPLIFIED: Beneficiary Information (removed unwanted fields)
+    has_beneficiary: false,
+    // Individual Person - KEPT: First Name, Last Name, Phone
+    beneficiary_first_name: '',
+    beneficiary_last_name: '',
+    beneficiary_phone: '',
+    // REMOVED: beneficiary_email, beneficiary_relationship
+
+    // Organization - KEPT: Organization Name only (like "3lmni al 9aid initiative")
+    beneficiary_organization_name: '',
+    // REMOVED: organization contact phone, organization contact email
+
+    // Common fields
+    beneficiary_special_instructions: '',
+    beneficiary_is_organization: false,
+});
+
+// Watch for beneficiary form toggle
+watch(showBeneficiaryForm, (newValue) => {
+    formData.value.has_beneficiary = newValue;
+    if (!newValue) {
+        // Reset beneficiary data when hiding form
+        formData.value.beneficiary_first_name = '';
+        formData.value.beneficiary_last_name = '';
+        formData.value.beneficiary_phone = '';
+        formData.value.beneficiary_organization_name = '';
+        formData.value.beneficiary_special_instructions = '';
+        formData.value.beneficiary_is_organization = false;
+        beneficiaryIsOrganization.value = false;
+    }
+});
+
+// Watch for organization toggle
+// Watch for organization toggle
+watch(beneficiaryIsOrganization, (newValue) => {
+    formData.value.beneficiary_is_organization = newValue;
+    if (newValue) {
+        // Clear individual fields when switching to organization
+        formData.value.beneficiary_first_name = '';
+        formData.value.beneficiary_last_name = '';
+        formData.value.beneficiary_phone = '';
+
+        // AUTO-SET: Always set to the fixed organization name
+        formData.value.beneficiary_organization_name = '3lmni al 9aid initiative';
+    } else {
+        // Clear organization field when switching to individual
+        formData.value.beneficiary_organization_name = '';
+    }
 });
 
 // Computed
@@ -77,47 +135,73 @@ const getProductImage = (item: CartItem) => {
     return item.product?.image || null;
 };
 
-// Validation
+// SIMPLIFIED: Validation with reduced beneficiary requirements
 const isFormValid = computed(() => {
-    return formData.value.first_name &&
+    const basicValid = formData.value.first_name &&
         formData.value.last_name &&
-        (purchaseType.value === 'donation' || formData.value.address);
+        formData.value.phone;
+
+    const addressValid = purchaseType.value === 'donation' || formData.value.address;
+
+    // SIMPLIFIED: If beneficiary form is shown, validate only required fields
+    let beneficiaryValid = true;
+    if (showBeneficiaryForm.value && formData.value.has_beneficiary) {
+        if (beneficiaryIsOrganization.value) {
+            // Organization: Only organization name required
+            beneficiaryValid = !!formData.value.beneficiary_organization_name;
+        } else {
+            // Individual: At least first name or last name required
+            beneficiaryValid = !!(formData.value.beneficiary_first_name || formData.value.beneficiary_last_name);
+        }
+    }
+
+    return basicValid && addressValid && beneficiaryValid;
 });
 
-// Handle form submission
+// Handle form submission with simplified beneficiary data
 const completeOrder = async () => {
     if (isProcessing.value || !isFormValid.value) return;
 
     isProcessing.value = true;
 
     try {
-        // Better CSRF token retrieval
         const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
 
         if (!csrfToken) {
             throw new Error('CSRF token not found. Please refresh the page.');
         }
 
+        // SIMPLIFIED: Include only the kept beneficiary fields
+        const orderData = {
+            is_donation: purchaseType.value === 'donation',
+            first_name: formData.value.first_name,
+            last_name: formData.value.last_name,
+            phone: formData.value.phone,
+            address: formData.value.address,
+            notes: formData.value.notes,
+
+            // SIMPLIFIED: Beneficiary data (only kept fields)
+            has_beneficiary: formData.value.has_beneficiary,
+            beneficiary_first_name: formData.value.beneficiary_first_name,
+            beneficiary_last_name: formData.value.beneficiary_last_name,
+            beneficiary_phone: formData.value.beneficiary_phone,
+            beneficiary_organization_name: formData.value.beneficiary_organization_name,
+            beneficiary_special_instructions: formData.value.beneficiary_special_instructions,
+            beneficiary_is_organization: formData.value.beneficiary_is_organization,
+        };
+
         const response = await fetch('/orders', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
                 'X-CSRF-TOKEN': csrfToken,
-                'Accept': 'application/json', // Important for Laravel
+                'Accept': 'application/json',
             },
-            credentials: 'same-origin', // Include cookies
-            body: JSON.stringify({
-                is_donation: purchaseType.value === 'donation',
-                first_name: formData.value.first_name,
-                last_name: formData.value.last_name,
-                phone: formData.value.phone,
-                address: formData.value.address,
-                notes: formData.value.notes,
-            }),
+            credentials: 'same-origin',
+            body: JSON.stringify(orderData),
         });
 
         if (!response.ok) {
-            // Get error details
             const errorData = await response.text();
             console.error('Response error:', response.status, errorData);
             throw new Error(`Server error: ${response.status}`);
@@ -126,7 +210,6 @@ const completeOrder = async () => {
         const data = await response.json();
 
         if (data.url) {
-            // Redirect to Stripe Checkout
             window.location.href = data.url;
         } else {
             throw new Error('No checkout URL received');
@@ -201,13 +284,18 @@ const completeOrder = async () => {
                 'mt-4 space-y-1 text-sm transition-colors',
                 purchaseType === 'purchase' ? 'text-yellow-100' : 'text-gray-600'
             ]">
-                                <p>✓ Admin will contact you</p>
-                                <p>✓ Free delivery arrangement</p>
-                                <p>✓ Address required</p>
+                                <p>✓ Buy it for yourself or for one of your relatives in Sweida</p>
+                                <p>✓ Receive it from one of our centers</p>
+                                <p class="flex items-center space-x-1">
+                                    <Clock class="h-3 w-3" />
+                                    <span>Delivery: 1 day to 1 week</span>
+                                </p>
                             </div>
 
                             <div v-if="purchaseType === 'purchase'" class="absolute top-3 right-3">
-                                <Badge variant="destructive">Selected ✓</Badge>
+                                <span class="inline-flex items-center rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-800">
+                                    Selected ✓
+                                </span>
                             </div>
                         </label>
 
@@ -257,13 +345,14 @@ const completeOrder = async () => {
                 'mt-4 space-y-1 text-sm transition-colors',
                 purchaseType === 'donation' ? 'text-yellow-100' : 'text-gray-600'
             ]">
-                                <p>❤️ Support our mission</p>
-                                <p>📧 Tax-exempt receipt</p>
-                                <p>🎯 100% goes to cause</p>
+                                <p>❤️ Receive it from one of our centers</p>
+                                <p>❤️ Contributed to warming a family</p>
                             </div>
 
                             <div v-if="purchaseType === 'donation'" class="absolute top-3 right-3">
-                                <Badge variant="destructive">Selected ✓</Badge>
+                                <span class="inline-flex items-center rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-800">
+                                    Selected ✓
+                                </span>
                             </div>
                         </label>
                     </div>
@@ -276,6 +365,9 @@ const completeOrder = async () => {
                     <CardTitle class="flex items-center space-x-2">
                         <User class="h-5 w-5" />
                         <span>{{ purchaseType === 'donation' ? 'Donor' : 'Customer' }} Information</span>
+                        <span v-if="existingCustomerData?.has_existing_data" class="ml-auto inline-flex items-center rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-800">
+                            Pre-filled
+                        </span>
                     </CardTitle>
                 </CardHeader>
                 <CardContent class="space-y-4">
@@ -322,9 +414,22 @@ const completeOrder = async () => {
                             placeholder="Your address in Suwayda (neighborhood like Al-Nahdah, Al-Shuhada, street & building number)"
                             class="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                         ></textarea>
-                        <p class="text-sm text-primary flex items-center">
-                            📞 Our admin will contact you to coordinate the delivery
-                        </p>
+
+                        <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                            <div class="flex items-start space-x-3">
+                                <Truck class="h-5 w-5 text-blue-600 mt-0.5" />
+                                <div>
+                                    <h4 class="text-sm font-medium text-blue-800">Delivery Information</h4>
+                                    <div class="mt-2 space-y-1 text-sm text-blue-700">
+                                        <p class="flex items-center space-x-2">
+                                            <Clock class="h-3 w-3" />
+                                            <span><strong>Delivery Time:</strong> 1 day to 1 week</span>
+                                        </p>
+                                        <p>📞 Our admin will contact you within 24-48 hours to coordinate delivery</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
                     <div class="space-y-2">
@@ -338,7 +443,140 @@ const completeOrder = async () => {
                             rows="2"
                             :placeholder="purchaseType === 'donation'
                                 ? 'Any message or special instructions...'
-                                : 'Delivery instructions, preferred time, etc...'"
+                                : 'Delivery preferences, preferred time slots, special instructions, etc...'"
+                            class="flex min-h-[60px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                        ></textarea>
+                    </div>
+                </CardContent>
+            </Card>
+
+            <!-- SIMPLIFIED: Beneficiary Information (Only for Donations) -->
+            <Card v-if="purchaseType === 'donation'">
+                <CardHeader>
+                    <CardTitle class="flex items-center justify-between">
+                        <div class="flex items-center space-x-2">
+                            <Users class="h-5 w-5" />
+                            <span>Beneficiary Information</span>
+                            <span class="inline-flex items-center rounded-full border border-gray-300 px-2.5 py-0.5 text-xs font-medium text-gray-700 bg-white">
+                                Optional
+                            </span>
+                        </div>
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            @click="showBeneficiaryForm = !showBeneficiaryForm"
+                            class="flex items-center space-x-1"
+                        >
+                            <span>{{ showBeneficiaryForm ? 'Hide' : 'Add' }} Beneficiary</span>
+                            <ChevronDown v-if="!showBeneficiaryForm" class="h-4 w-4" />
+                            <ChevronUp v-else class="h-4 w-4" />
+                        </Button>
+                    </CardTitle>
+                </CardHeader>
+
+                <CardContent v-if="showBeneficiaryForm" class="space-y-4">
+                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                        <p class="text-sm text-blue-800 font-medium">Who is this donation for?</p>
+                        <p class="text-xs text-blue-600 mt-1">This section is completely optional. You can skip it if you prefer.</p>
+                    </div>
+
+                    <!-- Beneficiary Type Selection -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <label :class="`cursor-pointer rounded-lg border-2 p-4 ${!beneficiaryIsOrganization ? 'border-primary bg-primary/10' : 'border-border'}`">
+                            <input
+                                type="radio"
+                                :value="false"
+                                v-model="beneficiaryIsOrganization"
+                                class="sr-only"
+                            />
+                            <div class="flex items-center space-x-2">
+                                <User class="h-5 w-5" />
+                                <span class="font-medium">Individual Person</span>
+                            </div>
+                        </label>
+
+                        <label :class="`cursor-pointer rounded-lg border-2 p-4 ${beneficiaryIsOrganization ? 'border-primary bg-primary/10' : 'border-border'}`">
+                            <input
+                                type="radio"
+                                :value="true"
+                                v-model="beneficiaryIsOrganization"
+                                class="sr-only"
+                            />
+                            <div class="flex items-center space-x-2">
+                                <Users class="h-5 w-5" />
+                                <span class="font-medium">Organization</span>
+                            </div>
+                        </label>
+                    </div>
+
+                    <!-- SIMPLIFIED: Individual Beneficiary Fields -->
+                    <div v-if="!beneficiaryIsOrganization" class="space-y-4">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="space-y-2">
+                                <Label for="beneficiary_first_name">First Name</Label>
+                                <Input
+                                    id="beneficiary_first_name"
+                                    v-model="formData.beneficiary_first_name"
+                                    placeholder="Beneficiary's first name"
+                                />
+                            </div>
+                            <div class="space-y-2">
+                                <Label for="beneficiary_last_name">Last Name</Label>
+                                <Input
+                                    id="beneficiary_last_name"
+                                    v-model="formData.beneficiary_last_name"
+                                    placeholder="Beneficiary's last name"
+                                />
+                            </div>
+                        </div>
+
+                        <!-- KEPT: Only phone for individual -->
+                        <div class="space-y-2">
+                            <Label for="beneficiary_phone">Phone (Optional)</Label>
+                            <Input
+                                id="beneficiary_phone"
+                                v-model="formData.beneficiary_phone"
+                                type="tel"
+                                placeholder="Beneficiary's contact number"
+                            />
+                        </div>
+
+                        <!-- REMOVED: Email field and Relationship dropdown -->
+                    </div>
+
+                    <!-- SIMPLIFIED: Organization Beneficiary Fields -->
+                    <!-- SIMPLIFIED: Organization Beneficiary Fields - Auto-filled -->
+                    <div v-else class="space-y-4">
+                        <div class="space-y-2">
+                            <Label for="beneficiary_organization_name">Organization Name</Label>
+                            <div class="relative">
+                                <Input
+                                    id="beneficiary_organization_name"
+                                    v-model="formData.beneficiary_organization_name"
+                                    readonly
+                                    value="3lmni al 9aid initiative"
+                                    class="bg-gray-50 text-gray-700 cursor-not-allowed"
+                                />
+                                <div class="absolute inset-y-0 right-0 flex items-center pr-3">
+                <span class="inline-flex items-center rounded-full bg-blue-100 px-2 py-1 text-xs font-medium text-blue-800">
+                    Auto-filled
+                </span>
+                                </div>
+                            </div>
+                            <p class="text-xs text-gray-600">
+                                ℹ️ This donation will be made on behalf of "3lmni al 9aid initiative"
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Common Fields -->
+                    <div class="space-y-2">
+                        <Label for="beneficiary_special_instructions">Special Instructions (Optional)</Label>
+                        <textarea
+                            id="beneficiary_special_instructions"
+                            v-model="formData.beneficiary_special_instructions"
+                            rows="2"
+                            placeholder="Any special requirements or instructions for the beneficiary..."
                             class="flex min-h-[60px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                         ></textarea>
                     </div>
@@ -394,8 +632,22 @@ const completeOrder = async () => {
                             <p class="text-xs text-destructive/90 mt-1">Tax-exempt receipt will be emailed to you</p>
                         </div>
 
-                        <div v-else class="bg-primary/10 border border-primary/20 rounded-lg p-4 text-center">
-                            <p class="text-xs text-primary/90 mt-1">Admin will contact you within 24-48 hours</p>
+                        <div v-else class="bg-primary/10 border border-primary/20 rounded-lg p-4">
+                            <div class="text-center mb-3">
+                                <p class="text-xs text-primary/90">Admin will contact you within 24-48 hours</p>
+                            </div>
+                            <div class="bg-white rounded-md p-3">
+                                <div class="flex items-center space-x-2 mb-2">
+                                    <Truck class="h-4 w-4 text-blue-600" />
+                                    <span class="text-sm font-medium text-gray-800">Delivery Timeline</span>
+                                </div>
+                                <div class="space-y-1 text-xs text-gray-600">
+                                    <p class="flex items-center space-x-2">
+                                        <Clock class="h-3 w-3" />
+                                        <span><strong>Expected:</strong> 1 day to 1 week</span>
+                                    </p>
+                                </div>
+                            </div>
                         </div>
 
                         <!-- Complete Order Button -->
@@ -408,7 +660,6 @@ const completeOrder = async () => {
         : 'bg-blue-600 hover:bg-blue-700 text-white disabled:bg-blue-400'
     "
                         >
-                            <!-- Loading Spinner - Shows when processing -->
                             <div v-if="isProcessing" class="flex items-center">
                                 <svg
                                     class="animate-spin -ml-1 mr-3 h-6 w-6 text-white"
@@ -433,7 +684,6 @@ const completeOrder = async () => {
                                 <span>Processing...</span>
                             </div>
 
-                            <!-- Normal State - Shows when not processing -->
                             <div v-else class="flex items-center justify-center">
                                 <CreditCard class="h-6 w-6 mr-3" />
                                 <span>
@@ -444,7 +694,6 @@ const completeOrder = async () => {
         </span>
                             </div>
                         </Button>
-
 
                         <div class="text-center text-xs text-muted-foreground space-y-1">
                             <p>🔒 Secure payment powered by Stripe</p>

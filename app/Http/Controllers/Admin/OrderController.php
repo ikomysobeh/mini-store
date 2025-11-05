@@ -22,15 +22,32 @@ class OrderController extends Controller
         $this->stripeService = new StripeService();
     }
 
+// In App/Http/Controllers/Admin/OrderController.php
+// REPLACE the existing index method
+
     public function index(Request $request)
     {
-        $query = Order::with(['customer.user', 'items']);
+        // ENHANCED: Load beneficiary relationship
+        $query = Order::with(['customer.user', 'items', 'beneficiary']); // NEW: Added 'beneficiary'
 
+        // ENHANCED: Updated search to include beneficiary
         if ($request->search) {
-            $query->whereHas('customer.user', function($q) use ($request) {
-                $q->where('name', 'like', '%' . $request->search . '%')
-                    ->orWhere('email', 'like', '%' . $request->search . '%');
-            })->orWhere('id', 'like', '%' . $request->search . '%');
+            $query->where(function($q) use ($request) {
+                // Search in customer/user data
+                $q->whereHas('customer.user', function($subQ) use ($request) {
+                    $subQ->where('name', 'like', '%' . $request->search . '%')
+                        ->orWhere('email', 'like', '%' . $request->search . '%');
+                })
+                    // Search in order ID
+                    ->orWhere('id', 'like', '%' . $request->search . '%')
+                    // SIMPLIFIED: Search only in existing beneficiary fields
+                    ->orWhereHas('beneficiary', function($subQ) use ($request) {
+                        $subQ->where('first_name', 'like', '%' . $request->search . '%')
+                            ->orWhere('last_name', 'like', '%' . $request->search . '%')
+                            ->orWhere('organization_name', 'like', '%' . $request->search . '%');
+                        // REMOVED: email and relationship searches
+                    });
+            });
         }
 
         if ($request->status) {
@@ -41,18 +58,30 @@ class OrderController extends Controller
             $query->where('is_donation', $request->is_donation);
         }
 
+        // NEW: Filter by beneficiary presence
+        if ($request->has('has_beneficiary')) {
+            if ($request->has_beneficiary === '1') {
+                $query->whereNotNull('beneficiary_id');
+            } elseif ($request->has_beneficiary === '0') {
+                $query->whereNull('beneficiary_id');
+            }
+        }
+
         $orders = $query->latest()->paginate(15);
 
-        // Calculate stats
+        // ENHANCED: Calculate stats with beneficiary data
         $stats = $this->calculateStats();
 
         return Inertia::render('Admin/Orders/Index', [
             'orders' => $orders,
-            'filters' => $request->only(['search', 'status', 'is_donation']),
+            'filters' => $request->only(['search', 'status', 'is_donation', 'has_beneficiary']), // NEW: Added has_beneficiary
             'statuses' => Order::getStatuses(),
-            'stats' => $stats, // Add this line
+            'stats' => $stats,
         ]);
     }
+// In App/Http/Controllers/Admin/OrderController.php
+// REPLACE the existing calculateStats method
+
     private function calculateStats()
     {
         $baseQuery = Order::query();
@@ -66,37 +95,44 @@ class OrderController extends Controller
             'cancelled' => (clone $baseQuery)->where('status', 'cancelled')->count(),
             'total_revenue' => (clone $baseQuery)->where('is_donation', false)->sum('total'),
             'donations_total' => (clone $baseQuery)->where('is_donation', true)->sum('total'),
+
+            // NEW: Beneficiary-related stats
+            'donations_with_beneficiary' => (clone $baseQuery)->where('is_donation', true)->whereNotNull('beneficiary_id')->count(),
+            'donations_without_beneficiary' => (clone $baseQuery)->where('is_donation', true)->whereNull('beneficiary_id')->count(),
+            'total_beneficiaries' => \App\Models\DonationBeneficiary::count(),
         ];
     }
 
 
+// In App/Http/Controllers/Admin/OrderController.php
+// REPLACE the existing show method
+
     public function show(Order $order)
     {
-        // ENHANCED: Load with variant relationships and product data
+        // ENHANCED: Load beneficiary relationship
         $order->load([
             'customer.user',
             'items.product',
-            'items.variant.color',  // Load variant with color
-            'items.variant.size',   // Load variant with size
+            'items.variant.color',
+            'items.variant.size',
+            'beneficiary', // NEW: Load beneficiary data
             'payments'
         ]);
 
         // Process image URLs and prepare variant data for display
         $order->items->each(function ($item) {
-            // Add product image URL
             if ($item->product && $item->product->image) {
                 $item->product->image_url = asset('storage/' . $item->product->image);
             }
-
-            // The variant_details attribute will be computed automatically
-            // from the model's getVariantDetailsAttribute method
         });
 
         return Inertia::render('Admin/Orders/Show', [
             'order' => $order,
             'statuses' => Order::getStatuses(),
         ]);
-    }    public function update(Request $request, Order $order)
+    }
+
+    public function update(Request $request, Order $order)
     {
         $request->validate([
             'status' => 'required|in:pending,processing,shipped,delivered,cancelled',

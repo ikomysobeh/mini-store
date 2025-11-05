@@ -50,9 +50,12 @@ const user = auth.user;
 
                     <!-- Hero Section Component -->
                     <HeroSection
-                        :siteName="siteName"
-                        :heroTitle="heroTitle"
-                        :heroSubtitle="heroSubtitle"
+                        :site-name="siteName"
+                        :hero-title="settings.hero_title"
+                        :hero-subtitle="settings.hero_subtitle"
+                        :hero-background-url="settings.hero_background_url"
+                        :hero-use-background="settings.hero_use_background_image"
+                        :hero-background-overlay="settings.hero_background_overlay"
                     />
 
                     <!-- Featured Products Component -->

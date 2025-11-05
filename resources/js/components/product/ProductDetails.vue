@@ -1,51 +1,51 @@
 <script setup lang="ts">
-import { router, usePage } from '@inertiajs/vue3'; // Added usePage import
+import { router, usePage } from '@inertiajs/vue3';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { ShoppingCart, Plus, Minus, CheckCircle, XCircle, AlertCircle } from 'lucide-vue-next';
+import { ShoppingCart, Plus, Minus, CheckCircle, XCircle, AlertCircle, ChevronLeft, ChevronRight, Eye } from 'lucide-vue-next';
 import { ref, computed, watch } from 'vue';
 
 // ============== INLINE AUTHENTICATION LOGIC ==============
 const page = usePage()
 
 const isAuthenticated = computed(() => {
-  return !!(
-    page.props.auth?.user || 
-    page.props.user || 
-    page.props.auth_user ||
-    page.props.authUser
-  )
+    return !!(
+        page.props.auth?.user ||
+        page.props.user ||
+        page.props.auth_user ||
+        page.props.authUser
+    )
 })
 
 const currentUser = computed(() => {
-  return page.props.auth?.user || 
-         page.props.user || 
-         page.props.auth_user ||
-         page.props.authUser ||
-         null
+    return page.props.auth?.user ||
+        page.props.user ||
+        page.props.auth_user ||
+        page.props.authUser ||
+        null
 })
 
 const redirectToLogin = (returnUrl?: string) => {
-  const currentPath = returnUrl || window.location.pathname
-  const query = `?redirect=${encodeURIComponent(currentPath)}`
-  router.visit(`/login${query}`)
+    const currentPath = returnUrl || window.location.pathname
+    const query = `?redirect=${encodeURIComponent(currentPath)}`
+    router.visit(`/login${query}`)
 }
 
 const requireAuth = (callback: () => void, returnUrl?: string) => {
-  if (!isAuthenticated.value) {
-    redirectToLogin(returnUrl)
-    return false
-  }
-  
-  if (typeof callback === 'function') {
-    callback()
-  }
-  return true
+    if (!isAuthenticated.value) {
+        redirectToLogin(returnUrl)
+        return false
+    }
+
+    if (typeof callback === 'function') {
+        callback()
+    }
+    return true
 }
 
 const can = (permission: string) => {
-  return page.props.can?.[permission] || false
+    return page.props.can?.[permission] || false
 }
 // ============== END AUTHENTICATION LOGIC ==============
 
@@ -63,6 +63,54 @@ const isAddingToCart = ref(false);
 // ADDED: Message state for user-friendly errors
 const cartMessage = ref('');
 const messageType = ref(''); // 'success', 'error', 'warning'
+
+// NEW: Image gallery state
+const selectedImageIndex = ref(0);
+const isLightboxOpen = ref(false);
+
+// NEW: Image gallery computed properties
+const currentImage = computed(() => {
+    // Use enhanced multiple image system from our updated controller
+    if (product.gallery && product.gallery.length > 0) {
+        return product.gallery[selectedImageIndex.value]?.url || product.primary_image || product.image;
+    }
+    // Fallback to legacy image system
+    return product.primary_image || product.image || '/placeholder.jpg';
+});
+
+const hasMultipleImages = computed(() => {
+    return product.has_gallery && product.images_count > 1;
+});
+
+const imageGallery = computed(() => {
+    return product.gallery || [];
+});
+
+// NEW: Image navigation methods
+const selectImage = (index: number) => {
+    selectedImageIndex.value = index;
+};
+
+const nextImage = () => {
+    if (hasMultipleImages.value) {
+        selectedImageIndex.value = (selectedImageIndex.value + 1) % imageGallery.value.length;
+    }
+};
+
+const prevImage = () => {
+    if (hasMultipleImages.value) {
+        const length = imageGallery.value.length;
+        selectedImageIndex.value = (selectedImageIndex.value - 1 + length) % length;
+    }
+};
+
+const openLightbox = () => {
+    isLightboxOpen.value = true;
+};
+
+const closeLightbox = () => {
+    isLightboxOpen.value = false;
+};
 
 // Selected variant computed
 const selectedVariant = computed(() => {
@@ -157,10 +205,6 @@ const maxQuantity = computed(() => {
 
 // Stock status message
 const stockStatusMessage = computed(() => {
-    if (product.is_donatable) {
-        return { type: 'donation', message: 'Available for donation' };
-    }
-
     if (product.has_variants) {
         if (selectedVariant.value) {
             if (selectedVariant.value.stock > 0) {
@@ -308,17 +352,73 @@ const addToCart = () => {
 <template>
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 mb-12">
 
-        <!-- Product Images -->
+        <!-- ENHANCED: Product Images with Gallery -->
         <div class="space-y-6 p-6">
-            <div class="relative aspect-square bg-muted rounded-lg overflow-hidden">
+            <!-- Main Image Display -->
+            <div class="relative aspect-square bg-muted rounded-lg overflow-hidden group">
                 <img
-                    :src="product.image || '/placeholder.jpg'"
+                    :src="currentImage"
                     :alt="product.name"
-                    class="w-full h-full object-cover"
+                    class="w-full h-full object-full cursor-pointer transition-transform group-hover:scale-105"
+                    @click="openLightbox"
                 />
                 <Badge v-if="product.is_donatable" class="absolute top-4 right-4 bg-warning/20 text-warning">
                     Donation
                 </Badge>
+
+                <!-- NEW: Navigation arrows for multiple images -->
+                <div v-if="hasMultipleImages" class="absolute inset-y-0 left-0 right-0 flex items-center justify-between p-4 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button
+                        @click="prevImage"
+                        class="p-2 bg-black/50 text-white rounded-full hover:bg-black/70 transition-colors"
+                    >
+                        <ChevronLeft class="h-5 w-5" />
+                    </button>
+                    <button
+                        @click="nextImage"
+                        class="p-2 bg-black/50 text-white rounded-full hover:bg-black/70 transition-colors"
+                    >
+                        <ChevronRight class="h-5 w-5" />
+                    </button>
+                </div>
+
+                <!-- NEW: Image counter -->
+                <div v-if="hasMultipleImages" class="absolute top-4 left-4 bg-black/50 text-white px-2 py-1 rounded text-sm">
+                    {{ selectedImageIndex + 1 }} / {{ product.images_count }}
+                </div>
+
+                <!-- NEW: Zoom indicator -->
+                <div v-if="currentImage" class="absolute bottom-4 left-4 bg-black/50 text-white px-2 py-1 rounded text-sm opacity-0 group-hover:opacity-100 transition-opacity">
+                    <Eye class="h-3 w-3 inline mr-1" />
+                    Click to zoom
+                </div>
+            </div>
+
+            <!-- NEW: Thumbnail Gallery -->
+            <div v-if="hasMultipleImages" class="space-y-2">
+                <div class="flex space-x-2 overflow-x-auto pb-2">
+                    <button
+                        v-for="(image, index) in imageGallery"
+                        :key="image.id || index"
+                        @click="selectImage(index)"
+                        :class="[
+                            'flex-shrink-0 w-20 h-20 rounded-md overflow-hidden border-2 transition-all',
+                            selectedImageIndex === index
+                                ? 'border-primary ring-2 ring-primary/20'
+                                : 'border-gray-200 hover:border-gray-300'
+                        ]"
+                    >
+                        <img
+                            :src="image.url"
+                            :alt="image.alt || product.name"
+                            class="w-full h-full object-full"
+                        />
+                    </button>
+                </div>
+                <!-- NEW: Image info -->
+                <p class="text-sm text-muted-foreground text-center">
+                    {{ product.images_count }} images available • Click thumbnails to view
+                </p>
             </div>
         </div>
 
@@ -357,7 +457,7 @@ const addToCart = () => {
             <!-- Authentication Status Info -->
             <div v-if="!isAuthenticated" class="bg-blue-50 border border-blue-200 rounded-lg p-3">
                 <p class="text-sm text-blue-800">
-                    <span class="font-medium">Not signed in.</span> 
+                    <span class="font-medium">Not signed in.</span>
                     You'll be redirected to login when adding items to cart.
                 </p>
             </div>
@@ -429,7 +529,7 @@ const addToCart = () => {
                     <div class="w-2 h-2 bg-destructive rounded-full"></div>
                     <span class="text-sm font-medium">{{ stockStatusMessage.message }}</span>
                 </div>
-                
+
                 <!-- Variant selection reminder -->
                 <div v-if="product.has_variants && (!selectedColor || !selectedSize)" class="text-warning text-sm">
                     Please select {{ !selectedColor ? 'color' : '' }}{{ !selectedColor && !selectedSize ? ' and ' : '' }}{{ !selectedSize ? 'size' : '' }}
@@ -487,7 +587,7 @@ const addToCart = () => {
                 >
                     <ShoppingCart v-if="!isAddingToCart" class="h-4 w-4 mr-2" />
                     <div v-else class="animate-spin h-4 w-4 mr-2 border-2 border-white border-t-transparent rounded-full"></div>
-                    {{ isAddingToCart ? 'Adding...' : (product.is_donatable ? 'Donate Now' : 'Add to Cart') }}
+                    Add to Cart
                 </Button>
             </div>
 
@@ -496,6 +596,42 @@ const addToCart = () => {
                 <p class="text-info font-medium">Please select color and size to continue</p>
             </div>
 
+        </div>
+    </div>
+
+    <!-- NEW: Lightbox Modal -->
+    <div
+        v-if="isLightboxOpen && currentImage"
+        class="fixed inset-0 z-50 flex items-center justify-center bg-black/80"
+        @click="closeLightbox"
+    >
+        <div class="relative max-w-4xl max-h-full p-4">
+            <img
+                :src="currentImage"
+                :alt="product.name"
+                class="max-w-full max-h-full object-contain"
+            />
+            <button
+                @click="closeLightbox"
+                class="absolute top-4 right-4 text-white hover:text-gray-300 text-2xl bg-black/50 rounded-full w-10 h-10 flex items-center justify-center"
+            >
+                ×
+            </button>
+            <!-- NEW: Lightbox navigation for multiple images -->
+            <div v-if="hasMultipleImages" class="absolute inset-y-0 left-0 right-0 flex items-center justify-between px-4">
+                <button
+                    @click.stop="prevImage"
+                    class="p-3 bg-black/50 text-white rounded-full hover:bg-black/70 transition-colors"
+                >
+                    <ChevronLeft class="h-6 w-6" />
+                </button>
+                <button
+                    @click.stop="nextImage"
+                    class="p-3 bg-black/50 text-white rounded-full hover:bg-black/70 transition-colors"
+                >
+                    <ChevronRight class="h-6 w-6" />
+                </button>
+            </div>
         </div>
     </div>
 </template>

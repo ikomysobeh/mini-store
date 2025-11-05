@@ -187,4 +187,61 @@ class Product extends Model
             }
         });
     }
+    public function images()
+    {
+        return $this->hasMany(ProductImage::class)->ordered();
+    }
+
+// Add this method to get primary image
+    public function primaryImage()
+    {
+        return $this->hasOne(ProductImage::class)->where('is_primary', true);
+    }
+
+// Add this accessor to get the best available image
+    public function getBestImageAttribute()
+    {
+        // Try to get primary image first
+        $primaryImage = $this->primaryImage;
+        if ($primaryImage) {
+            return $primaryImage->image_url;
+        }
+
+        // Try to get first image from gallery
+        $firstImage = $this->images->first();
+        if ($firstImage) {
+            return $firstImage->image_url;
+        }
+
+        // Fall back to old image field
+        if ($this->image) {
+            return asset('storage/' . $this->image);
+        }
+
+        // Return default image if no image exists
+        return asset('images/no-image.png');
+    }
+
+// Add this method to get all image URLs
+    public function getAllImagesAttribute()
+    {
+        $images = $this->images;
+
+        if ($images->count() > 0) {
+            return $images->pluck('image_url')->toArray();
+        }
+
+        // Fall back to old image field
+        if ($this->image) {
+            return [asset('storage/' . $this->image)];
+        }
+
+        return [];
+    }
+
+// Add this method to check if product has multiple images
+    public function hasMultipleImages()
+    {
+        return $this->images->count() > 1 || ($this->images->count() >= 1 && $this->image);
+    }
 }

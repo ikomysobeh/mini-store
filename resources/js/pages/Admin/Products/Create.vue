@@ -15,7 +15,7 @@ const { categories } = defineProps({
     categories: { type: Array, required: true },
 });
 
-// Form data
+// Form data - ENHANCED with multiple images support
 const form = useForm({
     name: '',
     description: '',
@@ -25,6 +25,10 @@ const form = useForm({
     is_active: true,
     is_donatable: false,
     image: null,
+    // NEW: Multiple images support
+    images: [],
+    delete_images: [],
+    primary_image_id: null,
 
     // Variant data
     colors: [],
@@ -109,7 +113,28 @@ const handleVariantUpdate = (updatedVariants) => {
     form.variants = updatedVariants;
 };
 
-// Submit form - ENHANCED WITH BETTER ERROR HANDLING
+// NEW: Handle multiple images
+const handleImagesChange = (images: File[]) => {
+    form.images = images;
+    console.log('Images added to form:', images.length, images);
+};
+
+// NEW: Handle image deletion (for edit mode)
+const handleDeleteImage = (imageId: number) => {
+    if (!form.delete_images) {
+        form.delete_images = [];
+    }
+    form.delete_images.push(imageId);
+    console.log('Image marked for deletion:', imageId);
+};
+
+// NEW: Handle primary image setting
+const handleSetPrimary = (imageId: number) => {
+    form.primary_image_id = imageId;
+    console.log('Primary image set to:', imageId);
+};
+
+// Submit form - ENHANCED WITH IMAGE SUPPORT
 const submitForm = () => {
     // Clear previous errors
     form.clearErrors();
@@ -119,18 +144,24 @@ const submitForm = () => {
         form.variants = [];
     }
 
-    // Enhanced logging
+    // Enhanced logging with image info
     console.log('Creating product with data:', {
         name: form.name,
         price: form.price,
         stock: form.stock,
         category_id: form.category_id,
         has_variants: hasVariants.value,
-        variants_count: form.variants.length
+        variants_count: form.variants.length,
+        // NEW: Image logging
+        has_single_image: !!form.image,
+        has_multiple_images: form.images && form.images.length > 0,
+        images_count: form.images?.length || 0,
+        images_data: form.images
     });
 
+    // FIXED: Use forceFormData for file uploads
     form.post('/admin/products', {
-        forceFormData: true,
+        forceFormData: true,  // CRITICAL for file uploads!
         preserveScroll: true,
         onSuccess: () => {
             console.log('Product created successfully');
@@ -158,8 +189,6 @@ const submitForm = () => {
 
         <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
-
-
             <form @submit.prevent="submitForm" class="space-y-8">
 
                 <!-- Basic Product Information -->
@@ -167,7 +196,7 @@ const submitForm = () => {
                     <CardHeader>
                         <CardTitle>Basic Product Information</CardTitle>
                         <!-- ADD: Error indicator for this section -->
-                        <div v-if="form.errors.name || form.errors.price || form.errors.stock || form.errors.category_id || form.errors.description || form.errors.image"
+                        <div v-if="form.errors.name || form.errors.price || form.errors.stock || form.errors.category_id || form.errors.description || form.errors.image || form.errors.images"
                              class="text-red-600 text-sm flex items-center mt-1">
                             <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
                                 <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
@@ -176,9 +205,14 @@ const submitForm = () => {
                         </div>
                     </CardHeader>
                     <CardContent>
+                        <!-- ENHANCED: Pass image handlers -->
                         <BasicProductForm
                             :form="form"
                             :categories="categories"
+                            :images="[]"
+                            @images-change="handleImagesChange"
+                            @delete-image="handleDeleteImage"
+                            @set-primary-image="handleSetPrimary"
                         />
                     </CardContent>
                 </Card>

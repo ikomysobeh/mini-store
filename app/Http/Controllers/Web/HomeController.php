@@ -8,6 +8,7 @@ use App\Models\Category;
 use App\Models\Setting;
 use App\Services\CartService;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 
 class HomeController extends Controller
@@ -21,6 +22,7 @@ class HomeController extends Controller
 
     public function index()
     {
+        // Get featured products
         $featuredProducts = Product::active()
             ->with('category')
             ->take(8)
@@ -33,10 +35,10 @@ class HomeController extends Controller
                 return $productArray;
             });
 
-        $categories = Category::active()
-            ->ordered()
-            ->get();
+        // Get categories
+        $categories = Category::active()->ordered()->get();
 
+        // Get settings with hero background support
         $settings = Setting::public()->get()->pluck('value', 'key');
 
         // Add logo URL if logo setting exists
@@ -44,13 +46,32 @@ class HomeController extends Controller
             $settings['logo_url'] = asset('storage/' . $settings['logo']);
         }
 
-        $user = Auth::user();
+        // FIXED: Convert boolean settings from string to actual boolean
+        $settings['hero_use_background_image'] = filter_var($settings['hero_use_background_image'] ?? false, FILTER_VALIDATE_BOOLEAN);
 
+        // Add hero background URL if it exists and is enabled
+        if (isset($settings['hero_background_image']) && $settings['hero_background_image'] && $settings['hero_use_background_image']) {
+            $settings['hero_background_url'] = asset('storage/' . $settings['hero_background_image']);
+        }
+
+        // DEBUG: Log the settings to see what's being sent
+        Log::info('Hero Settings Debug:', [
+            'hero_background_image' => $settings['hero_background_image'] ?? 'NOT SET',
+            'hero_use_background_image' => $settings['hero_use_background_image'] ?? 'NOT SET',
+            'hero_background_url' => $settings['hero_background_url'] ?? 'NOT SET',
+            'hero_background_overlay' => $settings['hero_background_overlay'] ?? 'NOT SET',
+        ]);
+
+        // Get user and cart
+        $user = Auth::user();
         $cartItems = [];
+
         if ($user) {
             $cart = $this->cartService->getCart($user);
             if ($cart) {
-                $cartItems = $cart->items()->with('product')->get()->map(function ($item) {
+                $cart->load('items.product.category');
+
+                $cartItems = $cart->items->map(function ($item) {
                     $image = null;
                     if ($item->product && $item->product->image) {
                         $image = asset('storage/' . $item->product->image);
@@ -63,8 +84,8 @@ class HomeController extends Controller
                         'price' => $item->price,
                         'image' => $image,
                         'category' => [
-                            'id' => $item->product->category_id,
-                            'name' => $item->product->category->name ?? 'Uncategorized'
+                            'id' => $item->product->category_id ?? null,
+                            'name' => $item->product->category->name ?? 'Uncategorized',
                         ],
                     ];
                 });
@@ -74,9 +95,9 @@ class HomeController extends Controller
         return Inertia::render('Web/Home', [
             'featuredProducts' => $featuredProducts,
             'categories' => $categories,
-            'settings' => $settings,
+            'settings' => $settings->toArray(), // Convert to array for Inertia
             'user' => $user,
-            'cartItems' => $cartItems,
+            'cartItems' => $cartItems->toArray(), // Convert to array for Inertia
         ]);
     }
 }

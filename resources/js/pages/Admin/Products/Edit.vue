@@ -1,4 +1,3 @@
-<!-- resources/js/Pages/Admin/Products/Edit.vue -->
 <script setup lang="ts">
 import { Head, useForm } from '@inertiajs/vue3';
 import AdminLayout from '@/layouts/AdminLayout.vue';
@@ -19,7 +18,7 @@ const { product, categories, existingVariants } = defineProps({
     existingVariants: { type: Array, default: () => [] },
 });
 
-// Form data
+// Form data - ENHANCED with multiple images support
 const form = useForm({
     name: product.name,
     description: product.description,
@@ -29,6 +28,10 @@ const form = useForm({
     is_active: product.is_active,
     is_donatable: product.is_donatable,
     image: null,
+    // NEW: Multiple images support
+    images: [],
+    delete_images: [],
+    primary_image_id: null,
 
     // Variant data
     colors: [],
@@ -132,8 +135,28 @@ const handleVariantUpdate = (updatedVariants) => {
     form.variants = updatedVariants;
 };
 
-// Submit form
-// Submit form - FIXED VERSION
+// NEW: Handle multiple images
+const handleImagesChange = (images: File[]) => {
+    form.images = images;
+    console.log('New images added to form:', images.length, images);
+};
+
+// NEW: Handle image deletion
+const handleDeleteImage = (imageId: number) => {
+    if (!form.delete_images) {
+        form.delete_images = [];
+    }
+    form.delete_images.push(imageId);
+    console.log('Image marked for deletion:', imageId);
+};
+
+// NEW: Handle primary image setting
+const handleSetPrimary = (imageId: number) => {
+    form.primary_image_id = imageId;
+    console.log('Primary image set to:', imageId);
+};
+
+// Submit form - ENHANCED with image support
 const submitForm = () => {
     console.log('Form data before submit:', {
         name: form.name,
@@ -141,45 +164,33 @@ const submitForm = () => {
         stock: form.stock,
         category_id: form.category_id,
         is_active: form.is_active,
-        is_donatable: form.is_donatable
+        is_donatable: form.is_donatable,
+        // NEW: Image logging
+        has_single_image: !!form.image,
+        has_multiple_images: form.images && form.images.length > 0,
+        images_count: form.images?.length || 0,
+        delete_images_count: form.delete_images?.length || 0,
+        primary_image_id: form.primary_image_id
     });
 
-    // CRITICAL FIX: Use POST with method spoofing instead of PATCH for file uploads
-    const formData = {
+    // FIXED: Use POST with _method for file uploads
+    form.transform((data) => ({
+        ...data,
         _method: 'PATCH',
-        name: form.name || '',
-        description: form.description || '',
-        price: form.price || 0,
-        stock: form.stock || 0,
-        category_id: form.category_id || '',
-        is_active: form.is_active ? 1 : 0,
-        is_donatable: form.is_donatable ? 1 : 0,
-        variants: form.variants || [],
-        colors: form.colors || [],
-        sizes: form.sizes || []
-    };
-
-    // Add image if exists
-    if (form.image) {
-        formData.image = form.image;
-    }
-
-    // Create new form with the data
-    const submitForm = useForm(formData);
-
-    // Use POST instead of PATCH for multipart data
-    submitForm.post(`/admin/products/${product.id}`, {
-        forceFormData: true,
+        is_active: data.is_active ? 1 : 0,
+        is_donatable: data.is_donatable ? 1 : 0,
+    })).post(`/admin/products/${product.id}`, {
+        forceFormData: true,  // CRITICAL for file uploads!
         preserveScroll: true,
         onSuccess: () => {
             console.log('Update successful');
         },
         onError: (errors) => {
             console.log('Update errors:', errors);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         }
     });
 };
-
 
 // Delete product
 const deleteProduct = () => {
@@ -218,13 +229,17 @@ const deleteProduct = () => {
                                     <Badge v-if="product.is_donatable" variant="primary">
                                         Donatable
                                     </Badge>
+                                    <!-- NEW: Show current images count -->
+                                    <Badge v-if="product.images && product.images.length > 0" variant="outline">
+                                        {{ product.images.length }} Images
+                                    </Badge>
                                 </div>
                             </div>
 
                             <!-- Current Product Image -->
-                            <div v-if="product.image" class="shrink-0">
+                            <div v-if="product.image_url || product.image" class="shrink-0">
                                 <img
-                                    :src="product.image"
+                                    :src="product.image_url || product.image"
                                     :alt="product.name"
                                     class="w-20 h-20 object-cover rounded-lg border"
                                 />
@@ -232,9 +247,14 @@ const deleteProduct = () => {
                         </div>
                     </CardHeader>
                     <CardContent>
+                        <!-- ENHANCED: Pass existing images and handlers -->
                         <BasicProductForm
                             :form="form"
                             :categories="categories"
+                            :images="product.images || []"
+                            @images-change="handleImagesChange"
+                            @delete-image="handleDeleteImage"
+                            @set-primary-image="handleSetPrimary"
                         />
                     </CardContent>
                 </Card>
@@ -333,7 +353,7 @@ const deleteProduct = () => {
                             <div v-if="form.processing" class="flex items-center">
                                 <svg class="animate-spin -ml-1 mr-2 h-4 w-4" fill="none" viewBox="0 0 24 24">
                                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 714 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                                 </svg>
                                 Updating...
                             </div>
