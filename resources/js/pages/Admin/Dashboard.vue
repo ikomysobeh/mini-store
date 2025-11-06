@@ -24,7 +24,7 @@ const { stats, recentOrders, topProducts } = defineProps({
 const formatPrice = (price) => {
     return new Intl.NumberFormat('nl-NL', {
         style: 'currency',
-        currency: 'EUR'
+        currency: 'USD'
     }).format(price || 0);
 };
 
