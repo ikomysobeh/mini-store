@@ -21,7 +21,7 @@ class StripeService
         'payment_method_types' => ['card'],
         'line_items' => $lineItems,
         'mode' => 'payment',
-        'success_url' => route('payment.success'), // no session_id logic needed in URL now
+        'success_url' => route('payment.success') . '?session_id={CHECKOUT_SESSION_ID}',
         'cancel_url' => route('payment.cancel'),
         'metadata' => [
             'order_id'    => $order->id,
