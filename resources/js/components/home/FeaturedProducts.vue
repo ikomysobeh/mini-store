@@ -41,7 +41,9 @@ const formatPrice = (price: number) => {
     return parseFloat(price.toString()).toFixed(2);
 };
 
-const addToWishlist = (productId: number) => {
+const addToWishlist = (productId: number, event: Event) => {
+    event.stopPropagation(); // ✅ Prevent card click
+    
     if (!user) {
         router.visit('/login');
         return;
@@ -60,11 +62,18 @@ const addToWishlist = (productId: number) => {
     });
 };
 
-const addToCart = (productId: number) => {
+const addToCart = (productId: number, event: Event) => {
+    event.stopPropagation(); // ✅ Prevent card click
+    
     router.post(`/cart/add/${productId}`, { quantity: 1 }, {
         preserveState: true,
         preserveScroll: true
     });
+};
+
+// ✅ NEW: Navigate to product page
+const goToProduct = (slug: string) => {
+    router.visit(`/products/${slug}`);
 };
 </script>
 
@@ -80,32 +89,33 @@ const addToCart = (productId: number) => {
                 v-for="product in featuredProducts"
                 :key="product.id"
                 class="group overflow-hidden hover:shadow-xl hover:scale-[1.02] transition-all duration-500 cursor-pointer border-0 shadow-md"
+                @click="goToProduct(product.slug)"
             >
                 <div class="relative overflow-hidden">
                     <img
                         :src="product.image || '/placeholder-product.jpg'"
                         :alt="product.name"
-                        class="h-48 w-full object-full group-hover:scale-110 transition-transform duration-700"
+                        class="h-48 w-full object-cover group-hover:scale-110 transition-transform duration-700"
                         loading="lazy"
                     />
                     <div class="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
 
-                    <!-- Action Buttons -->
+                    <!-- ✅ UPDATED: Action Buttons with event.stopPropagation() -->
                     <div class="absolute top-3 right-3 flex flex-col space-y-2 opacity-0 group-hover:opacity-100 transition-all duration-300">
                         <Button
                             size="icon"
                             variant="secondary"
                             class="hover:scale-110 shadow-lg"
-                            @click.stop="addToWishlist(product.id)"
+                            @click="(e) => addToWishlist(product.id, e)"
                         >
                             <Heart :class="{ 'fill-current text-red-500': wishlistedItems.has(product.id) }" class="h-4 w-4" />
                         </Button>
                         <Button
+                            v-if="product.stock > 0"
                             size="icon"
                             variant="secondary"
                             class="hover:scale-110 shadow-lg"
-                            @click.stop="addToCart(product.id)"
-                            v-if="product.stock > 0"
+                            @click="(e) => addToCart(product.id, e)"
                         >
                             <ShoppingCart class="h-4 w-4" />
                         </Button>
@@ -159,15 +169,7 @@ const addToCart = (productId: number) => {
                                 ${{ formatPrice(product.original_price) }}
                             </span>
                         </div>
-                        <Button
-                            size="sm"
-                            variant="default"
-                            class="hover:scale-105 transition-all duration-300"
-                            as="a"
-                            :href="`/products/${product.slug}`"
-                        >
-                            View Details
-                        </Button>
+                        <!-- ✅ REMOVED: View Details button (entire card is now clickable) -->
                     </div>
                 </CardContent>
             </Card>

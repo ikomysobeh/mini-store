@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Button } from '@/components/ui/button';
-import { ShoppingCart, ArrowRight, Sparkles } from 'lucide-vue-next';
+import { ShoppingCart, ArrowRight, Sparkles, MessageCircle, Facebook } from 'lucide-vue-next';
 import { computed } from 'vue';
 
 interface Props {
@@ -8,7 +8,7 @@ interface Props {
     heroTitle?: string;
     heroSubtitle?: string;
     heroBackgroundUrl?: string | null;
-    heroUseBackground?: boolean | string; // ALLOW STRING TOO
+    heroUseBackground?: boolean | string;
     heroBackgroundOverlay?: string;
 }
 
@@ -24,7 +24,7 @@ const {
 const defaultTitle = heroTitle || 'Discover Amazing Products';
 const defaultSubtitle = heroSubtitle || 'Premium quality items with modern design and exceptional value';
 
-// FIXED: Convert to boolean properly
+// Convert to boolean properly
 const useBackground = computed(() => {
     if (typeof heroUseBackground === 'string') {
         return heroUseBackground === '1' || heroUseBackground === 'true';
@@ -32,15 +32,13 @@ const useBackground = computed(() => {
     return Boolean(heroUseBackground);
 });
 
-// UPDATED: Use computed boolean
 const heroStyles = computed(() => {
     if (useBackground.value && heroBackgroundUrl) {
         return {
             backgroundImage: `url(${heroBackgroundUrl})`,
-            backgroundSize: 'cover',           // Covers entire area
-            backgroundPosition: 'center', // Centers the image
-            backgroundRepeat: 'no-repeat',     // No repetition
-
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            backgroundRepeat: 'no-repeat',
         };
     }
     return {};
@@ -75,7 +73,8 @@ const textClasses = computed(() => {
             title: 'text-primary-foreground',
             subtitle: 'text-primary-foreground/80',
             badge: 'text-primary-foreground',
-            badgeBg: 'bg-primary-foreground/20'
+            badgeBg: 'bg-primary-foreground/20',
+            contact: 'text-primary-foreground/90'
         };
     }
 
@@ -85,7 +84,8 @@ const textClasses = computed(() => {
                 title: 'text-black',
                 subtitle: 'text-black/80',
                 badge: 'text-black',
-                badgeBg: 'bg-black/20'
+                badgeBg: 'bg-black/20',
+                contact: 'text-black/90'
             };
         case 'dark':
         case 'none':
@@ -94,7 +94,8 @@ const textClasses = computed(() => {
                 title: 'text-white',
                 subtitle: 'text-white/90',
                 badge: 'text-white',
-                badgeBg: 'bg-white/20'
+                badgeBg: 'bg-white/20',
+                contact: 'text-white/90'
             };
     }
 });
@@ -112,6 +113,15 @@ const buttonClasses = computed(() => {
         secondary: 'border-white text-white hover:bg-white/10 hover:scale-105 transition-all duration-300 shadow-lg'
     };
 });
+
+// ✅ NEW: WhatsApp link generators
+const getWhatsAppLink = (phoneNumber: string) => {
+    // Remove any spaces, dashes, or special characters
+    const cleanNumber = phoneNumber.replace(/\D/g, '');
+    // For Syria, add country code +963
+    const internationalNumber = cleanNumber.startsWith('963') ? cleanNumber : `963${cleanNumber}`;
+    return `https://wa.me/${internationalNumber}`;
+};
 </script>
 
 <template>
@@ -151,7 +161,7 @@ const buttonClasses = computed(() => {
             </p>
 
             <!-- CTA Buttons -->
-            <div class="flex flex-col sm:flex-row gap-4 justify-center">
+            <div class="flex flex-col sm:flex-row gap-4 justify-center mb-8">
                 <Button
                     size="lg"
                     :variant="useBackground && heroBackgroundUrl ? 'default' : 'secondary'"
@@ -174,9 +184,51 @@ const buttonClasses = computed(() => {
                     <ArrowRight class="h-5 w-5 ml-2" />
                 </Button>
             </div>
+
+            <!-- ✅ UPDATED: WhatsApp Contact Information -->
+            <div :class="['max-w-3xl mx-auto space-y-3', textClasses.contact]">
+                <div class="flex flex-col sm:flex-row items-center justify-center gap-4 text-sm">
+                    <!-- WhatsApp for Initiative -->
+                    <a 
+                        :href="getWhatsAppLink('0944255208')"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        :class="['flex items-center gap-2 hover:opacity-80 transition-opacity', textClasses.contact]"
+                    >
+                        <MessageCircle class="h-4 w-4" />
+                        <span class="font-medium">Initiative:</span>
+                        <span>0944255208</span>
+                    </a>
+
+                    <!-- Separator -->
+                    <span class="hidden sm:inline">|</span>
+
+                    <!-- WhatsApp for Technical Issues -->
+                    <a 
+                        :href="getWhatsAppLink('0937671126')"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        :class="['flex items-center gap-2 hover:opacity-80 transition-opacity', textClasses.contact]"
+                    >
+                        <MessageCircle class="h-4 w-4" />
+                        <span class="font-medium">Technical Support:</span>
+                        <span>0937671126</span>
+                    </a>
+                </div>
+
+                <!-- Facebook Link -->
+                <!-- <div class="flex items-center justify-center">
+                    <a 
+                        href="https://www.facebook.com/profile.php?id=61551867866791" 
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        :class="['inline-flex items-center gap-2 px-4 py-2 rounded-full transition-all hover:scale-105', textClasses.badgeBg]"
+                    >
+                        <Facebook class="h-4 w-4" />
+                        <span class="text-sm font-medium">Follow us on Facebook</span>
+                    </a>
+                </div> -->
+            </div>
         </div>
-
-        <!-- Background Image Indicator -->
-
     </section>
 </template>

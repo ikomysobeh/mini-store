@@ -43,13 +43,10 @@ interface Props {
 
 const { cartItems, categories = [], isProductPage = false, currentProduct } = defineProps<Props>();
 
-// Computed
+// ✅ UPDATED: Removed shipping calculations
 const cartTotal = computed(() =>
     cartItems.reduce((sum, item) => sum + (parseFloat(item.price.toString()) * parseInt(item.quantity.toString())), 0)
 );
-
-const shippingCost = computed(() => cartTotal.value > 50 ? 0 : 9.99);
-const finalTotal = computed(() => cartTotal.value + shippingCost.value);
 
 // Helper functions
 const formatPrice = (price: number) => {
@@ -110,36 +107,18 @@ const formatPrice = (price: number) => {
 
                     <Separator class="my-4" />
 
-                    <!-- Cart Totals -->
+                    <!-- ✅ UPDATED: Simplified Cart Totals (No Shipping) -->
                     <div class="space-y-3">
                         <div class="flex justify-between items-center text-sm">
-                            <span>Subtotal:</span>
+                            <span class="text-muted-foreground">Subtotal:</span>
                             <span class="font-medium">${{ formatPrice(cartTotal) }}</span>
-                        </div>
-                        <div class="flex justify-between items-center text-sm">
-                            <span>Shipping:</span>
-                            <span class="font-medium" :class="{ 'text-success': shippingCost === 0 }">
-                                {{ shippingCost === 0 ? 'Free' : `$${formatPrice(shippingCost)}` }}
-                            </span>
-                        </div>
-
-                        <!-- Free Shipping Progress -->
-                        <div v-if="shippingCost > 0" class="text-sm bg-muted p-3 rounded-lg">
-                            <div class="flex items-center justify-between mb-1">
-                                <span class="text-muted-foreground">Add ${{ formatPrice(50 - cartTotal) }} more for free shipping!</span>
-                            </div>
-                                <div class="w-full bg-muted-foreground/20 rounded-full h-1.5">
-                                <div
-                                    class="bg-success h-1.5 rounded-full transition-all duration-300"
-                                    :style="{ width: Math.min((cartTotal / 50) * 100, 100) + '%' }"
-                                ></div>
-                            </div>
                         </div>
 
                         <Separator />
-                        <div class="flex justify-between items-center font-semibold text-base">
+                        
+                        <div class="flex justify-between items-center font-semibold text-lg">
                             <span>Total:</span>
-                            <span class="text-lg text-primary">${{ formatPrice(finalTotal) }}</span>
+                            <span class="text-xl text-primary">${{ formatPrice(cartTotal) }}</span>
                         </div>
                     </div>
 
@@ -249,10 +228,6 @@ const formatPrice = (price: number) => {
                 </Button>
             </CardContent>
         </Card>
-
-        <!-- Newsletter Signup -->
-
-        <!-- Trust Signals -->
     </div>
 </template>
 

@@ -9,13 +9,18 @@ import CustomerInfo from '@/components/admin/CustomerInfo.vue'
 import ShippingInfo from '@/components/admin/ShippingInfo.vue'
 import PaymentInfo from '@/components/admin/PaymentInfo.vue'
 import OrderNotes from '@/components/admin/OrderNotes.vue'
-// NEW: Import beneficiary component (we'll create this)
 import BeneficiaryInfo from '@/components/admin/BeneficiaryInfo.vue'
-import { Package, Send, Printer, Heart } from 'lucide-vue-next'
-import { ref, computed } from 'vue'
+// ✅ NEW: Import UI components for status update
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Badge } from '@/components/ui/badge'
+import { Textarea } from '@/components/ui/textarea'
+import { Label } from '@/components/ui/label'
+import { Package, Send, Printer, Heart, CheckCircle, Clock, XCircle, AlertCircle } from 'lucide-vue-next'
+import { ref, computed, watch } from 'vue'
 import AdminLayout from '@/Layouts/AdminLayout.vue'
 
-// FIXED: Match the expected props structure from your existing code
 const { order, orderHistory } = defineProps<{
     order: {
         id: number
@@ -55,9 +60,8 @@ const { order, orderHistory } = defineProps<{
         notes?: string
         created_at: string
         payment_method?: string
-        payment_status: string
-        transaction_id?: string
         payment_date?: string
+        paid_at?: string
         shipping_address?: {
             address_line1: string
             address_line2?: string
@@ -71,8 +75,17 @@ const { order, orderHistory } = defineProps<{
     orderHistory?: Array<any>
 }>()
 
-// State
-const isUpdatingStatus = ref(false)
+// ✅ UPDATED: New status options
+const statusOptions = [
+    { value: 'pending', label: 'Pending', color: 'yellow', icon: Clock },
+    { value: 'processing', label: 'Processing', color: 'blue', icon: AlertCircle },
+    { value: 'failed', label: 'Failed', color: 'red', icon: XCircle },
+    { value: 'success', label: 'Success', color: 'green', icon: CheckCircle },
+    { value: 'done', label: 'Done', color: 'gray', icon: CheckCircle }
+]
+
+// State for status update
+const selectedStatus = ref(order.status)
 
 // Form for status updates
 const statusForm = useForm({
@@ -80,16 +93,54 @@ const statusForm = useForm({
     notes: order.notes || ''
 })
 
-// FIXED: Status options (match the expected structure)
-const statusOptions = [
-    { value: 'pending', label: 'Pending', color: 'yellow' },
-    { value: 'processing', label: 'Processing', color: 'blue' },
-    { value: 'shipped', label: 'Shipped', color: 'purple' },
-    { value: 'delivered', label: 'Delivered', color: 'green' },
-    { value: 'cancelled', label: 'Cancelled', color: 'red' }
-]
+// Watch for status changes
+watch(selectedStatus, (newStatus) => {
+    statusForm.status = newStatus
+})
 
-// FIXED: Header actions
+// Check if status has changed
+const hasStatusChanged = computed(() => {
+    return statusForm.status !== order.status
+})
+
+// Check if notes have changed
+const hasNotesChanged = computed(() => {
+    return statusForm.notes !== (order.notes || '')
+})
+
+// Check if anything has changed
+const hasChanges = computed(() => {
+    return hasStatusChanged.value || hasNotesChanged.value
+})
+
+// Get current status option
+const currentStatusOption = computed(() => {
+    return statusOptions.find(opt => opt.value === order.status)
+})
+
+// Get status color class
+const getStatusColorClass = (color: string) => {
+    const colors: Record<string, string> = {
+        yellow: 'bg-yellow-100 text-yellow-800 border-yellow-300',
+        blue: 'bg-blue-100 text-blue-800 border-blue-300',
+        red: 'bg-red-100 text-red-800 border-red-300',
+        green: 'bg-green-100 text-green-800 border-green-300',
+        gray: 'bg-gray-100 text-gray-800 border-gray-300'
+    }
+    return colors[color] || 'bg-gray-100 text-gray-800 border-gray-300'
+}
+
+// Update order status
+const updateStatus = () => {
+    statusForm.put(`/admin/orders/${order.id}`, {
+        preserveScroll: true,
+        onSuccess: () => {
+            selectedStatus.value = order.status
+        }
+    })
+}
+
+// Header actions
 const headerActions = computed(() => [
     {
         label: 'Send Email',
@@ -104,21 +155,6 @@ const headerActions = computed(() => [
         onClick: printOrder
     }
 ])
-
-// Actions
-const updateStatus = () => {
-    if (statusForm.status === order.status) return
-
-    isUpdatingStatus.value = true
-    statusForm.put(`/admin/orders/${order.id}/status`, {
-        onSuccess: () => {
-            isUpdatingStatus.value = false
-        },
-        onError: () => {
-            isUpdatingStatus.value = false
-        }
-    })
-}
 
 const sendOrderEmail = () => {
     router.post(`/admin/orders/${order.id}/send-email`, {}, {
@@ -140,7 +176,6 @@ const formatDate = (date: string) => {
     })
 }
 
-// Page title with donation badge
 const pageTitle = computed(() => {
     return order.is_donation ? `Order #${order.id} (Donation)` : `Order #${order.id}`
 })
@@ -149,12 +184,10 @@ const pageDescription = computed(() => {
     return `Placed on ${formatDate(order.created_at)}`
 })
 
-// NEW: Check if order has beneficiary
 const hasBeneficiary = computed(() => {
     return order.is_donation && order.beneficiary
 })
 
-// FIXED: Breadcrumbs
 const breadcrumbs = [
     { label: 'Orders', href: '/admin/orders' },
     { label: `#${order.id}`, href: null }
@@ -166,7 +199,6 @@ const breadcrumbs = [
         <div class="min-h-screen bg-background text-foreground">
             <Head :title="pageTitle" />
 
-            <!-- Form Header Component -->
             <div class="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
                     <!-- Main Content -->
@@ -181,6 +213,76 @@ const breadcrumbs = [
 
                     <!-- Sidebar -->
                     <div class="lg:col-span-1 space-y-6">
+                        <!-- ✅ NEW: Status Update Card -->
+                        <Card>
+                            <CardHeader>
+                                <CardTitle class="flex items-center justify-between">
+                                    <span>Order Status</span>
+                                    <Badge 
+                                        v-if="currentStatusOption" 
+                                        :class="getStatusColorClass(currentStatusOption.color)"
+                                        class="border"
+                                    >
+                                        <component 
+                                            :is="currentStatusOption.icon" 
+                                            class="h-3 w-3 mr-1"
+                                        />
+                                        {{ currentStatusOption.label }}
+                                    </Badge>
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent class="space-y-4">
+                                <!-- Status Select -->
+                                <div class="space-y-2">
+                                    <Label for="status">Update Status</Label>
+                                    <Select v-model="selectedStatus">
+                                        <SelectTrigger id="status" class="w-full">
+                                            <SelectValue placeholder="Select status" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectGroup>
+                                                <SelectItem 
+                                                    v-for="option in statusOptions" 
+                                                    :key="option.value" 
+                                                    :value="option.value"
+                                                >
+                                                    <div class="flex items-center space-x-2">
+                                                        <component 
+                                                            :is="option.icon" 
+                                                            class="h-4 w-4"
+                                                            :class="{
+                                                                'text-yellow-600': option.color === 'yellow',
+                                                                'text-blue-600': option.color === 'blue',
+                                                                'text-red-600': option.color === 'red',
+                                                                'text-green-600': option.color === 'green',
+                                                                'text-gray-600': option.color === 'gray'
+                                                            }"
+                                                        />
+                                                        <span>{{ option.label }}</span>
+                                                    </div>
+                                                </SelectItem>
+                                            </SelectGroup>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+
+                                <!-- Notes Textarea -->
+                               
+
+                                <!-- Update Button -->
+                                <Button
+                                    @click="updateStatus"
+                                    :disabled="!hasChanges || statusForm.processing"
+                                    class="w-full"
+                                    size="lg"
+                                >
+                                    <span v-if="statusForm.processing">Updating...</span>
+                                    <span v-else-if="!hasChanges">No Changes</span>
+                                    <span v-else>Update Order</span>
+                                </Button>
+                            </CardContent>
+                        </Card>
+
                         <!-- Order Summary Component -->
                         <OrderSummary
                             :order="order"
@@ -188,13 +290,13 @@ const breadcrumbs = [
                             locale="en-US"
                         />
 
-                        <!-- FIXED: Customer Information Component -->
+                        <!-- Customer Information Component -->
                         <CustomerInfo
                             :order="order"
                             locale="en-US"
                         />
 
-                        <!-- NEW: Beneficiary Information (Only for donations) -->
+                        <!-- Beneficiary Information (Only for donations) -->
                         <BeneficiaryInfo
                             v-if="order.is_donation"
                             :beneficiary="order.beneficiary"

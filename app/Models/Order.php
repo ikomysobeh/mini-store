@@ -35,11 +35,12 @@ class Order extends Model
         'updated_at' => 'datetime',
     ];
 
+    // Updated status constants
     const STATUS_PENDING = 'pending';
     const STATUS_PROCESSING = 'processing';
-    const STATUS_SHIPPED = 'shipped';
-    const STATUS_DELIVERED = 'delivered';
-    const STATUS_CANCELLED = 'cancelled';
+    const STATUS_FAILED = 'failed';
+    const STATUS_SUCCESS = 'success';
+    const STATUS_DONE = 'done';
 
     public function customer()
     {
@@ -108,12 +109,12 @@ class Order extends Model
     public static function getStatuses()
     {
         return [
-            self::STATUS_PENDING => 'Pending',
-            self::STATUS_PROCESSING => 'Processing',
-            self::STATUS_SHIPPED => 'Shipped',
-            self::STATUS_DELIVERED => 'Delivered',
-            self::STATUS_CANCELLED => 'Cancelled',
-        ];
+        ['value' => self::STATUS_PENDING, 'label' => 'Pending'],
+        ['value' => self::STATUS_PROCESSING, 'label' => 'Processing'],
+        ['value' => self::STATUS_FAILED, 'label' => 'Failed'],
+        ['value' => self::STATUS_SUCCESS, 'label' => 'Success'],
+        ['value' => self::STATUS_DONE, 'label' => 'Done'],
+    ];
     }
     protected static function booted()
     {

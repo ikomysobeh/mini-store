@@ -110,7 +110,7 @@ const closeUserDropdown = (event) => {
 // Mock admin user data (you can pass this as props or get from auth)
 const adminUser = {
     name: 'Admin User',
-    email: 'admin@example.com',
+    email: 'admin',
     role: 'Administrator',
     avatar: null // You can add avatar URL here
 };

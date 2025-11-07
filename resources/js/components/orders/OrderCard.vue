@@ -2,8 +2,9 @@
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Calendar, Package, Heart, Palette, Ruler, ShoppingCart, Eye } from 'lucide-vue-next';
+import { Calendar, Package, Heart, Palette, Ruler, ShoppingCart, Eye, CreditCard } from 'lucide-vue-next';
 import { router } from '@inertiajs/vue3';
+import { ref } from 'vue';
 
 interface VariantDisplay {
     color?: {
@@ -38,11 +39,15 @@ interface Order {
     total: number;
     created_at: string;
     items: OrderItem[];
+    paid_at?: string; // ✅ Added
 }
 
 const { order } = defineProps<{
     order: Order;
 }>();
+
+// ✅ NEW: Loading state for retry payment
+const isRetryingPayment = ref(false);
 
 const formatPrice = (price: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -59,13 +64,14 @@ const formatDate = (date: string) => {
     });
 };
 
+// ✅ UPDATED: Status colors for new enum values
 const getStatusColor = (status: string) => {
     const colors = {
-        pending: 'bg-warning/20 text-warning',
-        processing: 'bg-info/20 text-info',
-        shipped: 'bg-purple-500/20 text-purple-700 dark:text-purple-400',
-        delivered: 'bg-success/20 text-success',
-        cancelled: 'bg-destructive/20 text-destructive'
+        pending: 'bg-yellow-500/20 text-yellow-700 dark:text-yellow-400',
+        processing: 'bg-blue-500/20 text-blue-700 dark:text-blue-400',
+        failed: 'bg-red-500/20 text-red-700 dark:text-red-400',
+        success: 'bg-green-500/20 text-green-700 dark:text-green-400',
+        done: 'bg-gray-500/20 text-gray-700 dark:text-gray-400'
     };
     return colors[status] || 'bg-gray-100 text-gray-800';
 };
@@ -90,6 +96,29 @@ const reorderItems = () => {
     });
 };
 
+// ✅ NEW: Retry payment for pending order
+const retryPayment = () => {
+    isRetryingPayment.value = true;
+    
+    router.post(`/my-orders/${order.id}/retry-payment`, {}, {
+        preserveScroll: true,
+        onStart: () => {
+            isRetryingPayment.value = true;
+        },
+        onFinish: () => {
+            isRetryingPayment.value = false;
+        },
+        onError: () => {
+            isRetryingPayment.value = false;
+        }
+    });
+};
+
+// ✅ NEW: Check if order can be paid
+const canRetryPayment = () => {
+    return order.status === 'pending' && !order.paid_at;
+};
+
 // Count items with variants
 const variantItemsCount = order.items.filter(item => item.variant_display).length;
 const totalQuantity = order.items.reduce((sum, item) => sum + item.quantity, 0);
@@ -112,6 +141,10 @@ const totalQuantity = order.items.reduce((sum, item) => sum + item.quantity, 0);
                             <Heart class="h-3 w-3 mr-1" />
                             Donation
                         </Badge>
+                        <!-- ✅ NEW: Unpaid badge for pending orders -->
+                        <Badge v-if="canRetryPayment()" variant="destructive">
+                            Unpaid
+                        </Badge>
                     </div>
                     <div class="flex items-center text-sm text-muted-foreground space-x-4">
                         <div class="flex items-center">
@@ -131,6 +164,21 @@ const totalQuantity = order.items.reduce((sum, item) => sum + item.quantity, 0);
                 <div class="text-right">
                     <div class="text-2xl font-bold text-foreground">
                         {{ formatPrice(order.total) }}
+                    </div>
+                </div>
+            </div>
+
+            <!-- ✅ NEW: Payment reminder for pending orders -->
+            <div v-if="canRetryPayment()" class="mb-4 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+                <div class="flex items-start space-x-2">
+                    <CreditCard class="h-5 w-5 text-yellow-600 dark:text-yellow-400 mt-0.5" />
+                    <div class="flex-1">
+                        <h4 class="text-sm font-medium text-yellow-800 dark:text-yellow-300">
+                            Payment Required
+                        </h4>
+                        <p class="text-sm text-yellow-700 dark:text-yellow-400 mt-1">
+                            This order is awaiting payment. Complete your payment to process this order.
+                        </p>
                     </div>
                 </div>
             </div>
@@ -247,9 +295,23 @@ const totalQuantity = order.items.reduce((sum, item) => sum + item.quantity, 0);
                     {{ totalQuantity }} items • {{ variantItemsCount }} with variants
                 </div>
                 <div class="flex space-x-3">
+                    <!-- ✅ NEW: Pay Now button for pending orders -->
+                    <Button
+                        v-if="canRetryPayment()"
+                        variant="default"
+                        size="sm"
+                        @click="retryPayment"
+                        :disabled="isRetryingPayment"
+                        class="bg-green-600 hover:bg-green-700"
+                    >
+                        <CreditCard class="h-4 w-4 mr-2" />
+                        {{ isRetryingPayment ? 'Processing...' : 'Pay Now' }}
+                    </Button>
+
+                   
 
                     <Button
-                        v-if="!order.is_donation"
+                        v-if="!order.is_donation && !canRetryPayment()"
                         variant="default"
                         size="sm"
                         @click="reorderItems"

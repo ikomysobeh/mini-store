@@ -82,27 +82,41 @@ class OrderController extends Controller
 // In App/Http/Controllers/Admin/OrderController.php
 // REPLACE the existing calculateStats method
 
+    
+
     private function calculateStats()
-    {
-        $baseQuery = Order::query();
+{
+    $baseQuery = Order::query();
 
-        return [
-            'total' => $baseQuery->count(),
-            'pending' => (clone $baseQuery)->where('status', 'pending')->count(),
-            'processing' => (clone $baseQuery)->where('status', 'processing')->count(),
-            'shipped' => (clone $baseQuery)->where('status', 'shipped')->count(),
-            'delivered' => (clone $baseQuery)->where('status', 'delivered')->count(),
-            'cancelled' => (clone $baseQuery)->where('status', 'cancelled')->count(),
-            'total_revenue' => (clone $baseQuery)->where('is_donation', false)->sum('total'),
-            'donations_total' => (clone $baseQuery)->where('is_donation', true)->sum('total'),
+    return [
+        'total' => $baseQuery->count(),
+        
+        // Status counts
+        'pending' => (clone $baseQuery)->where('status', Order::STATUS_PENDING)->count(),
+        'processing' => (clone $baseQuery)->where('status', Order::STATUS_PROCESSING)->count(),
+        'failed' => (clone $baseQuery)->where('status', Order::STATUS_FAILED)->count(),
+        'success' => (clone $baseQuery)->where('status', Order::STATUS_SUCCESS)->count(),
+        'done' => (clone $baseQuery)->where('status', Order::STATUS_DONE)->count(),
+        
+        // ✅ UPDATED: Only count revenue from completed orders (success or done)
+        'total_revenue' => (clone $baseQuery)
+            ->whereIn('status', [Order::STATUS_SUCCESS, Order::STATUS_DONE])
+            ->sum('total'),
+        
+        // ✅ UPDATED: Only count donations revenue from completed orders
+        'donations_total' => (clone $baseQuery)
+            ->where('is_donation', true)
+            ->whereIn('status', [Order::STATUS_SUCCESS, Order::STATUS_DONE])
+            ->sum('total'),
 
-            // NEW: Beneficiary-related stats
-            'donations_with_beneficiary' => (clone $baseQuery)->where('is_donation', true)->whereNotNull('beneficiary_id')->count(),
-            'donations_without_beneficiary' => (clone $baseQuery)->where('is_donation', true)->whereNull('beneficiary_id')->count(),
-            'total_beneficiaries' => \App\Models\DonationBeneficiary::count(),
-        ];
-    }
+        // Beneficiary-related stats
+        'donations_with_beneficiary' => (clone $baseQuery)->where('is_donation', true)->whereNotNull('beneficiary_id')->count(),
+        'donations_without_beneficiary' => (clone $baseQuery)->where('is_donation', true)->whereNull('beneficiary_id')->count(),
+        'total_beneficiaries' => \App\Models\DonationBeneficiary::count(),
+    ];
+}
 
+    
 
 // In App/Http/Controllers/Admin/OrderController.php
 // REPLACE the existing show method
@@ -132,10 +146,10 @@ class OrderController extends Controller
         ]);
     }
 
-    public function update(Request $request, Order $order)
+   public function update(Request $request, Order $order)
     {
         $request->validate([
-            'status' => 'required|in:pending,processing,shipped,delivered,cancelled',
+            'status' => 'required|in:pending,processing,failed,success,done', // ✅ CHANGED
             'notes' => 'nullable|string',
         ]);
 
@@ -144,7 +158,8 @@ class OrderController extends Controller
             'notes' => $request->notes,
         ]);
 
-        if ($request->status === 'shipped') {
+        // ✅ CHANGED: Update ready_at for 'done' status instead of 'shipped'
+        if ($request->status === Order::STATUS_DONE) {
             $order->update(['ready_at' => now()]);
         }
 

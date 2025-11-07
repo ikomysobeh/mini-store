@@ -3,7 +3,8 @@ import { router, usePage } from '@inertiajs/vue3';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { ShoppingCart, Plus, Minus, CheckCircle, XCircle, AlertCircle, ChevronLeft, ChevronRight, Eye } from 'lucide-vue-next';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
+import { ShoppingCart, Plus, Minus, CheckCircle, XCircle, AlertCircle, ChevronLeft, ChevronRight, Eye, UserPlus, LogIn, Truck } from 'lucide-vue-next';
 import { ref, computed, watch } from 'vue';
 
 // ============== INLINE AUTHENTICATION LOGIC ==============
@@ -26,15 +27,25 @@ const currentUser = computed(() => {
         null
 })
 
+// Auth modal state
+const showAuthModal = ref(false);
+
 const redirectToLogin = (returnUrl?: string) => {
     const currentPath = returnUrl || window.location.pathname
     const query = `?redirect=${encodeURIComponent(currentPath)}`
     router.visit(`/login${query}`)
 }
 
+const redirectToRegister = (returnUrl?: string) => {
+    const currentPath = returnUrl || window.location.pathname
+    const query = `?redirect=${encodeURIComponent(currentPath)}`
+    router.visit(`/register${query}`)
+}
+
+// Show modal instead of redirecting
 const requireAuth = (callback: () => void, returnUrl?: string) => {
     if (!isAuthenticated.value) {
-        redirectToLogin(returnUrl)
+        showAuthModal.value = true;
         return false
     }
 
@@ -60,21 +71,19 @@ const selectedColor = ref(null);
 const selectedSize = ref(null);
 const isAddingToCart = ref(false);
 
-// ADDED: Message state for user-friendly errors
+// Message state for user-friendly errors
 const cartMessage = ref('');
-const messageType = ref(''); // 'success', 'error', 'warning'
+const messageType = ref('');
 
-// NEW: Image gallery state
+// Image gallery state
 const selectedImageIndex = ref(0);
 const isLightboxOpen = ref(false);
 
-// NEW: Image gallery computed properties
+// Image gallery computed properties
 const currentImage = computed(() => {
-    // Use enhanced multiple image system from our updated controller
     if (product.gallery && product.gallery.length > 0) {
         return product.gallery[selectedImageIndex.value]?.url || product.primary_image || product.image;
     }
-    // Fallback to legacy image system
     return product.primary_image || product.image || '/placeholder.jpg';
 });
 
@@ -86,7 +95,7 @@ const imageGallery = computed(() => {
     return product.gallery || [];
 });
 
-// NEW: Image navigation methods
+// Image navigation methods
 const selectImage = (index: number) => {
     selectedImageIndex.value = index;
 };
@@ -135,7 +144,7 @@ const availableSizes = computed(() => {
     return product.available_sizes.filter(size => sizeIds.includes(size.id));
 });
 
-// FIXED: Enhanced price computation
+// Enhanced price computation
 const currentPrice = computed(() => {
     if (selectedVariant.value) {
         return selectedVariant.value.price;
@@ -143,13 +152,12 @@ const currentPrice = computed(() => {
     return product.price;
 });
 
-// FIXED: Enhanced stock computation - This was the main issue
+// Enhanced stock computation
 const currentStock = computed(() => {
     if (product.has_variants) {
         if (selectedVariant.value) {
             return selectedVariant.value.stock;
         } else {
-            // When no specific variant is selected, show total available stock
             const totalVariantStock = product.variants.reduce((total, variant) => {
                 return total + parseInt(variant.stock || 0);
             }, 0);
@@ -235,7 +243,7 @@ const stockStatusMessage = computed(() => {
     }
 });
 
-// ADDED: Message display helpers
+// Message display helpers
 const getMessageIcon = computed(() => {
     switch (messageType.value) {
         case 'success': return CheckCircle;
@@ -283,12 +291,11 @@ const decrementQuantity = () => {
     }
 };
 
-// ADDED: Show message helper
+// Show message helper
 const showMessage = (message, type) => {
     cartMessage.value = message;
     messageType.value = type;
 
-    // Auto-hide success messages after 3 seconds
     if (type === 'success') {
         setTimeout(() => {
             cartMessage.value = '';
@@ -297,11 +304,10 @@ const showMessage = (message, type) => {
     }
 };
 
-// MODIFIED: Enhanced add to cart with authentication check
+// Enhanced add to cart with authentication check
 const addToCart = () => {
     // Check authentication before proceeding
     requireAuth(() => {
-        // Original add to cart logic
         if (product.has_variants && !selectedVariant.value) {
             showMessage('Please select both color and size before adding to cart.', 'warning');
             return;
@@ -318,7 +324,6 @@ const addToCart = () => {
             data.variant_id = selectedVariant.value.id;
         }
 
-        // FIXED: Using fetch for better JSON error handling
         fetch(`/cart/add/${product.id}`, {
             method: 'POST',
             headers: {
@@ -334,7 +339,6 @@ const addToCart = () => {
                 if (response.ok && jsonData.success) {
                     showMessage(jsonData.message || 'Item added to cart successfully!', 'success');
                 } else {
-                    // Handle error responses
                     showMessage(jsonData.message || 'Failed to add item to cart.', 'error');
                 }
             })
@@ -345,28 +349,27 @@ const addToCart = () => {
             .finally(() => {
                 isAddingToCart.value = false;
             });
-    }, window.location.pathname); // Pass current path for redirect after login
+    }, window.location.pathname);
 };
 </script>
 
 <template>
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 mb-12">
-
-        <!-- ENHANCED: Product Images with Gallery -->
+        <!-- Product Images with Gallery -->
         <div class="space-y-6 p-6">
             <!-- Main Image Display -->
             <div class="relative aspect-square bg-muted rounded-lg overflow-hidden group">
                 <img
                     :src="currentImage"
                     :alt="product.name"
-                    class="w-full h-full object-full cursor-pointer transition-transform group-hover:scale-105"
+                    class="w-full h-full object-cover cursor-pointer transition-transform group-hover:scale-105"
                     @click="openLightbox"
                 />
                 <Badge v-if="product.is_donatable" class="absolute top-4 right-4 bg-warning/20 text-warning">
                     Donation
                 </Badge>
 
-                <!-- NEW: Navigation arrows for multiple images -->
+                <!-- Navigation arrows for multiple images -->
                 <div v-if="hasMultipleImages" class="absolute inset-y-0 left-0 right-0 flex items-center justify-between p-4 opacity-0 group-hover:opacity-100 transition-opacity">
                     <button
                         @click="prevImage"
@@ -382,19 +385,19 @@ const addToCart = () => {
                     </button>
                 </div>
 
-                <!-- NEW: Image counter -->
+                <!-- Image counter -->
                 <div v-if="hasMultipleImages" class="absolute top-4 left-4 bg-black/50 text-white px-2 py-1 rounded text-sm">
                     {{ selectedImageIndex + 1 }} / {{ product.images_count }}
                 </div>
 
-                <!-- NEW: Zoom indicator -->
+                <!-- Zoom indicator -->
                 <div v-if="currentImage" class="absolute bottom-4 left-4 bg-black/50 text-white px-2 py-1 rounded text-sm opacity-0 group-hover:opacity-100 transition-opacity">
                     <Eye class="h-3 w-3 inline mr-1" />
                     Click to zoom
                 </div>
             </div>
 
-            <!-- NEW: Thumbnail Gallery -->
+            <!-- Thumbnail Gallery -->
             <div v-if="hasMultipleImages" class="space-y-2">
                 <div class="flex space-x-2 overflow-x-auto pb-2">
                     <button
@@ -411,11 +414,10 @@ const addToCart = () => {
                         <img
                             :src="image.url"
                             :alt="image.alt || product.name"
-                            class="w-full h-full object-full"
+                            class="w-full h-full object-cover"
                         />
                     </button>
                 </div>
-                <!-- NEW: Image info -->
                 <p class="text-sm text-muted-foreground text-center">
                     {{ product.images_count }} images available • Click thumbnails to view
                 </p>
@@ -424,7 +426,6 @@ const addToCart = () => {
 
         <!-- Product Info -->
         <div class="space-y-6 p-6">
-
             <!-- Category -->
             <Badge variant="outline" class="capitalize">
                 {{ product.category?.name || 'Uncategorized' }}
@@ -441,7 +442,7 @@ const addToCart = () => {
                 </p>
             </div>
 
-            <!-- ADDED: Cart Message Display -->
+            <!-- Cart Message Display -->
             <div v-if="cartMessage" :class="getMessageClasses">
                 <component :is="getMessageIcon" class="h-4 w-4 flex-shrink-0" />
                 <span>{{ cartMessage }}</span>
@@ -454,18 +455,10 @@ const addToCart = () => {
                 </button>
             </div>
 
-            <!-- Authentication Status Info -->
-            <div v-if="!isAuthenticated" class="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                <p class="text-sm text-blue-800">
-                    <span class="font-medium">Not signed in.</span>
-                    You'll be redirected to login when adding items to cart.
-                </p>
-            </div>
-
             <!-- Color Selection -->
             <div v-if="product.has_variants && product.available_colors" class="space-y-3">
                 <h4 class="font-medium">Color:</h4>
-                <div class="flex gap-2">
+                <div class="flex gap-2 flex-wrap">
                     <button
                         v-for="color in product.available_colors"
                         :key="color.id"
@@ -486,7 +479,7 @@ const addToCart = () => {
             <!-- Size Selection -->
             <div v-if="product.has_variants && availableSizes.length > 0" class="space-y-3">
                 <h4 class="font-medium">Size:</h4>
-                <div class="flex gap-2">
+                <div class="flex gap-2 flex-wrap">
                     <button
                         v-for="size in availableSizes"
                         :key="size.id"
@@ -577,7 +570,7 @@ const addToCart = () => {
                     </div>
                 </div>
 
-                <!-- ENHANCED: Add to Cart Button -->
+                <!-- Add to Cart Button -->
                 <Button
                     @click="addToCart"
                     :disabled="!canAddToCart || isAddingToCart"
@@ -589,17 +582,100 @@ const addToCart = () => {
                     <div v-else class="animate-spin h-4 w-4 mr-2 border-2 border-white border-t-transparent rounded-full"></div>
                     Add to Cart
                 </Button>
+
+                <!-- Delivery Time Notice -->
+                <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+                    <div class="flex items-start space-x-3">
+                        <Truck class="h-5 w-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
+                        <div class="flex-1">
+                            <h4 class="text-sm font-semibold text-blue-900 dark:text-blue-300 mb-1">
+                                Information
+                            </h4>
+                            <p class="text-sm text-blue-800 dark:text-blue-400">
+                                Your order will be received within <strong>1 to 7 days</strong> after purchase.
+                            </p>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <!-- Selection Required Message -->
             <div v-else-if="product.has_variants && stockStatusMessage.type === 'variants-available'" class="p-4 bg-info/10 border border-info/20 rounded-lg">
                 <p class="text-info font-medium">Please select color and size to continue</p>
             </div>
-
         </div>
     </div>
 
-    <!-- NEW: Lightbox Modal -->
+    <!-- Authentication Required Modal -->
+    <Dialog v-model:open="showAuthModal">
+        <DialogContent class="sm:max-w-md">
+            <DialogHeader>
+                <DialogTitle class="flex items-center gap-2 text-xl">
+                    <ShoppingCart class="h-5 w-5 text-primary" />
+                    Account Required
+                </DialogTitle>
+                <DialogDescription class="text-base pt-2">
+                    You need to be signed in to add items to your cart. Create an account or log in to continue shopping!
+                </DialogDescription>
+            </DialogHeader>
+
+            <div class="py-6 space-y-4">
+                <!-- Benefits list -->
+                <div class="bg-muted/50 rounded-lg p-4 space-y-2">
+                    <p class="text-sm font-medium">With an account you can:</p>
+                    <ul class="text-sm text-muted-foreground space-y-1">
+                        <li class="flex items-center gap-2">
+                            <CheckCircle class="h-4 w-4 text-success" />
+                            Save items to your cart
+                        </li>
+                        <li class="flex items-center gap-2">
+                            <CheckCircle class="h-4 w-4 text-success" />
+                            Track your orders
+                        </li>
+                        <li class="flex items-center gap-2">
+                            <CheckCircle class="h-4 w-4 text-success" />
+                            Fast checkout
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <DialogFooter class="flex-col sm:flex-col gap-3">
+                <!-- Register Button (Primary) -->
+                <Button
+                    @click="redirectToRegister(window.location.pathname)"
+                    size="lg"
+                    class="w-full"
+                >
+                    <UserPlus class="h-4 w-4 mr-2" />
+                    Create Account
+                </Button>
+
+                <!-- Login Button (Secondary) -->
+                <Button
+                    @click="redirectToLogin(window.location.pathname)"
+                    variant="outline"
+                    size="lg"
+                    class="w-full"
+                >
+                    <LogIn class="h-4 w-4 mr-2" />
+                    Log In
+                </Button>
+
+                <!-- Cancel Button -->
+                <Button
+                    @click="showAuthModal = false"
+                    variant="ghost"
+                    size="sm"
+                    class="w-full"
+                >
+                    Continue Browsing
+                </Button>
+            </DialogFooter>
+        </DialogContent>
+    </Dialog>
+
+    <!-- Lightbox Modal -->
     <div
         v-if="isLightboxOpen && currentImage"
         class="fixed inset-0 z-50 flex items-center justify-center bg-black/80"
@@ -617,7 +693,6 @@ const addToCart = () => {
             >
                 ×
             </button>
-            <!-- NEW: Lightbox navigation for multiple images -->
             <div v-if="hasMultipleImages" class="absolute inset-y-0 left-0 right-0 flex items-center justify-between px-4">
                 <button
                     @click.stop="prevImage"

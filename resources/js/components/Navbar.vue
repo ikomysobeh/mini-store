@@ -14,8 +14,10 @@ import {
     Package,
     Menu,
     X,
-    History, // For My Orders icon
-    ClipboardList
+    History,
+    Home,
+    Eye,
+    ShoppingBag
 } from 'lucide-vue-next';
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 
@@ -29,9 +31,11 @@ const { categories, cartItems, user, siteName, settings } = defineProps({
 
 // Mobile menu state
 const mobileMenuOpen = ref(false);
-// Simple dropdown state control
-const dropdownOpen = ref(false);
-const dropdownRef = ref(null);
+// Dropdown states
+const userDropdownOpen = ref(false);
+const cartDropdownOpen = ref(false); // ✅ NEW: Cart dropdown state
+const userDropdownRef = ref(null);
+const cartDropdownRef = ref(null); // ✅ NEW: Cart dropdown ref
 const isLoggingOut = ref(false);
 
 // Computed properties for safe user data access
@@ -49,15 +53,27 @@ const cartItemsCount = computed(() => {
     return cartItems.reduce((total, item) => total + (parseInt(item.quantity) || 0), 0);
 });
 
+// ✅ NEW: Calculate cart total
+const cartTotal = computed(() => {
+    return cartItems.reduce((total, item) => {
+        const price = parseFloat(item.price || 0);
+        const quantity = parseInt(item.quantity || 0);
+        return total + (price * quantity);
+    }, 0);
+});
+
 // Single color for all category buttons
 const getCategoryButtonClass = () => {
     return 'text-primary hover:bg-primary/10 hover:text-primary transition-all duration-300';
 };
 
-// Close dropdown when clicking outside
+// ✅ UPDATED: Close dropdowns when clicking outside
 const handleClickOutside = (event) => {
-    if (dropdownRef.value && !dropdownRef.value.contains(event.target)) {
-        dropdownOpen.value = false;
+    if (userDropdownRef.value && !userDropdownRef.value.contains(event.target)) {
+        userDropdownOpen.value = false;
+    }
+    if (cartDropdownRef.value && !cartDropdownRef.value.contains(event.target)) {
+        cartDropdownOpen.value = false;
     }
 };
 
@@ -65,7 +81,7 @@ const handleClickOutside = (event) => {
 const logout = () => {
     if (isLoggingOut.value) return;
 
-    dropdownOpen.value = false;
+    userDropdownOpen.value = false;
     mobileMenuOpen.value = false;
     isLoggingOut.value = true;
 
@@ -97,23 +113,47 @@ const getUserInitials = (userData) => {
 const toggleMobileMenu = () => {
     mobileMenuOpen.value = !mobileMenuOpen.value;
     if (mobileMenuOpen.value) {
-        dropdownOpen.value = false;
+        userDropdownOpen.value = false;
+        cartDropdownOpen.value = false;
     }
 };
 
-const toggleDropdown = () => {
-    dropdownOpen.value = !dropdownOpen.value;
-    if (dropdownOpen.value) {
+// ✅ UPDATED: Toggle user dropdown
+const toggleUserDropdown = () => {
+    userDropdownOpen.value = !userDropdownOpen.value;
+    if (userDropdownOpen.value) {
         mobileMenuOpen.value = false;
+        cartDropdownOpen.value = false;
+    }
+};
+
+// ✅ NEW: Toggle cart dropdown
+const toggleCartDropdown = () => {
+    cartDropdownOpen.value = !cartDropdownOpen.value;
+    if (cartDropdownOpen.value) {
+        mobileMenuOpen.value = false;
+        userDropdownOpen.value = false;
     }
 };
 
 // Handle dropdown navigation
 const handleDropdownItemClick = (href) => {
-    dropdownOpen.value = false;
+    userDropdownOpen.value = false;
+    cartDropdownOpen.value = false;
     if (href) {
         router.visit(href);
     }
+};
+
+// ✅ NEW: Format price helper
+const formatPrice = (price) => {
+    return parseFloat(price || 0).toFixed(2);
+};
+
+// ✅ NEW: Go to cart page
+const goToCart = () => {
+    cartDropdownOpen.value = false;
+    router.visit('/cart');
 };
 
 // Close mobile menu when navigating
@@ -168,18 +208,101 @@ onUnmounted(() => {
 
                 <!-- Desktop Right Side -->
                 <div class="hidden md:flex items-center space-x-4">
-                    <!-- Cart -->
-                    <Button variant="outline" class="relative" as="a" href="/cart">
-                        <ShoppingCart class="h-5 w-5" />
-                        <Badge
-                            v-if="cartItemsCount > 0"
-                            class="absolute -top-2 -right-2 bg-primary text-primary-foreground min-w-5 h-5 flex items-center justify-center text-xs"
+                    <!-- ✅ NEW: Cart Dropdown -->
+                    <div class="relative" ref="cartDropdownRef">
+                        <Button 
+                            variant="outline" 
+                            class="relative" 
+                            @click="toggleCartDropdown"
                         >
-                            {{ cartItemsCount > 99 ? '99+' : cartItemsCount }}
-                        </Badge>
-                    </Button>
+                            <ShoppingCart class="h-5 w-5" />
+                            <Badge
+                                v-if="cartItemsCount > 0"
+                                class="absolute -top-2 -right-2 bg-primary text-primary-foreground min-w-5 h-5 flex items-center justify-center text-xs"
+                            >
+                                {{ cartItemsCount > 99 ? '99+' : cartItemsCount }}
+                            </Badge>
+                        </Button>
 
-                    <!-- NEW: My Orders Icon (only for authenticated users) -->
+                        <!-- Cart Dropdown Content -->
+                        <Transition
+                            enter-active-class="transition ease-out duration-100"
+                            enter-from-class="transform opacity-0 scale-95"
+                            enter-to-class="transform opacity-100 scale-100"
+                            leave-active-class="transition ease-in duration-75"
+                            leave-from-class="transform opacity-100 scale-100"
+                            leave-to-class="transform opacity-0 scale-95"
+                        >
+                            <div
+                                v-if="cartDropdownOpen"
+                                class="absolute right-0 mt-2 w-80 bg-popover border border-border rounded-md shadow-lg z-50"
+                            >
+                                <!-- Cart Header -->
+                                <div class="px-4 py-3 border-b border-border">
+                                    <div class="flex items-center justify-between">
+                                        <h3 class="text-sm font-semibold">Shopping Cart</h3>
+                                        <Badge variant="secondary">{{ cartItemsCount }} items</Badge>
+                                    </div>
+                                </div>
+
+                                <!-- Empty Cart -->
+                                <div v-if="cartItems.length === 0" class="px-4 py-8 text-center">
+                                    <ShoppingCart class="h-12 w-12 text-muted-foreground mx-auto mb-2" />
+                                    <p class="text-sm text-muted-foreground">Your cart is empty</p>
+                                </div>
+
+                                <!-- Cart Items (Show first 3) -->
+                                <div v-else class="max-h-80 overflow-y-auto">
+                                    <div class="px-4 py-3 space-y-3">
+                                        <div
+                                            v-for="item in cartItems.slice(0, 3)"
+                                            :key="item.id"
+                                            class="flex items-center space-x-3 p-2 bg-muted/30 rounded-lg"
+                                        >
+                                            <img
+                                                :src="item.product?.image || item.image || '/placeholder-product.jpg'"
+                                                :alt="item.product?.name || item.name"
+                                                class="w-12 h-12 object-cover rounded-md border"
+                                            />
+                                            <div class="flex-1 min-w-0">
+                                                <p class="text-sm font-medium truncate">
+                                                    {{ item.product?.name || item.name }}
+                                                </p>
+                                                <p class="text-xs text-muted-foreground">
+                                                    Qty: {{ item.quantity }} × ${{ formatPrice(item.price) }}
+                                                </p>
+                                            </div>
+                                            <span class="text-sm font-semibold">
+                                                ${{ formatPrice((item.price || 0) * (item.quantity || 1)) }}
+                                            </span>
+                                        </div>
+
+                                        <div v-if="cartItems.length > 3" class="text-center text-xs text-muted-foreground">
+                                            +{{ cartItems.length - 3 }} more items
+                                        </div>
+                                    </div>
+
+                                    <!-- Cart Footer -->
+                                    <div class="px-4 py-3 border-t border-border space-y-3">
+                                        <div class="flex justify-between items-center font-semibold">
+                                            <span>Total:</span>
+                                            <span class="text-lg text-primary">${{ formatPrice(cartTotal) }}</span>
+                                        </div>
+                                        <Button class="w-full" @click="goToCart">
+                                            <Eye class="h-4 w-4 mr-2" />
+                                            View Cart
+                                        </Button>
+                                        <Button class="w-full" variant="outline" as="a" href="/checkout" @click="cartDropdownOpen = false">
+                                            <ShoppingBag class="h-4 w-4 mr-2" />
+                                            Checkout
+                                        </Button>
+                                    </div>
+                                </div>
+                            </div>
+                        </Transition>
+                    </div>
+
+                    <!-- My Orders Icon (only for authenticated users) -->
                     <Button
                         v-if="user"
                         variant="outline"
@@ -191,12 +314,12 @@ onUnmounted(() => {
                         <History class="h-5 w-5" />
                     </Button>
 
-                    <!-- User Dropdown - Manual Implementation -->
-                    <div v-if="user" class="relative" ref="dropdownRef">
+                    <!-- ✅ UPDATED: User Dropdown -->
+                    <div v-if="user" class="relative" ref="userDropdownRef">
                         <Button
                             variant="ghost"
                             class="relative h-10 w-10 rounded-full"
-                            @click="toggleDropdown"
+                            @click="toggleUserDropdown"
                             :disabled="isLoggingOut"
                         >
                             <Avatar class="h-9 w-9">
@@ -221,7 +344,7 @@ onUnmounted(() => {
                             leave-to-class="transform opacity-0 scale-95"
                         >
                             <div
-                                v-if="dropdownOpen"
+                                v-if="userDropdownOpen"
                                 class="absolute right-0 mt-2 w-56 bg-popover border border-border rounded-md shadow-lg z-50"
                             >
                                 <!-- User Info -->
@@ -232,31 +355,15 @@ onUnmounted(() => {
                                     </div>
                                 </div>
 
-                                <!-- Menu Items (removed My Orders from here) -->
+                                <!-- ✅ UPDATED: Menu Items (removed Settings and Profile, changed Dashboard to Home) -->
                                 <div class="py-1">
                                     <button
-                                        @click="handleDropdownItemClick('/dashboard')"
+                                        @click="handleDropdownItemClick('/')"
                                         class="w-full px-3 py-2 text-left text-sm hover:bg-accent hover:text-accent-foreground flex items-center transition-colors"
                                         :disabled="isLoggingOut"
                                     >
-                                        <User class="mr-2 h-4 w-4" />
-                                        <span>Dashboard</span>
-                                    </button>
-                                    <button
-                                        @click="handleDropdownItemClick('/user/profile')"
-                                        class="w-full px-3 py-2 text-left text-sm hover:bg-accent hover:text-accent-foreground flex items-center transition-colors"
-                                        :disabled="isLoggingOut"
-                                    >
-                                        <User class="mr-2 h-4 w-4" />
-                                        <span>Profile</span>
-                                    </button>
-                                    <button
-                                        @click="handleDropdownItemClick('/user/settings')"
-                                        class="w-full px-3 py-2 text-left text-sm hover:bg-accent hover:text-accent-foreground flex items-center transition-colors"
-                                        :disabled="isLoggingOut"
-                                    >
-                                        <Settings class="mr-2 h-4 w-4" />
-                                        <span>Settings</span>
+                                        <Home class="mr-2 h-4 w-4" />
+                                        <span>Home</span>
                                     </button>
                                 </div>
 
@@ -298,7 +405,7 @@ onUnmounted(() => {
                         </Badge>
                     </Button>
 
-                    <!-- NEW: Mobile My Orders (only for authenticated users) -->
+                    <!-- Mobile My Orders (only for authenticated users) -->
                     <Button
                         v-if="user"
                         variant="outline"
@@ -345,7 +452,7 @@ onUnmounted(() => {
                             <Separator class="my-2" />
                         </div>
 
-                        <!-- Mobile User Section -->
+                        <!-- ✅ UPDATED: Mobile User Section -->
                         <div v-if="user" class="space-y-2">
                             <div class="px-3 py-2 bg-muted/30 rounded-lg mx-2">
                                 <div class="flex items-center space-x-3">
@@ -370,34 +477,12 @@ onUnmounted(() => {
                                 variant="ghost"
                                 class="justify-start w-full"
                                 as="a"
-                                href="/dashboard"
+                                href="/"
                                 @click="closeMobileMenu"
                                 :disabled="isLoggingOut"
                             >
-                                <User class="mr-2 h-4 w-4" />
-                                Dashboard
-                            </Button>
-                            <Button
-                                variant="ghost"
-                                class="justify-start w-full"
-                                as="a"
-                                href="/user/profile"
-                                @click="closeMobileMenu"
-                                :disabled="isLoggingOut"
-                            >
-                                <User class="mr-2 h-4 w-4" />
-                                Profile
-                            </Button>
-                            <Button
-                                variant="ghost"
-                                class="justify-start w-full"
-                                as="a"
-                                href="/user/settings"
-                                @click="closeMobileMenu"
-                                :disabled="isLoggingOut"
-                            >
-                                <Settings class="mr-2 h-4 w-4" />
-                                Settings
+                                <Home class="mr-2 h-4 w-4" />
+                                Home
                             </Button>
 
                             <Separator class="my-2" />

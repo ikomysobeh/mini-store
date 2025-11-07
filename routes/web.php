@@ -40,6 +40,9 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/my-orders/{order}', [App\Http\Controllers\Web\UserOrderController::class, 'show'])->name('user.orders.show');
     Route::post('/my-orders/{order}/reorder', [App\Http\Controllers\Web\UserOrderController::class, 'reorder'])->name('user.orders.reorder');
 
+    Route::post('/my-orders/{order}/retry-payment', [App\Http\Controllers\Web\UserOrderController::class, 'retryPayment'])->name('orders.retry-payment');
+
+
     Route::post('/orders', [CheckoutController::class, 'store'])->name('orders.store');
 
     Route::get('/order/success', [OrderController::class, 'success'])->name('orders.success');

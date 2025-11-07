@@ -22,10 +22,25 @@ class UserOrderController extends Controller
             'query_string' => $request->getQueryString(),
         ]);
 
-        // Make sure user has a customer profile
-        if (!$user->customer) {
-            Log::warning('❌ User has no customer profile', ['user_id' => $user->id]);
-            return redirect()->route('home')->with('error', 'No order history found');
+        // ✅ FIX: Handle user without customer profile
+        if (!$user || !$user->customer) {
+            Log::warning('❌ User has no customer profile', ['user_id' => $user?->id]);
+            
+            // Return empty state instead of redirecting
+            return Inertia::render('Web/Orders/Index', [
+                'orders' => [
+                    'data' => [],
+                    'links' => [],
+                    'meta' => [
+                        'current_page' => 1,
+                        'last_page' => 1,
+                        'per_page' => 10,
+                        'total' => 0,
+                    ],
+                ],
+                'stats' => $this->getEmptyStats(),
+                'filters' => [],
+            ]);
         }
 
         // ENHANCED: Load variant data with colors and sizes
@@ -228,6 +243,21 @@ class UserOrderController extends Controller
         }
     }
 
+    // ✅ NEW: Return empty stats structure
+    private function getEmptyStats()
+    {
+        return [
+            'total_orders' => 0,
+            'total_purchases' => 0,
+            'total_donations' => 0,
+            'total_spent' => 0,
+            'this_year_spent' => 0,
+            'recent_orders' => 0,
+            'orders_with_variants' => 0,
+            'favorite_colors' => [],
+        ];
+    }
+
     // ENHANCED: Get variant display data
     private function getVariantDisplayData($item)
     {
@@ -335,4 +365,41 @@ class UserOrderController extends Controller
             'favorite_colors' => $favoriteColors,
         ];
     }
+
+    public function retryPayment(Order $order)
+{
+    $user = auth()->user();
+
+    // Check if order belongs to the authenticated user
+    if ($order->customer_id !== $user->customer->id) {
+        abort(403, 'Unauthorized access to order');
+    }
+
+    // Only allow retry for pending orders
+    if ($order->status !== Order::STATUS_PENDING) {
+        return back()->with('error', 'This order cannot be paid again. Status: ' . $order->status);
+    }
+
+    // Check if order is already paid
+    if ($order->paid_at) {
+        return back()->with('error', 'This order has already been paid');
+    }
+
+    try {
+        // Create new Stripe payment URL for this order
+        $stripeService = app(\App\Services\StripeService::class);
+        $stripeUrl = $stripeService->createPaymentUrl($order);
+
+        // Redirect user to Stripe payment page
+        return Inertia::location($stripeUrl);
+    } catch (\Exception $e) {
+        Log::error('Retry payment failed', [
+            'order_id' => $order->id,
+            'error' => $e->getMessage()
+        ]);
+        
+        return back()->with('error', 'Failed to create payment link. Please try again.');
+    }
+}
+
 }

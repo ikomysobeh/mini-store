@@ -167,15 +167,125 @@ class StripeWebhookController extends Controller
 
     protected function handlePaymentIntentSucceeded($paymentIntent)
     {
-        // Optional: Map back to an order if you kept payment_intent id somewhere.
-        // Good for reconciliation or if you don’t use checkout.session.completed.
-        Log::info('Stripe: payment_intent.succeeded ' . ($paymentIntent->id ?? ''));
+        // Get the payment_intent ID
+        $paymentIntentId = $paymentIntent->id ?? null;
+        
+        if (!$paymentIntentId) {
+            Log::warning('Stripe: payment_intent.succeeded but no ID found');
+            return;
+        }
+        
+        // Find the order by payment_id (which stores the payment_intent ID)
+        $order = Order::where('payment_id', $paymentIntentId)->first();
+        
+        if (!$order) {
+            Log::warning("Stripe: payment_intent.succeeded but order not found for payment_intent: {$paymentIntentId}");
+            return;
+        }
+        
+        // ✅ CHANGED: Check for SUCCESS instead of PROCESSING
+        if ($order->status === Order::STATUS_SUCCESS || $order->paid_at) {
+            Log::info("Stripe: payment_intent.succeeded for order {$order->id} already processed");
+            return;
+        }
+        
+        // ✅ CHANGED: Update to SUCCESS status
+        $order->update([
+            'status' => Order::STATUS_SUCCESS, // CHANGED
+            'paid_at' => now(),
+            'payment_method' => 'stripe',
+        ]);
+        
+        Log::info("Stripe: payment_intent.succeeded - Order {$order->id} marked as success");
     }
 
     protected function handlePaymentFailed($paymentIntent)
     {
-        // Optional: mark the order failed if you stored a correlation
-        Log::warning('Stripe: payment_intent.payment_failed ' . ($paymentIntent->id ?? ''));
+        // Get the payment_intent ID
+        $paymentIntentId = $paymentIntent->id ?? null;
+        
+        if (!$paymentIntentId) {
+            Log::warning('Stripe: payment_intent.payment_failed but no ID found');
+            return;
+        }
+        
+        // Find the order by payment_id
+        $order = Order::where('payment_id', $paymentIntentId)->first();
+        
+        if (!$order) {
+            Log::warning("Stripe: payment_intent.payment_failed but order not found for payment_intent: {$paymentIntentId}");
+            return;
+        }
+        
+        // Extract error details from last_payment_error
+        $errorMessage = null;
+        $errorCode = null;
+        
+        if (isset($paymentIntent->last_payment_error)) {
+            $errorMessage = $paymentIntent->last_payment_error->message ?? 'Payment failed';
+            $errorCode = $paymentIntent->last_payment_error->code ?? null;
+        }
+        
+        // ✅ CHANGED: Update to use the new FAILED status
+        $order->update([
+            'status' => Order::STATUS_FAILED, // CHANGED from 'payment_failed'
+            'payment_error_message' => $errorMessage,
+            'payment_failed_at' => now(),
+        ]);
+        
+        // DO NOT decrement stock - payment never succeeded
+        // DO NOT clear cart - customer needs to retry
+        
+        Log::warning("Stripe: payment_intent.payment_failed - Order {$order->id} marked as failed. Reason: {$errorMessage}");
+        
+        // Optional: Send notification to customer about failed payment
+        // Queue this to avoid blocking webhook response
+        // dispatch(new SendPaymentFailedNotificationJob($order, $errorMessage));
     }
-
 }
+{
+    // Get the payment_intent ID
+    $paymentIntentId = $paymentIntent->id ?? null;
+    
+    if (!$paymentIntentId) {
+        Log::warning('Stripe: payment_intent.payment_failed but no ID found');
+        return;
+    }
+    
+    // Find the order by payment_id
+    $order = Order::where('payment_id', $paymentIntentId)->first();
+    
+    if (!$order) {
+        Log::warning("Stripe: payment_intent.payment_failed but order not found for payment_intent: {$paymentIntentId}");
+        return;
+    }
+    
+    
+    
+    // Extract error details from last_payment_error
+    $errorMessage = null;
+    $errorCode = null;
+    
+    if (isset($paymentIntent->last_payment_error)) {
+        $errorMessage = $paymentIntent->last_payment_error->message ?? 'Payment failed';
+        $errorCode = $paymentIntent->last_payment_error->code ?? null;
+    }
+    
+    // Update order status to failed
+    $order->update([
+        'status' => 'payment_failed',
+        'payment_error_message' => $errorMessage,
+        'payment_failed_at' => now(),
+    ]);
+    
+    // DO NOT decrement stock - payment never succeeded
+    // DO NOT clear cart - customer needs to retry
+    
+    Log::warning("Stripe: payment_intent.payment_failed - Order {$order->id} marked as failed. Reason: {$errorMessage}");
+    
+    // Optional: Send notification to customer about failed payment
+    // Queue this to avoid blocking webhook response
+    // dispatch(new SendPaymentFailedNotificationJob($order, $errorMessage));
+}
+
+

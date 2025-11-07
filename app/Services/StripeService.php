@@ -119,4 +119,10 @@ class StripeService
             return null;
         }
     }
+
+     // ✅ ADD THIS: Alias method for backward compatibility
+    public function createPaymentUrl(Order $order)
+    {
+        return $this->createCheckoutSession($order);
+    }
 }

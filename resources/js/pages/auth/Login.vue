@@ -96,16 +96,7 @@ const submit = () => {
 
                         <!-- Password Field -->
                         <div class="space-y-2">
-                            <div class="flex items-center justify-between">
-                                <Label for="password">Password</Label>
-                                <a
-                                    v-if="canResetPassword"
-                                    href="/forgot-password"
-                                    class="text-sm underline underline-offset-4 hover:text-primary"
-                                >
-                                    Forgot your password?
-                                </a>
-                            </div>
+                        
                             <div class="relative">
                                 <Input
                                     id="password"

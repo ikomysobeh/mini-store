@@ -66,27 +66,57 @@ class OrderController extends Controller
 
     // Handle successful payment
     // Handle successful payment - UPDATED with stock decrementing
-    public function paymentSuccess(Request $request)
-    {
-        $sessionId = $request->get('session_id');
+   public function paymentSuccess(Request $request)
+{
+    $sessionId = $request->get('session_id');
 
-        if (!$sessionId) {
-            return redirect('/')->with('error', 'Invalid payment');
-        }
-
-        $order = Order::where('payment_id', $sessionId)->first();
-
-        if (!$order) {
-            return redirect('/')->with('error', 'Order not found');
-        }
-
-        return Inertia::render('Web/OrderSuccess', [
-                'order' => $order->load(['items.product', 'items.variant.color', 'items.variant.size'])
-            ]);
+    if (!$sessionId) {
+        return redirect('/')->with('error', 'Invalid payment');
     }
 
-     public function paymentCancel()
-    {
-        return Inertia::render('Web/PaymentCancel');
+    $order = Order::where('payment_id', $sessionId)->first();
+
+    if (!$order) {
+        return redirect('/')->with('error', 'Order not found');
     }
+
+    // ✅ FIXED: Load all necessary relationships
+    $order->load([
+        'items.product',
+        'items.variant.color',
+        'items.variant.size',
+        'customer.user'
+    ]);
+
+    return Inertia::render('Web/OrderSuccess', [
+        'order' => $order,
+        // ✅ FIXED: Pass required navbar data
+        'categories' => \App\Models\Category::withCount('products')->get(),
+        'cartItems' => auth()->user() ? auth()->user()->cart?->items()->with('product')->get() ?? [] : [],
+        'auth' => [
+            'user' => auth()->user()
+        ],
+        'settings' => [
+            'site_name' => config('app.name', 'Elegant Store'),
+            'logo_url' => null,
+        ],
+    ]);
+}
+
+public function paymentCancel()
+{
+    return Inertia::render('Web/PaymentCancel', [
+        // ✅ FIXED: Pass required navbar data
+        'categories' => \App\Models\Category::withCount('products')->get(),
+        'cartItems' => auth()->user() ? auth()->user()->cart?->items()->with('product')->get() ?? [] : [],
+        'auth' => [
+            'user' => auth()->user()
+        ],
+        'settings' => [
+            'site_name' => config('app.name', 'Elegant Store'),
+            'logo_url' => null,
+        ],
+    ]);
+}
+
 }
