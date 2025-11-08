@@ -31,13 +31,12 @@ const currentUser = computed(() => {
 const showAuthModal = ref(false);
 
 const redirectToLogin = (returnUrl?: string) => {
-    const currentPath = returnUrl || window.location.pathname
+    const currentPath = returnUrl || (typeof window !== 'undefined' ? window.location.pathname : '/products')
     const query = `?redirect=${encodeURIComponent(currentPath)}`
     router.visit(`/login${query}`)
 }
-
 const redirectToRegister = (returnUrl?: string) => {
-    const currentPath = returnUrl || window.location.pathname
+    const currentPath = returnUrl || (typeof window !== 'undefined' ? window.location.pathname : '/products')
     const query = `?redirect=${encodeURIComponent(currentPath)}`
     router.visit(`/register${query}`)
 }
@@ -644,38 +643,38 @@ const addToCart = () => {
                 </div>
             </div>
 
-            <DialogFooter class="flex-col sm:flex-col gap-3">
-                <!-- Register Button (Primary) -->
-                <Button
-                    @click="redirectToRegister(window.location.pathname)"
-                    size="lg"
-                    class="w-full"
-                >
-                    <UserPlus class="h-4 w-4 mr-2" />
-                    Create Account
-                </Button>
+           <DialogFooter class="flex-col sm:flex-col gap-3">
+    <!-- Register Button (Primary) -->
+    <Button
+        @click="redirectToRegister()"
+        size="lg"
+        class="w-full"
+    >
+        <UserPlus class="h-4 w-4 mr-2" />
+        Create Account
+    </Button>
 
-                <!-- Login Button (Secondary) -->
-                <Button
-                    @click="redirectToLogin(window.location.pathname)"
-                    variant="outline"
-                    size="lg"
-                    class="w-full"
-                >
-                    <LogIn class="h-4 w-4 mr-2" />
-                    Log In
-                </Button>
+    <!-- Login Button (Secondary) -->
+    <Button
+        @click="redirectToLogin()"
+        variant="outline"
+        size="lg"
+        class="w-full"
+    >
+        <LogIn class="h-4 w-4 mr-2" />
+        Log In
+    </Button>
 
-                <!-- Cancel Button -->
-                <Button
-                    @click="showAuthModal = false"
-                    variant="ghost"
-                    size="sm"
-                    class="w-full"
-                >
-                    Continue Browsing
-                </Button>
-            </DialogFooter>
+    <!-- Cancel Button -->
+    <Button
+        @click="showAuthModal = false"
+        variant="ghost"
+        size="sm"
+        class="w-full"
+    >
+        Continue Browsing
+    </Button>
+</DialogFooter>
         </DialogContent>
     </Dialog>
 
