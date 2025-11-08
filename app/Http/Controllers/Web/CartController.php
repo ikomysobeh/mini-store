@@ -14,62 +14,65 @@ use Inertia\Inertia;
 
 class CartController extends Controller
 {
-    public function index()
-    {
-        $cart = $this->getCart();
+   public function index()
+{
+    $cart = $this->getCart();
 
-        if ($cart) {
-            // NEW: Load variant relationships
-            $cart->load(['items.product', 'items.variant.color', 'items.variant.size', 'items.selectedColor', 'items.selectedSize']);
+    if ($cart) {
+        // Load variant relationships
+        $cart->load(['items.product', 'items.variant.color', 'items.variant.size']);
 
-            // Transform cart items to include variant info and image URLs
-            $cart->items->each(function ($item) {
-                if ($item->product && $item->product->image) {
-                    $item->product->image = asset('storage/' . $item->product->image);
-                }
+        // Transform cart items to include variant info and image URLs
+        $cart->items->each(function ($item) {
+            // Product image
+            if ($item->product && $item->product->image) {
+                $item->product->image = asset('storage/' . $item->product->image);
+            }
 
-                // NEW: Add variant display info
-                if ($item->variant) {
-                    $item->variant_info = [
-                        'color_name' => $item->variant->color->name,
-                        'color_hex' => $item->variant->color->hex_code,
-                        'size_name' => $item->variant->size->name,
-                        'sku' => $item->variant->sku,
-                    ];
-                } elseif ($item->selectedColor || $item->selectedSize) {
-                    // Fallback for items with selected colors/sizes but no variant
-                    $item->variant_info = [
-                        'color_name' => $item->selectedColor->name ?? null,
-                        'color_hex' => $item->selectedColor->hex_code ?? null,
-                        'size_name' => $item->selectedSize->name ?? null,
-                    ];
-                }
-            });
+            // ✅ ENHANCED: Add variant display info
+            if ($item->variant) {
+                $item->variant_display = [
+                    'has_variant' => true,
+                    'color_name' => $item->variant->color->name ?? null,
+                    'color_hex' => $item->variant->color->hex_code ?? null,
+                    'size_name' => $item->variant->size->name ?? null,
+                    'sku' => $item->variant->sku ?? null,
+                ];
+            } else {
+                $item->variant_display = [
+                    'has_variant' => false,
+                    'color_name' => null,
+                    'color_hex' => null,
+                    'size_name' => null,
+                    'sku' => null,
+                ];
+            }
+        });
 
-            // Calculate totals (use effective price for variants)
-            $subtotal = $cart->items->sum(function ($item) {
-                return $item->quantity * ($item->variant ? $item->variant->final_price : $item->price);
-            });
+        // Calculate totals (use effective price for variants)
+        $subtotal = $cart->items->sum(function ($item) {
+            return $item->quantity * $item->price;
+        });
 
-            $shipping = $subtotal >= 50 ? 0 : 5.99;
-            $total = $subtotal + $shipping;
+        $shipping = $subtotal >= 50 ? 0 : 5.99;
+        $total = $subtotal + $shipping;
 
-            $cart->subtotal = $subtotal;
-            $cart->shipping = $shipping;
-            $cart->total = $total;
-            $cart->item_count = $cart->items->sum('quantity');
-        }
-
-        $settings = Setting::public()->get()->pluck('value', 'key');
-        if (isset($settings['logo']) && $settings['logo']) {
-            $settings['logo_url'] = asset('storage/' . $settings['logo']);
-        }
-
-        return Inertia::render('Web/Cart', [
-            'settings' => $settings,
-            'cart' => $cart,
-        ]);
+        $cart->subtotal = $subtotal;
+        $cart->shipping = $shipping;
+        $cart->total = $total;
+        $cart->item_count = $cart->items->sum('quantity');
     }
+
+    $settings = Setting::public()->get()->pluck('value', 'key');
+    if (isset($settings['logo']) && $settings['logo']) {
+        $settings['logo_url'] = asset('storage/' . $settings['logo']);
+    }
+
+    return Inertia::render('Web/Cart', [
+        'settings' => $settings,
+        'cart' => $cart,
+    ]);
+}
 
     public function add(Request $request, Product $product)
     {

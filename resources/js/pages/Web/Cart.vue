@@ -7,14 +7,16 @@ import CartPageHeader from '@/components/cart/CartPageHeader.vue';
 import EmptyCart from '@/components/cart/EmptyCart.vue';
 import CartItemsList from '@/components/cart/CartItemsList.vue';
 import OrderSummary from '@/components/cart/OrderSummary.vue';
-import { ref, computed } from 'vue';
+import { ref, computed, watch } from 'vue';
 
-const { cartItems, categories, auth, settings } = defineProps({
-    cartItems: { type: Array, default: () => [] },
+const { cart, categories, auth, settings } = defineProps({
+    cart: { type: Object, default: null },
     categories: { type: Array, default: () => [] },
     auth: { type: Object, default: () => ({}) },
     settings: { type: Object, default: () => ({}) },
 });
+
+const cartItems = computed(() => cart?.items || []);
 
 const siteName = settings.site_name || 'Elegant Store';
 const user = auth.user;
@@ -23,14 +25,18 @@ const user = auth.user;
 const updatingItems = ref(new Set());
 const quantities = ref({});
 
-// Initialize quantities from cart items
-cartItems.forEach(item => {
-    quantities.value[item.id] = item.quantity;
-});
+// Initialize quantities from cart items using watch
+watch(cartItems, (items) => {
+    items.forEach(item => {
+        if (!quantities.value[item.id]) {
+            quantities.value[item.id] = item.quantity;
+        }
+    });
+}, { immediate: true });
 
 // Computed properties
 const subtotal = computed(() => {
-    return cartItems.reduce((sum, item) => {
+    return cartItems.value.reduce((sum, item) => {
         const qty = quantities.value[item.id] || item.quantity;
         return sum + (parseFloat(item.price || 0) * qty);
     }, 0);
@@ -40,12 +46,11 @@ const shipping = computed(() => {
     return subtotal.value > 50 ? 0 : 9.99;
 });
 
-
 const total = computed(() => {
-    return subtotal.value ;
+    return subtotal.value;
 });
 
-const isEmpty = computed(() => cartItems.length === 0);
+const isEmpty = computed(() => cartItems.value.length === 0);
 
 // Breadcrumb items
 const breadcrumbItems = [
@@ -76,7 +81,7 @@ const updateQuantity = (itemId, newQuantity) => {
             },
             onError: (errors) => {
                 console.error('Failed to update quantity:', errors);
-                quantities.value[itemId] = cartItems.find(item => item.id === itemId)?.quantity || 1;
+                quantities.value[itemId] = cartItems.value.find(item => item.id === itemId)?.quantity || 1;
                 updatingItems.value.delete(itemId);
             }
         });
@@ -188,19 +193,17 @@ const applyPromoCode = (code) => {
                 <!-- Order Summary Component -->
                 <div class="bg-card text-card-foreground p-6 rounded-lg border border-border">
                     <OrderSummary
-                    :subtotal="subtotal"
-                    :shipping="shipping"
-                    :total="total"
-                    :itemCount="cartItems.length"
-                    :user="user"
-                    :updatingItems="updatingItems"
-                    @proceedToCheckout="proceedToCheckout"
-                    @applyPromoCode="applyPromoCode"
-                />
-
+                        :subtotal="subtotal"
+                        :shipping="shipping"
+                        :total="total"
+                        :itemCount="cartItems.length"
+                        :user="user"
+                        :updatingItems="updatingItems"
+                        @proceedToCheckout="proceedToCheckout"
+                        @applyPromoCode="applyPromoCode"
+                    />
+                </div>
             </div>
         </div>
     </div>
-    </div>
-
 </template>

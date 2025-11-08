@@ -19,6 +19,7 @@ class Order extends Model
         'status',
         'payment_method',
         'payment_id',
+        'payment_intent_id', // ← ADD THIS LINE
         'paid_at',
         'ready_at',
         'is_donation',

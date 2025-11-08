@@ -39,10 +39,13 @@ class StripeService
         'expires_at' => now()->addHour()->timestamp,
     ]);
 
-    $order->update([
-        'payment_id' => $session->id,
-        'stripe_session_expires_at' => now()->addHour(),
-    ]);
+$paymentIntentId = $session->payment_intent; // ← Get it here
+
+$order->update([
+    'payment_id' => $session->id,
+    'payment_intent_id' => $paymentIntentId, // ← ADD THIS
+    'stripe_session_expires_at' => now()->addHour(),
+]);
 
     return $session->url;
 }

@@ -147,15 +147,7 @@ const visibleProducts = products.slice(0, maxItems);
                             >
                                 View
                             </Button>
-                            <Button
-                                v-if="product.stock > 0 || product.is_donatable"
-                                size="sm"
-                                variant="default"
-                                class="hover:scale-105 transition-all duration-300"
-                                title="Add to cart"
-                            >
-                                <ShoppingCart class="h-4 w-4" />
-                            </Button>
+                    
                         </div>
                     </div>
                 </CardContent>

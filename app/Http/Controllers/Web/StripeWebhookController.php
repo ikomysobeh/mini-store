@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Web;
 
 use App\Http\Controllers\Controller;
+use App\Models\Cart;
 use App\Models\Order;
 use App\Models\Product;
 use App\Models\ProductVariant;
@@ -57,7 +58,6 @@ class StripeWebhookController extends Controller
                     break;
 
                 case 'payment_intent.succeeded':
-                    // Optional: can be used for extra reconciliation if you wish
                     $this->handlePaymentIntentSucceeded($event->data->object);
                     break;
 
@@ -66,7 +66,6 @@ class StripeWebhookController extends Controller
                     break;
 
                 default:
-                    // Ignore other event types or log them
                     Log::info('Stripe webhook: unhandled event ' . $event->type);
                     break;
             }
@@ -74,7 +73,6 @@ class StripeWebhookController extends Controller
             $record->update(['processed_at' => now()]);
         } catch (\Throwable $e) {
             Log::error('Stripe webhook handling error: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
-            // Do not mark processed; let Stripe retry
             return response('Webhook handler error', 500);
         }
 
@@ -82,17 +80,10 @@ class StripeWebhookController extends Controller
     }
 
     /**
-     * The “source of truth” that the order is paid.
-     * We:
-     *  - Find the order using session.id or metadata.order_id
-     *  - Mark Paid/Processing
-     *  - Decrement stock (variants or normal)
-     *  - Clear the user’s cart
-     *  - Notify admins
+     * The "source of truth" that the order is paid.
      */
     protected function handleCheckoutSessionCompleted($session)
     {
-        // $session is a \Stripe\Checkout\Session object (stdClass here)
         $sessionId  = $session->id ?? null;
         $metadata   = (array)($session->metadata ?? []);
         $orderId    = $metadata['order_id'] ?? null;
@@ -109,23 +100,26 @@ class StripeWebhookController extends Controller
         $order = $orderQuery->first();
 
         if (!$order) {
-            Log::warning("Stripe: checkout.session.completed but order not found", ['session_id' => $sessionId, 'order_id' => $orderId]);
+            Log::warning("Stripe: checkout.session.completed but order not found", [
+                'session_id' => $sessionId, 
+                'order_id' => $orderId
+            ]);
             return;
         }
 
         if ($order->paid_at) {
-            // Already handled (idempotency guard on our side)
+            Log::info("Stripe: checkout.session.completed for order {$order->id} already processed");
             return;
         }
 
         DB::transaction(function () use ($order, $session) {
-            // Mark paid/processing + store Stripe refs
+            // ✅ Mark paid and set to SUCCESS status
             $order->update([
                 'paid_at'        => now(),
-                'status'         => Order::STATUS_PROCESSING,
+                'status'         => Order::STATUS_SUCCESS,
                 'payment_method' => 'stripe',
-                'payment_id'     => $session->id ?? $order->payment_id, // keep session id
-                'payment_ref'    => $session->payment_intent ?? null,   // optional extra column if you have it
+                'payment_id'     => $session->id ?? $order->payment_id,
+                'payment_ref'    => $session->payment_intent ?? null,
                 'currency'       => ($session->currency ?? 'usd'),
             ]);
 
@@ -149,10 +143,13 @@ class StripeWebhookController extends Controller
                 }
             }
 
-            // Clear user cart (if user is available via the order relation)
-            $user = optional($order->customer)->user;
-            if ($user) {
-                app(CartService::class)->getCart($user)?->items()?->delete();
+            // ✅ Clear user cart
+            if ($order->customer_id) {
+                $cart = Cart::where('customer_id', $order->customer_id)->first();
+                if ($cart) {
+                    $cart->items()->delete();
+                    Log::info("Cart cleared for customer {$order->customer_id} after order {$order->id}");
+                }
             }
 
             // Admin notification
@@ -163,11 +160,15 @@ class StripeWebhookController extends Controller
                 Log::error("Failed to create admin notification for order {$order->id}: " . $e->getMessage());
             }
         });
+
+        Log::info("Stripe: checkout.session.completed - Order {$order->id} marked as success");
     }
 
+    /**
+     * Handle payment intent succeeded (backup/alternative event)
+     */
     protected function handlePaymentIntentSucceeded($paymentIntent)
     {
-        // Get the payment_intent ID
         $paymentIntentId = $paymentIntent->id ?? null;
         
         if (!$paymentIntentId) {
@@ -175,33 +176,57 @@ class StripeWebhookController extends Controller
             return;
         }
         
-        // Find the order by payment_id (which stores the payment_intent ID)
-        $order = Order::where('payment_id', $paymentIntentId)->first();
+        // Try to find by payment_intent_id first
+        $order = Order::where('payment_intent_id', $paymentIntentId)->first();
+        
+        // ✅ If not found, try by metadata
+        if (!$order && isset($paymentIntent->metadata->order_id)) {
+            $order = Order::find($paymentIntent->metadata->order_id);
+            
+            if ($order) {
+                $order->update(['payment_intent_id' => $paymentIntentId]);
+            }
+        }
         
         if (!$order) {
-            Log::warning("Stripe: payment_intent.succeeded but order not found for payment_intent: {$paymentIntentId}");
+            Log::warning('Stripe: payment_intent.succeeded but order not found', [
+                'payment_intent' => $paymentIntentId,
+                'metadata' => $paymentIntent->metadata ?? null
+            ]);
             return;
         }
         
-        // ✅ CHANGED: Check for SUCCESS instead of PROCESSING
-        if ($order->status === Order::STATUS_SUCCESS || $order->paid_at) {
+        // Check if already processed
+        if ($order->status === Order::STATUS_SUCCESS && $order->paid_at) {
             Log::info("Stripe: payment_intent.succeeded for order {$order->id} already processed");
             return;
         }
         
-        // ✅ CHANGED: Update to SUCCESS status
+        // Update to SUCCESS status
         $order->update([
-            'status' => Order::STATUS_SUCCESS, // CHANGED
+            'status' => Order::STATUS_SUCCESS,
             'paid_at' => now(),
             'payment_method' => 'stripe',
+            'payment_intent_id' => $paymentIntentId,
         ]);
+        
+        // ✅ Clear cart here too (in case checkout.session.completed didn't fire)
+        if ($order->customer_id) {
+            $cart = Cart::where('customer_id', $order->customer_id)->first();
+            if ($cart) {
+                $cart->items()->delete();
+                Log::info("Cart cleared for customer {$order->customer_id} after payment_intent.succeeded for order {$order->id}");
+            }
+        }
         
         Log::info("Stripe: payment_intent.succeeded - Order {$order->id} marked as success");
     }
 
+    /**
+     * Handle payment failure
+     */
     protected function handlePaymentFailed($paymentIntent)
     {
-        // Get the payment_intent ID
         $paymentIntentId = $paymentIntent->id ?? null;
         
         if (!$paymentIntentId) {
@@ -217,18 +242,16 @@ class StripeWebhookController extends Controller
             return;
         }
         
-        // Extract error details from last_payment_error
+        // Extract error details
         $errorMessage = null;
-        $errorCode = null;
         
         if (isset($paymentIntent->last_payment_error)) {
             $errorMessage = $paymentIntent->last_payment_error->message ?? 'Payment failed';
-            $errorCode = $paymentIntent->last_payment_error->code ?? null;
         }
         
-        // ✅ CHANGED: Update to use the new FAILED status
+        // ✅ Update to FAILED status
         $order->update([
-            'status' => Order::STATUS_FAILED, // CHANGED from 'payment_failed'
+            'status' => Order::STATUS_FAILED,
             'payment_error_message' => $errorMessage,
             'payment_failed_at' => now(),
         ]);
@@ -237,55 +260,5 @@ class StripeWebhookController extends Controller
         // DO NOT clear cart - customer needs to retry
         
         Log::warning("Stripe: payment_intent.payment_failed - Order {$order->id} marked as failed. Reason: {$errorMessage}");
-        
-        // Optional: Send notification to customer about failed payment
-        // Queue this to avoid blocking webhook response
-        // dispatch(new SendPaymentFailedNotificationJob($order, $errorMessage));
     }
 }
-{
-    // Get the payment_intent ID
-    $paymentIntentId = $paymentIntent->id ?? null;
-    
-    if (!$paymentIntentId) {
-        Log::warning('Stripe: payment_intent.payment_failed but no ID found');
-        return;
-    }
-    
-    // Find the order by payment_id
-    $order = Order::where('payment_id', $paymentIntentId)->first();
-    
-    if (!$order) {
-        Log::warning("Stripe: payment_intent.payment_failed but order not found for payment_intent: {$paymentIntentId}");
-        return;
-    }
-    
-    
-    
-    // Extract error details from last_payment_error
-    $errorMessage = null;
-    $errorCode = null;
-    
-    if (isset($paymentIntent->last_payment_error)) {
-        $errorMessage = $paymentIntent->last_payment_error->message ?? 'Payment failed';
-        $errorCode = $paymentIntent->last_payment_error->code ?? null;
-    }
-    
-    // Update order status to failed
-    $order->update([
-        'status' => 'payment_failed',
-        'payment_error_message' => $errorMessage,
-        'payment_failed_at' => now(),
-    ]);
-    
-    // DO NOT decrement stock - payment never succeeded
-    // DO NOT clear cart - customer needs to retry
-    
-    Log::warning("Stripe: payment_intent.payment_failed - Order {$order->id} marked as failed. Reason: {$errorMessage}");
-    
-    // Optional: Send notification to customer about failed payment
-    // Queue this to avoid blocking webhook response
-    // dispatch(new SendPaymentFailedNotificationJob($order, $errorMessage));
-}
-
-

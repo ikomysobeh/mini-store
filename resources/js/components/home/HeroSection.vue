@@ -190,14 +190,14 @@ const getWhatsAppLink = (phoneNumber: string) => {
                 <div class="flex flex-col sm:flex-row items-center justify-center gap-4 text-sm">
                     <!-- WhatsApp for Initiative -->
                     <a 
-                        :href="getWhatsAppLink('0944255208')"
+                        :href="getWhatsAppLink('963944255208')"
                         target="_blank"
                         rel="noopener noreferrer"
                         :class="['flex items-center gap-2 hover:opacity-80 transition-opacity', textClasses.contact]"
                     >
                         <MessageCircle class="h-4 w-4" />
-                        <span class="font-medium">Initiative:</span>
-                        <span>0944255208</span>
+                        <span class="font-medium">3lmni al 9aid:</span>
+                        <span>963944255208</span>
                     </a>
 
                     <!-- Separator -->
@@ -205,21 +205,21 @@ const getWhatsAppLink = (phoneNumber: string) => {
 
                     <!-- WhatsApp for Technical Issues -->
                     <a 
-                        :href="getWhatsAppLink('0937671126')"
+                        :href="getWhatsAppLink('963937671126')"
                         target="_blank"
                         rel="noopener noreferrer"
                         :class="['flex items-center gap-2 hover:opacity-80 transition-opacity', textClasses.contact]"
                     >
                         <MessageCircle class="h-4 w-4" />
                         <span class="font-medium">Technical Support:</span>
-                        <span>0937671126</span>
+                        <span>963937671126</span>
                     </a>
                 </div>
 
                 <!-- Facebook Link -->
-                <!-- <div class="flex items-center justify-center">
+                <div class="flex items-center justify-center">
                     <a 
-                        href="https://www.facebook.com/profile.php?id=61551867866791" 
+                        href="https://www.facebook.com/share/1KAWdthyWQ/" 
                         target="_blank"
                         rel="noopener noreferrer"
                         :class="['inline-flex items-center gap-2 px-4 py-2 rounded-full transition-all hover:scale-105', textClasses.badgeBg]"
@@ -227,7 +227,7 @@ const getWhatsAppLink = (phoneNumber: string) => {
                         <Facebook class="h-4 w-4" />
                         <span class="text-sm font-medium">Follow us on Facebook</span>
                     </a>
-                </div> -->
+                </div>
             </div>
         </div>
     </section>

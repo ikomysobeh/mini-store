@@ -4,7 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { CreditCard, Heart, ShoppingCart, User, MessageSquare, Clock } from 'lucide-vue-next';
-import { ref, computed } from 'vue';
+import { ref, computed, watch } from 'vue';
 
 interface CartItem {
     id: number;
@@ -48,12 +48,52 @@ const props = withDefaults(defineProps<Props>(), {
 const isProcessing = ref(false);
 const purchaseType = ref<'purchase' | 'donation'>('purchase');
 
-// Form data
+// ✅ NEW: Country code state
+const countryCode = ref('+963');
+const isCustomCode = ref(false);
+const customCode = ref('');
+
+// ✅ NEW: Country codes list
+const countryCodes = [
+    { code: '+963', country: 'Syria', flag: '🇸🇾' },
+    { code: '+1', country: 'USA', flag: '🇺🇸' },
+    { code: '+44', country: 'UK', flag: '🇬🇧' },
+    { code: '+971', country: 'UAE', flag: '🇦🇪' },
+    { code: '+966', country: 'Saudi Arabia', flag: '🇸🇦' },
+    { code: '+962', country: 'Jordan', flag: '🇯🇴' },
+    { code: '+961', country: 'Lebanon', flag: '🇱🇧' },
+    { code: '+20', country: 'Egypt', flag: '🇪🇬' },
+    { code: 'custom', country: 'Other Country', flag: '🌍' },
+];
+
+// Form data - ✅ UPDATED: Remove country code from phone
 const formData = ref({
     first_name: props.existingCustomerData?.first_name || props.customer?.first_name || '',
     last_name: props.existingCustomerData?.last_name || props.customer?.last_name || '',
-    phone: props.existingCustomerData?.phone || props.customer?.phone || '',
+    phone: props.existingCustomerData?.phone?.replace(/^\+\d+\s*/, '') || props.customer?.phone?.replace(/^\+\d+\s*/, '') || '',
     notes: '',
+});
+
+// ✅ NEW: Watch for country code changes
+watch(countryCode, (newValue) => {
+    if (newValue === 'custom') {
+        isCustomCode.value = true;
+        customCode.value = '+';
+    } else {
+        isCustomCode.value = false;
+        customCode.value = '';
+    }
+});
+
+// ✅ NEW: Full phone number computed
+const fullPhoneNumber = computed(() => {
+    if (!formData.value.phone) return '';
+    
+    const activeCode = isCustomCode.value ? customCode.value : countryCode.value;
+    
+    if (!activeCode || activeCode === 'custom') return formData.value.phone;
+    
+    return `${activeCode}${formData.value.phone.replace(/^0+/, '')}`;
 });
 
 // Computed
@@ -94,7 +134,7 @@ const isFormValid = computed(() => {
         formData.value.phone;
 });
 
-// Handle form submission
+// Handle form submission - ✅ UPDATED: Use full phone number
 const completeOrder = async () => {
     if (isProcessing.value || !isFormValid.value) return;
 
@@ -111,7 +151,7 @@ const completeOrder = async () => {
             is_donation: purchaseType.value === 'donation',
             first_name: formData.value.first_name,
             last_name: formData.value.last_name,
-            phone: formData.value.phone,
+            phone: fullPhoneNumber.value, // ✅ CHANGED: Use full phone with country code
             notes: formData.value.notes,
         };
 
@@ -213,7 +253,7 @@ const completeOrder = async () => {
                                 <p>✓ Receive it from one of our centers</p>
                                 <p class="flex items-center space-x-1">
                                     <Clock class="h-3 w-3" />
-                                    <span>Delivery: 1 day to 1 week</span>
+                                    <span>received : 1 day to 1 week</span>
                                 </p>
                             </div>
 
@@ -319,35 +359,106 @@ const completeOrder = async () => {
                         </div>
                     </div>
 
-                    <div class="space-y-2">
-                        <Label for="phone">Phone Number *</Label>
-                        <Input
-                            id="phone"
-                            v-model="formData.phone"
-                            type="tel"
-                            required
-                            placeholder="Your contact number"
-                        />
-                    </div>
+                    <!-- ✅ UPDATED: Phone Number with Country Code -->
+                    <!-- ✅ UPDATED: Phone Number with Country Code - Mobile Responsive -->
+<div class="space-y-2">
+    <Label for="phone">Phone Number *</Label>
+    
+    <!-- Desktop Layout -->
+    <div class="hidden sm:flex gap-2">
+        <!-- Country Code Dropdown -->
+        <select
+            v-model="countryCode"
+            class="flex h-10 w-40 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        >
+            <option v-for="country in countryCodes" :key="country.code" :value="country.code">
+                {{ country.flag }} {{ country.code === 'custom' ? country.country : country.code }}
+            </option>
+        </select>
 
-                   <!-- Delivery Time Note -->
-<div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
-    <div class="flex items-start space-x-3">
-        <Clock class="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
-        <div class="space-y-2">
-            <h4 class="text-sm font-medium text-blue-800">Delivery Information</h4>
-            <p class="text-sm text-blue-700">
-                📦 Your order will be received within 1 to 7 days
-            </p>
-            <p class="text-sm text-blue-700">
-                🏢 The delivery will be coordinated either at one of our centers or through another suitable method.
-            </p>
-            <p class="text-sm text-blue-700">
-                📞 We will contact the number you provided within a week.
-            </p>
-        </div>
+        <!-- Custom Code Input -->
+        <Input
+            v-if="isCustomCode"
+            v-model="customCode"
+            type="text"
+            placeholder="+XXX"
+            class="w-24"
+            @input="customCode = customCode.replace(/[^0-9+]/g, '')"
+        />
+
+        <!-- Phone Input -->
+        <Input
+            id="phone"
+            v-model="formData.phone"
+            type="tel"
+            required
+            placeholder="944255208"
+            class="flex-1"
+            @input="formData.phone = formData.phone.replace(/[^0-9]/g, '')"
+        />
     </div>
+
+    <!-- Mobile Layout -->
+    <div class="sm:hidden space-y-2">
+        <!-- Country Code Dropdown (Full Width) -->
+        <select
+            v-model="countryCode"
+            class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        >
+            <option v-for="country in countryCodes" :key="country.code" :value="country.code">
+                {{ country.flag }} {{ country.code === 'custom' ? country.country : country.code }}
+            </option>
+        </select>
+
+        <!-- Custom Code Input (Full Width) -->
+        <Input
+            v-if="isCustomCode"
+            v-model="customCode"
+            type="text"
+            placeholder="+XXX"
+            class="w-full"
+            @input="customCode = customCode.replace(/[^0-9+]/g, '')"
+        />
+
+        <!-- Phone Input (Full Width) -->
+        <Input
+            id="phone"
+            v-model="formData.phone"
+            type="tel"
+            required
+            placeholder="944255208"
+            class="w-full"
+            @input="formData.phone = formData.phone.replace(/[^0-9]/g, '')"
+        />
+    </div>
+
+    <p class="text-xs text-muted-foreground">
+        Full number: <strong>{{ fullPhoneNumber || 'Enter phone number' }}</strong>
+    </p>
+    <p v-if="isCustomCode" class="text-xs text-amber-600">
+        💡 Enter your country code including the + symbol (e.g., +49 for Germany)
+    </p>
 </div>
+
+
+                    <!--  Time Note -->
+                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                        <div class="flex items-start space-x-3">
+                            <Clock class="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
+                            <div class="space-y-2">
+                                <h4 class="text-sm font-medium text-blue-800"> Information</h4>
+                                <p class="text-sm text-blue-700">
+                                    📦 Your order will be received within 1 to 7 days
+                                </p>
+                                <p class="text-sm text-blue-700">
+                                    🏢 The admin will be coordinated either at one of our centers or through another suitable method.
+                                </p>
+                                <p class="text-sm text-blue-700">
+                                    📞 We will contact the number you provided within a week.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
 
                     <div class="space-y-2">
                         <Label for="notes" class="flex items-center space-x-2">
@@ -360,7 +471,7 @@ const completeOrder = async () => {
                             rows="2"
                             :placeholder="purchaseType === 'donation'
                                 ? 'Any message or special instructions...'
-                                : 'Delivery preferences, preferred time slots, special instructions, etc...'"
+                                : ' preferred time slots, special instructions, etc...'"
                             class="flex min-h-[60px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                         ></textarea>
                     </div>

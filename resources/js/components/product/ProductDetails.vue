@@ -304,9 +304,8 @@ const showMessage = (message, type) => {
     }
 };
 
-// Enhanced add to cart with authentication check
+// ✅ FIXED: Use fetch (keep backend JSON response)
 const addToCart = () => {
-    // Check authentication before proceeding
     requireAuth(() => {
         if (product.has_variants && !selectedVariant.value) {
             showMessage('Please select both color and size before adding to cart.', 'warning');
@@ -338,6 +337,9 @@ const addToCart = () => {
 
                 if (response.ok && jsonData.success) {
                     showMessage(jsonData.message || 'Item added to cart successfully!', 'success');
+                    
+                    // ✅ UPDATED: Reload cart data after success
+                    router.reload({ only: ['cartItems'] });
                 } else {
                     showMessage(jsonData.message || 'Failed to add item to cart.', 'error');
                 }
@@ -349,8 +351,10 @@ const addToCart = () => {
             .finally(() => {
                 isAddingToCart.value = false;
             });
-    }, window.location.pathname);
+    });
 };
+
+
 </script>
 
 <template>

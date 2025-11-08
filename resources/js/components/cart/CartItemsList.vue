@@ -14,6 +14,13 @@ interface CartItem {
     original_price?: number;
     image?: string;
     slug?: string;
+    variant_display?: {  // ✅ NEW
+        has_variant: boolean;
+        color_name: string | null;
+        color_hex: string | null;
+        size_name: string | null;
+        sku: string | null;
+    };
     product?: {
         name: string;
         slug: string;
@@ -46,7 +53,7 @@ interface Emits {
 const props = defineProps<Props>();
 const emit = defineEmits<Emits>();
 
-// FIXED: Create reactive refs for quantities to ensure proper binding
+// Create reactive refs for quantities to ensure proper binding
 const localQuantities = ref<Record<number, number>>({});
 
 // Initialize local quantities when component mounts or props change
@@ -81,10 +88,8 @@ const handleQuantityInput = (itemId: number, event: Event) => {
     const target = event.target as HTMLInputElement;
     const newQuantity = Math.max(1, parseInt(target.value) || 1);
 
-    // Update local quantity immediately for UI responsiveness
     localQuantities.value[itemId] = newQuantity;
 
-    // Emit the change
     const currentItem = props.cartItems.find(item => item.id === itemId);
     const currentQuantity = props.quantities[itemId] || (currentItem ? currentItem.quantity : 1);
 
@@ -163,6 +168,29 @@ const getItemTotal = (item: CartItem) => {
                                 {{ item.product?.category?.name || item.category?.name || 'Uncategorized' }}
                             </p>
 
+                            <!-- ✅ NEW: Variant Display -->
+                            <div v-if="item.variant_display?.has_variant" class="text-sm text-muted-foreground space-y-1 mb-2">
+                                <div v-if="item.variant_display.color_name" class="flex items-center gap-2">
+                                    <span class="font-medium">Color:</span>
+                                    <div class="flex items-center gap-1">
+                                        <div 
+                                            class="w-4 h-4 rounded-full border border-gray-300"
+                                            :style="{ backgroundColor: item.variant_display.color_hex }"
+                                        ></div>
+                                        <span>{{ item.variant_display.color_name }}</span>
+                                    </div>
+                                </div>
+                                
+                                <div v-if="item.variant_display.size_name" class="flex items-center gap-2">
+                                    <span class="font-medium">Size:</span>
+                                    <span>{{ item.variant_display.size_name }}</span>
+                                </div>
+                                
+                                <div v-if="item.variant_display.sku" class="text-xs text-gray-500">
+                                    SKU: {{ item.variant_display.sku }}
+                                </div>
+                            </div>
+
                             <!-- Product Badges -->
                             <div class="flex space-x-2 mb-2">
                                 <Badge
@@ -195,7 +223,7 @@ const getItemTotal = (item: CartItem) => {
                                     </span>
                                 </div>
                                 <div class="flex items-center space-x-2">
-                                    <!-- Mobile Quantity Controls - FIXED -->
+                                    <!-- Mobile Quantity Controls -->
                                     <div class="flex items-center border rounded-md">
                                         <Button
                                             size="sm"
@@ -254,7 +282,7 @@ const getItemTotal = (item: CartItem) => {
                             </div>
                         </div>
 
-                        <!-- Desktop Quantity Controls - FIXED -->
+                        <!-- Desktop Quantity Controls -->
                         <div class="hidden sm:flex items-center border rounded-md">
                             <Button
                                 size="sm"
