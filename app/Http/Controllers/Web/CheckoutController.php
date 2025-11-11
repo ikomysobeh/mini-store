@@ -140,7 +140,7 @@ class CheckoutController extends Controller
 
         // SIMPLIFIED: Handle optional beneficiary creation (with removed fields)
         $beneficiaryId = null;
-        if ($validated['is_donation'] && $validated['has_beneficiary'] ?? false) {
+        if ($validated['is_donation'] && (isset($validated['has_beneficiary']) && $validated['has_beneficiary'])) {
             // Check if we have meaningful beneficiary data
             $hasBeneficiaryData = false;
 
