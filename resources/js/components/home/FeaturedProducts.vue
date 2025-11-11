@@ -43,7 +43,7 @@ const formatPrice = (price: number) => {
 
 const addToWishlist = (productId: number, event: Event) => {
     event.stopPropagation(); // ✅ Prevent card click
-    
+
     if (!user) {
         router.visit('/login');
         return;
@@ -64,7 +64,7 @@ const addToWishlist = (productId: number, event: Event) => {
 
 const addToCart = (productId: number, event: Event) => {
     event.stopPropagation(); // ✅ Prevent card click
-    
+
     router.post(`/cart/add/${productId}`, { quantity: 1 }, {
         preserveState: true,
         preserveScroll: true

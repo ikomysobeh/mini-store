@@ -148,11 +148,11 @@ const getDiscountPercentage = (original: number, current: number) => {
                 :key="product.id"
                 class="group overflow-hidden hover:shadow-xl hover:scale-[1.02] transition-all duration-500 cursor-pointer border-0 shadow-md"
             >
-                <div class="relative overflow-hidden">
+                <div class="relative overflow-hidden ">
                     <img
                         :src="product.image || '/placeholder-product.jpg'"
                         :alt="product.name"
-                        class="h-48 w-full object-full group-hover:scale-110 transition-transform duration-700"
+                        class="h-48 w-full object-cover group-hover:scale-110 transition-transform duration-700"
                         loading="lazy"
                     />
                     <div class="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
