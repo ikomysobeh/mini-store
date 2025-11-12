@@ -304,11 +304,7 @@ const totalQuantity = order.items.reduce((sum, item) => sum + item.quantity, 0);
                         {{ isRetryingPayment ? 'Processing...' : 'Pay Now' }}
                     </Button>
 
-                    <!-- View Details button -->
-                    <Button variant="outline" size="sm" @click="viewOrder">
-                        <Eye class="h-4 w-4 mr-2" />
-                        View Details
-                    </Button>
+                    
 
                     <!-- Reorder button -->
                     <Button
