@@ -82,145 +82,353 @@ class StripeWebhookController extends Controller
     /**
      * The "source of truth" that the order is paid.
      */
-    protected function handleCheckoutSessionCompleted($session)
-    {
-        $sessionId  = $session->id ?? null;
-        $metadata   = (array)($session->metadata ?? []);
-        $orderId    = $metadata['order_id'] ?? null;
-
-        // Prefer order_id from metadata if present
-        $orderQuery = Order::query();
-        if ($orderId) {
-            $orderQuery->where('id', $orderId);
-        } elseif ($sessionId) {
-            $orderQuery->where('payment_id', $sessionId);
-        }
-
-        /** @var Order|null $order */
-        $order = $orderQuery->first();
-
-        if (!$order) {
-            Log::warning("Stripe: checkout.session.completed but order not found", [
-                'session_id' => $sessionId, 
-                'order_id' => $orderId
-            ]);
-            return;
-        }
-
-        if ($order->paid_at) {
-            Log::info("Stripe: checkout.session.completed for order {$order->id} already processed");
-            return;
-        }
-
-        DB::transaction(function () use ($order, $session) {
-            // ✅ Mark paid and set to SUCCESS status
-            $order->update([
-                'paid_at'        => now(),
-                'status'         => Order::STATUS_SUCCESS,
-                'payment_method' => 'stripe',
-                'payment_id'     => $session->id ?? $order->payment_id,
-                'payment_ref'    => $session->payment_intent ?? null,
-                'currency'       => ($session->currency ?? 'usd'),
-            ]);
-
-            // Decrement stock for each order item (variant-aware)
-            $order->loadMissing(['items.product', 'items.variant', 'items.variant.color', 'items.variant.size']);
-            foreach ($order->items as $orderItem) {
-                if ($orderItem->variant_id) {
-                    $variant = ProductVariant::lockForUpdate()->find($orderItem->variant_id);
-                    if ($variant && $variant->stock >= $orderItem->quantity) {
-                        $variant->decrement('stock', $orderItem->quantity);
-                        Log::info("Variant stock decremented: Variant {$variant->id}, -{$orderItem->quantity}, new stock: {$variant->stock}");
-                    } else {
-                        Log::warning("Insufficient variant stock: Variant {$orderItem->variant_id}");
-                    }
-                } elseif ($orderItem->product_id) {
-                    $product = Product::lockForUpdate()->find($orderItem->product_id);
-                    if ($product && $product->stock >= $orderItem->quantity) {
-                        $product->decrement('stock', $orderItem->quantity);
-                        Log::info("Product stock decremented: Product {$product->id}, -{$orderItem->quantity}");
-                    }
-                }
-            }
-
-            // ✅ Clear user cart
-            if ($order->customer_id) {
-                $cart = Cart::where('customer_id', $order->customer_id)->first();
-                if ($cart) {
-                    $cart->items()->delete();
-                    Log::info("Cart cleared for customer {$order->customer_id} after order {$order->id}");
-                }
-            }
-
-            // Admin notification
-            try {
-                $order->load(['customer.user', 'items']);
-                app(AdminNotificationService::class)->createOrderNotification($order);
-            } catch (\Throwable $e) {
-                Log::error("Failed to create admin notification for order {$order->id}: " . $e->getMessage());
-            }
-        });
-
-        Log::info("Stripe: checkout.session.completed - Order {$order->id} marked as success");
+    /**
+ * Handle checkout session completed event
+ */
+protected function handleCheckoutSessionCompleted($session)
+{
+    $sessionId = $session->id;
+    
+    // ✅ FIXED: Check metadata first to determine type
+    $metadata = $session->metadata;
+    
+    // Log metadata for debugging
+    Log::info('Stripe: checkout.session.completed received', [
+        'session_id' => $sessionId,
+        'metadata' => $metadata ? $metadata->toArray() : []
+    ]);
+    
+    // ✅ NEW: Check if this is a donation
+    if (isset($metadata->type) && $metadata->type === 'donation') {
+        $this->handleDonationCheckout($session);
+        return;
     }
+    
+    // ✅ NEW: Check if donation_id exists in metadata (alternative check)
+    if (isset($metadata->donation_id)) {
+        $this->handleDonationCheckout($session);
+        return;
+    }
+    
+    // Otherwise, handle as order
+    $this->handleOrderCheckout($session);
+}
+
+/**
+ * Handle donation checkout completion
+ */
+protected function handleDonationCheckout($session)
+{
+    $sessionId = $session->id;
+    $metadata = $session->metadata;
+    
+    // Get donation ID from metadata
+    $donationId = $metadata->donation_id ?? null;
+    
+    if (!$donationId) {
+        Log::warning('Stripe: checkout.session.completed for donation but no donation_id in metadata', [
+            'session_id' => $sessionId,
+            'metadata' => $metadata ? $metadata->toArray() : []
+        ]);
+        return;
+    }
+    
+    // Find donation
+    $donation = \App\Models\Donation::find($donationId);
+    
+    if (!$donation) {
+        Log::warning('Stripe: Donation not found', [
+            'session_id' => $sessionId,
+            'donation_id' => $donationId
+        ]);
+        return;
+    }
+    
+    // Check if already processed
+    if ($donation->status === \App\Models\Donation::STATUS_COMPLETED) {
+        Log::info('Stripe: checkout.session.completed for donation already processed', [
+            'donation_id' => $donationId
+        ]);
+        return;
+    }
+    
+    // Update donation
+    $donation->update([
+        'status' => \App\Models\Donation::STATUS_COMPLETED,
+        'payment_id' => $sessionId,
+        'payment_intent_id' => $session->payment_intent ?? null,
+        'paid_at' => now(),
+    ]);
+    
+    Log::info('Stripe: Donation completed successfully', [
+        'donation_id' => $donationId,
+        'session_id' => $sessionId,
+        'amount' => $donation->value
+    ]);
+    
+    // Create admin notification
+    
+    
+    Log::info('✅ Admin notification created for donation', [
+        'donation_id' => $donation->id
+    ]);
+}
+
+/**
+ * Handle order checkout completion (existing logic)
+ */
+protected function handleOrderCheckout($session)
+{
+    $sessionId = $session->id;
+    $metadata = $session->metadata;
+    
+    // Get order ID from metadata
+    $orderId = $metadata->order_id ?? null;
+    
+    if (!$orderId) {
+        Log::warning('Stripe: checkout.session.completed but no order_id in metadata', [
+            'session_id' => $sessionId,
+            'metadata' => $metadata ? $metadata->toArray() : []
+        ]);
+        return;
+    }
+    
+    $order = \App\Models\Order::find($orderId);
+    
+    if (!$order) {
+        Log::warning('Stripe: checkout.session.completed but order not found', [
+            'session_id' => $sessionId,
+            'order_id' => $orderId
+        ]);
+        return;
+    }
+    
+    // Check if already processed
+    if ($order->status === 'success' || $order->status === 'done') {
+        Log::info('Stripe: checkout.session.completed for order already processed', [
+            'order_id' => $orderId
+        ]);
+        return;
+    }
+    
+    // Update order status
+    $order->update([
+        'status' => 'success',
+        'paid_at' => now(),
+        'payment_id' => $sessionId,
+    ]);
+    
+    // Clear cart
+    if ($order->customer_id) {
+        \App\Models\Cart::where('customer_id', $order->customer_id)->delete();
+        Log::info('Cart cleared for customer after order', [
+            'customer_id' => $order->customer_id,
+            'order_id' => $orderId
+        ]);
+    }
+    
+    // Decrement stock for each variant
+    foreach ($order->variants as $variant) {
+        if ($variant->pivot->quantity > 0) {
+            $variant->decrement('quantity', $variant->pivot->quantity);
+            Log::info('Variant stock decremented', [
+                'variant_id' => $variant->id,
+                'quantity' => $variant->pivot->quantity,
+                'new_stock' => $variant->fresh()->quantity
+            ]);
+        }
+    }
+    
+    Log::info('Stripe: checkout.session.completed - Order marked as success', [
+        'order_id' => $orderId,
+        'session_id' => $sessionId
+    ]);
+    
+    
+}
+
+
+/**
+ * ✅ NEW METHOD - Handle donation payment webhook
+ */
+private function handleDonationPayment($session, $metadata)
+{
+    $donationId = $metadata['donation_id'] ?? null;
+    
+    if (!$donationId) {
+        Log::warning('Stripe: Donation ID missing in webhook metadata', [
+            'session_id' => $session->id ?? null
+        ]);
+        return;
+    }
+    
+    $donation = \App\Models\Donation::find($donationId);
+    
+    if (!$donation) {
+        Log::warning('Stripe: Donation not found', [
+            'donation_id' => $donationId,
+            'session_id' => $session->id ?? null
+        ]);
+        return;
+    }
+    
+    // Check if already processed (prevent duplicate webhook processing)
+    if ($donation->status === \App\Models\Donation::STATUS_COMPLETED && $donation->paid_at) {
+        Log::info("Stripe: Donation {$donation->id} already processed");
+        return;
+    }
+    
+    // Update donation as completed
+    DB::transaction(function() use ($donation, $session) {
+        $donation->update([
+            'status' => \App\Models\Donation::STATUS_COMPLETED,
+            'paid_at' => now(),
+            'payment_id' => $session->id,
+            'payment_intent_id' => $session->payment_intent ?? null,
+        ]);
+        
+        // Send admin notification
+        try {
+            app(\App\Services\AdminNotificationService::class)->createDonationNotification($donation);
+        } catch (\Throwable $e) {
+            Log::error("Failed to create admin notification for donation {$donation->id}: " . $e->getMessage());
+        }
+    });
+    
+    Log::info("Stripe: Donation {$donation->id} completed successfully", [
+        'amount' => $donation->value,
+        'donor' => $donation->name,
+        'payment_id' => $session->id
+    ]);
+}
+
 
     /**
      * Handle payment intent succeeded (backup/alternative event)
      */
     protected function handlePaymentIntentSucceeded($paymentIntent)
-    {
-        $paymentIntentId = $paymentIntent->id ?? null;
-        
-        if (!$paymentIntentId) {
-            Log::warning('Stripe: payment_intent.succeeded but no ID found');
-            return;
-        }
-        
-        // Try to find by payment_intent_id first
-        $order = Order::where('payment_intent_id', $paymentIntentId)->first();
-        
-        // ✅ If not found, try by metadata
-        if (!$order && isset($paymentIntent->metadata->order_id)) {
-            $order = Order::find($paymentIntent->metadata->order_id);
-            
-            if ($order) {
-                $order->update(['payment_intent_id' => $paymentIntentId]);
-            }
-        }
-        
-        if (!$order) {
-            Log::warning('Stripe: payment_intent.succeeded but order not found', [
-                'payment_intent' => $paymentIntentId,
-                'metadata' => $paymentIntent->metadata ?? null
-            ]);
-            return;
-        }
-        
-        // Check if already processed
-        if ($order->status === Order::STATUS_SUCCESS && $order->paid_at) {
-            Log::info("Stripe: payment_intent.succeeded for order {$order->id} already processed");
-            return;
-        }
-        
-        // Update to SUCCESS status
-        $order->update([
-            'status' => Order::STATUS_SUCCESS,
-            'paid_at' => now(),
-            'payment_method' => 'stripe',
-            'payment_intent_id' => $paymentIntentId,
-        ]);
-        
-        // ✅ Clear cart here too (in case checkout.session.completed didn't fire)
-        if ($order->customer_id) {
-            $cart = Cart::where('customer_id', $order->customer_id)->first();
-            if ($cart) {
-                $cart->items()->delete();
-                Log::info("Cart cleared for customer {$order->customer_id} after payment_intent.succeeded for order {$order->id}");
-            }
-        }
-        
-        Log::info("Stripe: payment_intent.succeeded - Order {$order->id} marked as success");
+{
+    $paymentIntentId = $paymentIntent->id;
+    $metadata = $paymentIntent->metadata;
+    
+    // Log for debugging
+    Log::info('Stripe: payment_intent.succeeded received', [
+        'payment_intent_id' => $paymentIntentId,
+        'metadata' => $metadata ? $metadata->toArray() : []
+    ]);
+    
+    // ✅ NEW: Check if this is a donation
+    if (isset($metadata->type) && $metadata->type === 'donation') {
+        $this->handleDonationPaymentIntent($paymentIntent);
+        return;
     }
+    
+    // ✅ NEW: Alternative check for donation_id
+    if (isset($metadata->donation_id)) {
+        $this->handleDonationPaymentIntent($paymentIntent);
+        return;
+    }
+    
+    // Otherwise, handle as order
+    $this->handleOrderPaymentIntent($paymentIntent);
+}
+
+/**
+ * Handle donation payment intent
+ */
+protected function handleDonationPaymentIntent($paymentIntent)
+{
+    $metadata = $paymentIntent->metadata;
+    $donationId = $metadata->donation_id ?? null;
+    
+    if (!$donationId) {
+        Log::warning('Stripe: payment_intent.succeeded for donation but no donation_id', [
+            'payment_intent_id' => $paymentIntent->id
+        ]);
+        return;
+    }
+    
+    $donation = \App\Models\Donation::find($donationId);
+    
+    if (!$donation) {
+        Log::warning('Stripe: Donation not found for payment_intent', [
+            'donation_id' => $donationId
+        ]);
+        return;
+    }
+    
+    // Check if already processed
+    if ($donation->status === \App\Models\Donation::STATUS_COMPLETED) {
+        Log::info('Stripe: payment_intent.succeeded for donation already processed', [
+            'donation_id' => $donationId
+        ]);
+        return;
+    }
+    
+    // Update donation
+    $donation->update([
+        'status' => \App\Models\Donation::STATUS_COMPLETED,
+        'payment_intent_id' => $paymentIntent->id,
+        'paid_at' => now(),
+    ]);
+    
+    Log::info('Stripe: payment_intent.succeeded - Donation marked as completed', [
+        'donation_id' => $donationId
+    ]);
+}
+
+/**
+ * Handle order payment intent (existing logic)
+ */
+protected function handleOrderPaymentIntent($paymentIntent)
+{
+    $metadata = $paymentIntent->metadata;
+    $orderId = $metadata->order_id ?? null;
+    
+    if (!$orderId) {
+        Log::warning('Stripe: payment_intent.succeeded but order not found', [
+            'payment_intent' => $paymentIntent->id,
+            'metadata' => $metadata ? $metadata->toArray() : []
+        ]);
+        return;
+    }
+    
+    $order = \App\Models\Order::find($orderId);
+    
+    if (!$order) {
+        Log::warning('Stripe: Order not found for payment_intent', [
+            'order_id' => $orderId
+        ]);
+        return;
+    }
+    
+    // Check if already processed
+    if ($order->status === 'success' || $order->status === 'done') {
+        Log::info('Stripe: payment_intent.succeeded for order already processed', [
+            'order_id' => $orderId
+        ]);
+        return;
+    }
+    
+    // Update order
+    $order->update([
+        'status' => 'success',
+        'paid_at' => now(),
+    ]);
+    
+    // Clear cart
+    if ($order->customer_id) {
+        \App\Models\Cart::where('customer_id', $order->customer_id)->delete();
+        Log::info('Cart cleared after payment_intent.succeeded', [
+            'customer_id' => $order->customer_id,
+            'order_id' => $orderId
+        ]);
+    }
+    
+    Log::info('Stripe: payment_intent.succeeded - Order marked as success', [
+        'order_id' => $orderId
+    ]);
+}
 
     /**
      * Handle payment failure

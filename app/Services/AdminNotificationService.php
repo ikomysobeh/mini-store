@@ -247,4 +247,36 @@ class AdminNotificationService
         }
     }
 
+    /**
+ * Create notification for new donation
+ */
+public function createDonationNotification($donation)
+{
+    $type = 'new_donation';
+    $title = 'New Donation Received';
+    
+    $message = sprintf(
+        'Donation #%s for $%s from %s',
+        $donation->id,
+        number_format($donation->value, 2),
+        $donation->name
+    );
+    
+    $data = [
+        'donation_id' => $donation->id,
+        'donor_name' => $donation->name,
+        'donor_phone' => $donation->phone,
+        'amount' => $donation->value,
+        'message' => $donation->message,
+        'status' => $donation->status,
+        'created_at' => $donation->created_at->toDateTimeString(),
+        'payment_method' => $donation->payment_method,
+    ];
+    
+    Log::info('Creating admin notification for donation: ' . $donation->id);
+    
+    return $this->create($type, $title, $message, $data);
+}
+
+
 }

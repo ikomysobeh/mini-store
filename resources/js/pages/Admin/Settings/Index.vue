@@ -15,7 +15,7 @@ const { settings } = defineProps({
     settings: { type: Object, required: true },
 });
 
-// Form setup with current settings (ENHANCED with hero background)
+// Form setup with current settings (ENHANCED with donation fields)
 const form = useForm({
     site_name: settings.site_name || '',
     hero_title: settings.hero_title || '',
@@ -23,16 +23,21 @@ const form = useForm({
     donation_message: settings.donation_message || '',
     logo: null,
     remove_logo: false,
-    // NEW: Hero background fields
+    // Hero background fields
     hero_background_image: null,
     hero_use_background_image: settings.hero_use_background_image || false,
     hero_background_overlay: settings.hero_background_overlay || 'dark',
     remove_hero_background: false,
+    // ✅ NEW: Donation settings fields
+    donation_page_title: settings.donation_page_title || 'Support Our Cause',
+    donation_page_subtitle: settings.donation_page_subtitle || 'Your contribution makes a difference',
+    donation_page_message: settings.donation_page_message || '',
+    donation_min_amount: settings.donation_min_amount || '5',
+    donation_enable: settings.donation_enable === '1',
 });
 
 // State
 const logoPreview = ref(settings.logo ? `/storage/${settings.logo}` : null);
-// NEW: Hero background state
 const heroBackgroundPreview = ref(settings.hero_background_url || null);
 const activeTab = ref('general');
 const showPreview = ref(false);
@@ -46,7 +51,6 @@ const hasNewLogo = computed(() => {
     return !!form.logo;
 });
 
-// NEW: Hero background computed
 const hasNewHeroBackground = computed(() => {
     return !!form.hero_background_image;
 });
@@ -55,7 +59,7 @@ const hasNewHeroBackground = computed(() => {
 const tabs = [
     { id: 'general', label: 'General', icon: Globe },
     { id: 'branding', label: 'Branding', icon: Palette },
-    { id: 'hero', label: 'Hero Section', icon: Eye }, // NEW: Hero tab
+    { id: 'hero', label: 'Hero Section', icon: Eye },
     { id: 'content', label: 'Content', icon: MessageSquare },
     { id: 'donations', label: 'Donations', icon: Heart },
 ];
@@ -86,7 +90,7 @@ const handleExistingLogoRemoved = () => {
     }
 };
 
-// NEW: Hero background handling
+// Hero background handling
 const handleHeroBackgroundSelected = (file: File) => {
     form.hero_background_image = file;
     form.remove_hero_background = false;
@@ -109,13 +113,12 @@ const handleExistingHeroBackgroundRemoved = () => {
         heroBackgroundPreview.value = null;
         form.remove_hero_background = true;
         form.hero_background_image = null;
-        form.hero_use_background_image = false; // Auto-disable
+        form.hero_use_background_image = false;
     }
 };
 
 // Form submission
 const saveSettings = () => {
-    // Always use FormData for consistent handling
     const formData = new FormData();
 
     // Add all text fields
@@ -124,16 +127,22 @@ const saveSettings = () => {
     formData.append('hero_subtitle', form.hero_subtitle);
     formData.append('donation_message', form.donation_message);
 
-    // NEW: Add hero background fields
+    // Hero background fields
     formData.append('hero_use_background_image', form.hero_use_background_image ? '1' : '0');
     formData.append('hero_background_overlay', form.hero_background_overlay);
+
+    // ✅ NEW: Add donation settings fields
+    formData.append('donation_page_title', form.donation_page_title);
+    formData.append('donation_page_subtitle', form.donation_page_subtitle);
+    formData.append('donation_page_message', form.donation_page_message);
+    formData.append('donation_min_amount', form.donation_min_amount);
+    formData.append('donation_enable', form.donation_enable ? '1' : '0');
 
     // Add files if present
     if (form.logo) {
         formData.append('logo', form.logo);
     }
 
-    // NEW: Add hero background file if present
     if (form.hero_background_image) {
         formData.append('hero_background_image', form.hero_background_image);
     }
@@ -143,7 +152,6 @@ const saveSettings = () => {
         formData.append('remove_logo', '1');
     }
 
-    // NEW: Add hero background remove flag
     if (form.remove_hero_background) {
         formData.append('remove_hero_background', '1');
     }
@@ -272,6 +280,11 @@ const resetForm = () => {
                             @existing-hero-background-removed="handleExistingHeroBackgroundRemoved"
                             @update:hero-use-background="form.hero_use_background_image = $event"
                             @update:hero-overlay="form.hero_background_overlay = $event"
+                            @update:donation-page-title="form.donation_page_title = $event"
+                            @update:donation-page-subtitle="form.donation_page_subtitle = $event"
+                            @update:donation-page-message="form.donation_page_message = $event"
+                            @update:donation-min-amount="form.donation_min_amount = $event"
+                            @update:donation-enable="form.donation_enable = $event"
                         />
 
                         <!-- Unsaved Changes Alert -->

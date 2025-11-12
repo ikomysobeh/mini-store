@@ -55,6 +55,7 @@ const navigationItems = [
     { name: 'Orders', href: '/admin/orders', icon: ShoppingCart },
     { name: 'Products', href: '/admin/products', icon: Package },
     { name: 'Users', href: '/admin/users', icon: Users },
+    { name: 'Donations', href: '/admin/donations', icon: Heart }, // ✅ ADD THIS LINE
     { name: 'Category', href: '/admin/categories', icon: BarChart3 },
     { name: 'Notifications', href: '/admin/notifications', icon: Bell },
     { name: 'Settings', href: '/admin/settings', icon: Settings }

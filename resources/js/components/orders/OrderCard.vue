@@ -39,14 +39,13 @@ interface Order {
     total: number;
     created_at: string;
     items: OrderItem[];
-    paid_at?: string; // ✅ Added
+    paid_at?: string;
 }
 
 const { order } = defineProps<{
     order: Order;
 }>();
 
-// ✅ NEW: Loading state for retry payment
 const isRetryingPayment = ref(false);
 
 const formatPrice = (price: number) => {
@@ -64,7 +63,6 @@ const formatDate = (date: string) => {
     });
 };
 
-// ✅ UPDATED: Status colors for new enum values
 const getStatusColor = (status: string) => {
     const colors = {
         pending: 'bg-yellow-500/20 text-yellow-700 dark:text-yellow-400',
@@ -80,23 +78,24 @@ const viewOrder = () => {
     router.get(`/my-orders/${order.id}`);
 };
 
+// ✅ FIXED: Redirect to cart after reorder
 const reorderItems = () => {
     if (order.is_donation) {
         return;
     }
 
     router.post(`/my-orders/${order.id}/reorder`, {}, {
-        preserveScroll: true,
+        preserveScroll: false, // ✅ CHANGED: Allow scroll to top
         onSuccess: () => {
-            // Success message handled by controller
+            // ✅ FIXED: Navigate to cart to see added items and update navbar
+            router.visit('/cart');
         },
-        onError: () => {
-            // Error message handled by controller
+        onError: (errors) => {
+            console.error('Reorder failed:', errors);
         }
     });
 };
 
-// ✅ NEW: Retry payment for pending order
 const retryPayment = () => {
     isRetryingPayment.value = true;
     
@@ -114,12 +113,10 @@ const retryPayment = () => {
     });
 };
 
-// ✅ NEW: Check if order can be paid
 const canRetryPayment = () => {
     return order.status === 'pending' && !order.paid_at;
 };
 
-// Count items with variants
 const variantItemsCount = order.items.filter(item => item.variant_display).length;
 const totalQuantity = order.items.reduce((sum, item) => sum + item.quantity, 0);
 </script>
@@ -141,7 +138,6 @@ const totalQuantity = order.items.reduce((sum, item) => sum + item.quantity, 0);
                             <Heart class="h-3 w-3 mr-1" />
                             Donation
                         </Badge>
-                        <!-- ✅ NEW: Unpaid badge for pending orders -->
                         <Badge v-if="canRetryPayment()" variant="destructive">
                             Unpaid
                         </Badge>
@@ -168,7 +164,7 @@ const totalQuantity = order.items.reduce((sum, item) => sum + item.quantity, 0);
                 </div>
             </div>
 
-            <!-- ✅ NEW: Payment reminder for pending orders -->
+            <!-- Payment reminder for pending orders -->
             <div v-if="canRetryPayment()" class="mb-4 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
                 <div class="flex items-start space-x-2">
                     <CreditCard class="h-5 w-5 text-yellow-600 dark:text-yellow-400 mt-0.5" />
@@ -295,7 +291,7 @@ const totalQuantity = order.items.reduce((sum, item) => sum + item.quantity, 0);
                     {{ totalQuantity }} items • {{ variantItemsCount }} with variants
                 </div>
                 <div class="flex space-x-3">
-                    <!-- ✅ NEW: Pay Now button for pending orders -->
+                    <!-- Pay Now button for pending orders -->
                     <Button
                         v-if="canRetryPayment()"
                         variant="default"
@@ -308,8 +304,13 @@ const totalQuantity = order.items.reduce((sum, item) => sum + item.quantity, 0);
                         {{ isRetryingPayment ? 'Processing...' : 'Pay Now' }}
                     </Button>
 
-                   
+                    <!-- View Details button -->
+                    <Button variant="outline" size="sm" @click="viewOrder">
+                        <Eye class="h-4 w-4 mr-2" />
+                        View Details
+                    </Button>
 
+                    <!-- Reorder button -->
                     <Button
                         v-if="!order.is_donation && !canRetryPayment()"
                         variant="default"

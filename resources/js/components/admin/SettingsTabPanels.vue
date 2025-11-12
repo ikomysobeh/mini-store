@@ -1,13 +1,13 @@
 <script setup lang="ts">
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-// REMOVED: import { Switch } from '@/components/ui/switch';
+import { Separator } from '@/components/ui/separator';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Upload, X, Image, Eye, Monitor, Smartphone, Palette, ToggleLeft, ToggleRight } from 'lucide-vue-next';
+import { Upload, X, Image, Eye, Monitor, Smartphone, Palette, ToggleLeft, ToggleRight, Heart } from 'lucide-vue-next';
 import { ref } from 'vue';
 
 const props = defineProps({
@@ -15,7 +15,6 @@ const props = defineProps({
     form: Object,
     logoPreview: String,
     hasNewLogo: Boolean,
-    // Hero background props
     heroBackgroundPreview: String,
     hasNewHeroBackground: Boolean,
 });
@@ -28,12 +27,17 @@ const emit = defineEmits([
     'logo-selected',
     'logo-removed',
     'existing-logo-removed',
-    // Hero background events
     'hero-background-selected',
     'hero-background-removed',
     'existing-hero-background-removed',
     'update:hero-use-background',
     'update:hero-overlay',
+    // ✅ NEW: Donation events
+    'update:donation-page-title',
+    'update:donation-page-subtitle',
+    'update:donation-page-message',
+    'update:donation-min-amount',
+    'update:donation-enable',
 ]);
 
 const logoInputRef = ref(null);
@@ -63,9 +67,14 @@ const handleHeroBackgroundChange = (event) => {
     }
 };
 
-// NEW: Toggle background image
+// Toggle background image
 const toggleHeroBackground = () => {
     emit('update:hero-use-background', !props.form.hero_use_background_image);
+};
+
+// ✅ NEW: Toggle donation enable
+const toggleDonationEnable = () => {
+    emit('update:donation-enable', !props.form.donation_enable);
 };
 </script>
 
@@ -166,7 +175,6 @@ const toggleHeroBackground = () => {
             <div class="space-y-4">
                 <div class="flex items-center justify-between">
                     <Label class="text-base">Background Image</Label>
-                    <!-- FIXED: Custom Toggle Button instead of Switch -->
                     <Button
                         variant="outline"
                         size="sm"
@@ -315,16 +323,146 @@ const toggleHeroBackground = () => {
         </CardContent>
     </Card>
 
-    <!-- Donations Tab -->
+    <!-- ✅ Donations Tab - COMPLETELY REPLACED -->
     <Card v-if="activeTab === 'donations'">
         <CardHeader>
-            <CardTitle>Donation Settings</CardTitle>
+            <CardTitle class="flex items-center space-x-2">
+                <Heart class="h-5 w-5 text-red-500" />
+                <span>Donation Page Settings</span>
+            </CardTitle>
+            <CardDescription>
+                Customize the donation page content and behavior
+            </CardDescription>
         </CardHeader>
         <CardContent class="space-y-6">
-            <div class="text-center p-8 text-muted-foreground">
-                <Palette class="mx-auto h-12 w-12 mb-4" />
-                <p>Donation settings coming soon...</p>
+            
+            <!-- Enable Donations Toggle -->
+            <div class="flex items-center justify-between py-3 px-4 bg-muted/30 rounded-lg">
+                <div>
+                    <Label class="text-base font-medium">Enable Donation Feature</Label>
+                    <p class="text-sm text-muted-foreground mt-1">
+                        Allow visitors to make donations through your website
+                    </p>
+                </div>
+                <Button
+                    variant="outline"
+                    size="sm"
+                    @click="toggleDonationEnable"
+                    :class="[
+                        'flex items-center space-x-2 transition-all',
+                        form.donation_enable
+                            ? 'bg-primary text-primary-foreground hover:bg-primary/90'
+                            : 'hover:bg-muted'
+                    ]"
+                >
+                    <component
+                        :is="form.donation_enable ? ToggleRight : ToggleLeft"
+                        class="h-4 w-4"
+                    />
+                    <span class="text-sm">
+                        {{ form.donation_enable ? 'Enabled' : 'Disabled' }}
+                    </span>
+                </Button>
             </div>
+
+            <Separator />
+
+            <!-- Page Title -->
+            <div class="space-y-2">
+                <Label for="donation_page_title">
+                    Donation Page Title
+                    <span class="text-red-500">*</span>
+                </Label>
+                <Input 
+                    id="donation_page_title" 
+                    :model-value="form.donation_page_title"
+                    @update:model-value="emit('update:donation-page-title', $event)"
+                    placeholder="e.g., Support Our Cause"
+                    maxlength="255"
+                />
+                <p class="text-xs text-muted-foreground">
+                    Main heading displayed on the donation page
+                </p>
+            </div>
+
+            <!-- Page Subtitle -->
+            <div class="space-y-2">
+                <Label for="donation_page_subtitle">Subtitle</Label>
+                <Input 
+                    id="donation_page_subtitle" 
+                    :model-value="form.donation_page_subtitle"
+                    @update:model-value="emit('update:donation-page-subtitle', $event)"
+                    placeholder="Brief description of your cause"
+                    maxlength="500"
+                />
+                <p class="text-xs text-muted-foreground">
+                    Short tagline shown below the title
+                </p>
+            </div>
+
+            <!-- Main Message -->
+            <div class="space-y-2">
+                <Label for="donation_page_message">
+                    Main Message
+                    <span class="text-red-500">*</span>
+                </Label>
+                <Textarea 
+                    id="donation_page_message" 
+                    :model-value="form.donation_page_message"
+                    @update:model-value="emit('update:donation-page-message', $event)"
+                    rows="8"
+                    placeholder="Explain your cause, why donations matter, how funds will be used..."
+                    class="resize-y"
+                    maxlength="5000"
+                />
+                <div class="flex items-center justify-between text-xs text-muted-foreground">
+                    <span>This message will be displayed prominently on the donation page</span>
+                    <span>{{ form.donation_page_message?.length || 0 }} / 5000</span>
+                </div>
+            </div>
+
+            <!-- Minimum Amount -->
+            <div class="space-y-2">
+                <Label for="donation_min_amount">
+                    Minimum Donation Amount (USD)
+                    <span class="text-red-500">*</span>
+                </Label>
+                <Input 
+                    id="donation_min_amount" 
+                    :model-value="form.donation_min_amount"
+                    @update:model-value="emit('update:donation-min-amount', $event)"
+                    type="number"
+                    min="1"
+                    step="1"
+                    placeholder="5"
+                />
+                <p class="text-xs text-muted-foreground">
+                    Minimum amount required for a donation. Stripe typically requires at least $1.
+                </p>
+            </div>
+
+            <!-- Preview Link -->
+            <div class="bg-primary/5 border border-primary/20 rounded-lg p-4">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium">Preview Donation Page</p>
+                        <p class="text-xs text-muted-foreground mt-1">
+                            See how your donation page looks to visitors
+                        </p>
+                    </div>
+                    <Button 
+                        as="a" 
+                        href="/donate" 
+                        target="_blank"
+                        variant="outline"
+                        size="sm"
+                    >
+                        <Eye class="h-4 w-4 mr-2" />
+                        Preview
+                    </Button>
+                </div>
+            </div>
+
         </CardContent>
     </Card>
 </template>

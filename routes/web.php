@@ -19,6 +19,16 @@ use Illuminate\Support\Facades\Route;
 // Public routes
 Route::get('/', [HomeController::class, 'index'])->name('home');
 
+// Public Donation Routes
+Route::get('/donate', [\App\Http\Controllers\DonationController::class, 'index'])
+    ->name('donation.form');
+Route::post('/donate', [\App\Http\Controllers\DonationController::class, 'store'])
+    ->name('donation.store');
+Route::get('/donation/success', [\App\Http\Controllers\DonationController::class, 'success'])
+    ->name('donation.success');
+Route::get('/donation/cancel', [\App\Http\Controllers\DonationController::class, 'cancel'])
+    ->name('donation.cancel');
+
 // Products
 Route::get('/products', [ProductController::class, 'index'])->name('products.index');
 Route::get('/products/{product:slug}', [ProductController::class, 'show'])->name('products.show');
@@ -82,6 +92,15 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     // Orders Management
     Route::resource('orders', OrderController::class)->except(['create', 'store', 'destroy']);
 
+
+    Route::get('/donations', [\App\Http\Controllers\Admin\DonationController::class, 'index'])
+        ->name('donations.index');
+    Route::get('/donations/{donation}', [\App\Http\Controllers\Admin\DonationController::class, 'show'])
+        ->name('donations.show');
+    Route::delete('/donations/{donation}', [\App\Http\Controllers\Admin\DonationController::class, 'destroy'])
+        ->name('donations.destroy');
+    Route::post('/donations/bulk-delete', [\App\Http\Controllers\Admin\DonationController::class, 'bulkDelete'])
+        ->name('donations.bulk-delete');
 
     // Colors Management
     Route::resource('colors', ColorController::class);

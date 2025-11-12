@@ -3,6 +3,9 @@
 namespace App\Services;
 
 use App\Models\Order;
+use Illuminate\Support\Facades\Log;
+use App\Models\Donation;
+
 
 class StripeService
 {
@@ -24,6 +27,7 @@ class StripeService
         'success_url' => route('payment.success') . '?session_id={CHECKOUT_SESSION_ID}',
         'cancel_url' => route('payment.cancel'),
         'metadata' => [
+            'type' => 'order',  // ← ADD THIS LINE
             'order_id'    => $order->id,
             'customer_id' => $order->customer_id,
             'is_donation' => $order->is_donation ? 'true' : 'false',
@@ -128,4 +132,60 @@ $order->update([
     {
         return $this->createCheckoutSession($order);
     }
+
+    /**
+ * Create Stripe checkout session for donation
+ */
+public function createDonationCheckoutSession(Donation $donation)
+{
+    \Stripe\Stripe::setApiKey(config('services.stripe.secret'));
+
+    try {
+        $session = \Stripe\Checkout\Session::create([
+            'payment_method_types' => ['card'],
+            'line_items' => [[
+                'price_data' => [
+                    'currency' => 'usd',
+                    'product_data' => [
+                        'name' => 'Donation - ' . config('app.name'),
+                        'description' => 'Thank you for your generous donation!',
+                    ],
+                    'unit_amount' => $this->convertToStripeAmount($donation->value),
+                ],
+                'quantity' => 1,
+            ]],
+            'mode' => 'payment',
+            'success_url' => route('donation.success') . '?session_id={CHECKOUT_SESSION_ID}',
+            'cancel_url' => route('donation.cancel'),
+            
+            // ✅ CRITICAL: Metadata to identify this as a donation
+            'metadata' => [
+                'type' => 'donation',  // ← Identifies this as donation
+                'donation_id' => $donation->id,
+                'donor_name' => $donation->name,
+                'donor_phone' => $donation->phone,
+            ],
+            
+            'customer_email' => null, // Optional: add if you collect email
+            'expires_at' => now()->addHour()->timestamp,
+        ]);
+
+        // Store payment ID for tracking
+        $donation->update([
+            'payment_id' => $session->id,
+        ]);
+
+        Log::info('Stripe donation session created', [
+            'donation_id' => $donation->id,
+            'session_id' => $session->id,
+        ]);
+
+        return $session->url;
+
+    } catch (\Exception $e) {
+        Log::error('Stripe donation session failed: ' . $e->getMessage());
+        throw $e;
+    }
+}
+
 }
