@@ -8,7 +8,11 @@
         "login": "تسجيل الدخول",
         "register": "التسجيل",
         "logout": "تسجيل الخروج",
-        "admin": "لوحة الإدارة"
+        "admin": "لوحة الإدارة",
+        "dashboard": "لوحة التحكم",
+        "settings": "الإعدادات",
+        "githubRepo": "مستودع Github",
+        "documentation": "التوثيق"
     },
     "home": {
         "welcomeMessage": "مرحباً بك في متجرنا",
@@ -152,7 +156,6 @@
         "enterPhone": "أدخل رقم الهاتف",
         "countryCodeHint": "أدخل رمز الدولة متضمناً علامة + (مثال: +963 لسوريا)",
         "additionalNotes": "ملاحظات إضافية",
-        "notesPlaceholder": "أي ملاحظات خاصة بطلبك؟",
         "donationSummary": "ملخص التبرع",
         "donationAmount": "مبلغ التبرع",
         "thankYouSupport": "شكراً لدعمك قضيتنا!",
@@ -223,6 +226,7 @@
         "orderDeliveryInfo": "سيتم استلام طلبك خلال 1 إلى 7 أيام",
         "coordinationInfo": "سيتم التنسيق إما في أحد مراكزنا أو بطريقة أخرى مناسبة.",
         "contactInfo": "سنتواصل معك على الرقم الذي قدمته خلال أسبوع.",
+        "notesPlaceholder": "أي رسالة أو تعليمات خاصة...",
         "purchaseNotesPlaceholder": "أوقات التسليم المفضلة، تعليمات خاصة، إلخ...",
         "qty": "الكمية",
         "donationNotice": "تبرعك سيساعد المحتاجين. شكراً لكرمك!",
