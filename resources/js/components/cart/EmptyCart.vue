@@ -1,6 +1,11 @@
 <script setup lang="ts">
 import { Button } from '@/components/ui/button';
 import { ShoppingCart, ArrowRight, Heart, Star } from 'lucide-vue-next';
+import { useI18n } from 'vue-i18n';
+import { useLocale } from '@/composables/useLocale';
+
+const { t } = useI18n();
+const { localizedUrl } = useLocale();
 
 interface Props {
     className?: string;
@@ -15,20 +20,19 @@ const { className = '' } = defineProps<Props>();
             <ShoppingCart class="h-16 w-16 text-muted-foreground" />
         </div>
 
-        <h2 class="text-3xl font-bold mb-3">Your cart is empty</h2>
+        <h2 class="text-3xl font-bold mb-3">{{ t('cart.empty') }}</h2>
         <p class="text-muted-foreground mb-8 max-w-md mx-auto">
-            Looks like you haven't added anything to your cart yet.
-            Start exploring our amazing products!
+            {{ t('cart.emptyMessage') || "Looks like you haven't added anything to your cart yet. Start exploring our amazing products!" }}
         </p>
 
         <div class="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button as="a" href="/products" size="lg" class="min-w-48">
+            <Button as="a" :href="localizedUrl('/products')" size="lg" class="min-w-48">
                 <ShoppingCart class="h-5 w-5 mr-2" />
-                Start Shopping
+                {{ t('home.shopNow') }}
             </Button>
-            <Button variant="outline" as="a" href="/products?featured=true" size="lg">
+            <Button variant="outline" as="a" :href="localizedUrl('/products?featured=true')" size="lg">
                 <Star class="h-5 w-5 mr-2" />
-                View Featured Products
+                {{ t('home.featuredProducts') }}
             </Button>
         </div>
 

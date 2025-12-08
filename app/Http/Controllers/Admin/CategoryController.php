@@ -45,16 +45,24 @@ class CategoryController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'name' => 'required|string|max:255|unique:categories',
-            'description' => 'nullable|string',
+            'name_en' => 'required|string|max:255',
+            'name_ar' => 'required|string|max:255',
+            'description_en' => 'nullable|string',
+            'description_ar' => 'nullable|string',
             'is_active' => 'required|boolean',
             'sort_order' => 'required|integer|min:0',
         ]);
 
         Category::create([
-            'name' => $request->name,
-            'slug' => Str::slug($request->name),
-            'description' => $request->description,
+            'name' => $request->name_en, // Fallback
+            'name_en' => $request->name_en,
+            'name_ar' => $request->name_ar,
+            'slug' => Str::slug($request->name_en),
+            'slug_en' => Str::slug($request->name_en),
+            'slug_ar' => Str::slug($request->name_ar),
+            'description' => $request->description_en, // Fallback
+            'description_en' => $request->description_en,
+            'description_ar' => $request->description_ar,
             'is_active' => $request->is_active,
             'sort_order' => $request->sort_order,
         ]);
@@ -82,18 +90,25 @@ class CategoryController extends Controller
 
     public function update(Request $request, Category $category)
     {
-
         $request->validate([
-            'name' => 'required|string|max:255|unique:categories,name,' . $category->id,
-            'description' => 'nullable|string',
+            'name_en' => 'required|string|max:255',
+            'name_ar' => 'required|string|max:255',
+            'description_en' => 'nullable|string',
+            'description_ar' => 'nullable|string',
             'is_active' => 'required|boolean',
             'sort_order' => 'required|integer|min:0',
         ]);
 
         $category->update([
-            'name' => $request->name,
-            'slug' => Str::slug($request->name),
-            'description' => $request->description,
+            'name' => $request->name_en, // Fallback
+            'name_en' => $request->name_en,
+            'name_ar' => $request->name_ar,
+            'slug' => Str::slug($request->name_en),
+            'slug_en' => Str::slug($request->name_en),
+            'slug_ar' => Str::slug($request->name_ar),
+            'description' => $request->description_en, // Fallback
+            'description_en' => $request->description_en,
+            'description_ar' => $request->description_ar,
             'is_active' => $request->is_active,
             'sort_order' => $request->sort_order,
         ]);

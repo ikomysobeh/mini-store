@@ -5,15 +5,26 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { computed, watch } from 'vue';
 
 interface Props {
-    name: string;
-    slug: string;
-    description: string;
+    // Bilingual fields
+    nameEn: string;
+    nameAr: string;
+    descriptionEn: string;
+    descriptionAr: string;
+    // Legacy fields (for backward compatibility)
+    name?: string;
+    slug?: string;
+    description?: string;
     errors: Record<string, string>;
     autoGenerateSlug?: boolean;
     maxDescriptionLength?: number;
 }
 
 interface Emits {
+    (e: 'update:nameEn', value: string): void;
+    (e: 'update:nameAr', value: string): void;
+    (e: 'update:descriptionEn', value: string): void;
+    (e: 'update:descriptionAr', value: string): void;
+    // Legacy emits
     (e: 'update:name', value: string): void;
     (e: 'update:slug', value: string): void;
     (e: 'update:description', value: string): void;
@@ -21,7 +32,10 @@ interface Emits {
 
 const props = withDefaults(defineProps<Props>(), {
     autoGenerateSlug: true,
-    maxDescriptionLength: 500
+    maxDescriptionLength: 500,
+    name: '',
+    slug: '',
+    description: ''
 });
 
 const emit = defineEmits<Emits>();
@@ -32,35 +46,50 @@ const generateSlug = (name: string) => {
     return name.toLowerCase().replace(/[^\w ]+/g, '').replace(/ +/g, '-');
 };
 
-// Auto-generate slug when name changes
-watch(() => props.name, (newName) => {
-    if (props.autoGenerateSlug && newName && !props.slug) {
+// Auto-generate slug when English name changes
+watch(() => props.nameEn, (newName) => {
+    if (props.autoGenerateSlug && newName) {
         emit('update:slug', generateSlug(newName));
     }
 });
 
 // Computed
 const previewSlug = computed(() => {
-    return props.slug || generateSlug(props.name) || 'category-slug';
+    return props.slug || generateSlug(props.nameEn) || 'category-slug';
 });
 
-const descriptionLength = computed(() => {
-    return props.description.length;
+const descriptionEnLength = computed(() => {
+    return props.descriptionEn?.length || 0;
 });
 
-// Event handlers
-const updateName = (value: string) => {
-    emit('update:name', value);
+const descriptionArLength = computed(() => {
+    return props.descriptionAr?.length || 0;
+});
+
+// Event handlers - Bilingual
+const updateNameEn = (value: string) => {
+    emit('update:nameEn', value);
 };
 
+const updateNameAr = (value: string) => {
+    emit('update:nameAr', value);
+};
+
+const updateDescriptionEn = (value: string) => {
+    if (value.length <= props.maxDescriptionLength) {
+        emit('update:descriptionEn', value);
+    }
+};
+
+const updateDescriptionAr = (value: string) => {
+    if (value.length <= props.maxDescriptionLength) {
+        emit('update:descriptionAr', value);
+    }
+};
+
+// Legacy handlers
 const updateSlug = (value: string) => {
     emit('update:slug', value);
-};
-
-const updateDescription = (value: string) => {
-    if (value.length <= props.maxDescriptionLength) {
-        emit('update:description', value);
-    }
 };
 </script>
 
@@ -71,21 +100,40 @@ const updateDescription = (value: string) => {
         </CardHeader>
         <CardContent class="space-y-6">
 
-            <!-- Category Name -->
+            <!-- Category Name - English -->
             <div class="space-y-2">
-                <Label for="name">
-                    Category Name <span class="text-destructive">*</span>
+                <Label for="name_en">
+                    Category Name (English) <span class="text-destructive">*</span>
                 </Label>
                 <Input
-                    id="name"
-                    :model-value="name"
-                    @update:model-value="updateName"
+                    id="name_en"
+                    :model-value="nameEn"
+                    @update:model-value="updateNameEn"
                     placeholder="Electronics, Clothing, Books..."
                     class="text-lg"
-                    :class="{ 'border-destructive': errors.name }"
+                    :class="{ 'border-destructive': errors.name_en }"
                 />
-                <p v-if="errors.name" class="text-sm text-destructive">
-                    {{ errors.name }}
+                <p v-if="errors.name_en" class="text-sm text-destructive">
+                    {{ errors.name_en }}
+                </p>
+            </div>
+
+            <!-- Category Name - Arabic -->
+            <div class="space-y-2">
+                <Label for="name_ar">
+                    Category Name (Arabic) - اسم الفئة <span class="text-destructive">*</span>
+                </Label>
+                <Input
+                    id="name_ar"
+                    :model-value="nameAr"
+                    @update:model-value="updateNameAr"
+                    placeholder="أدخل اسم الفئة بالعربية"
+                    dir="rtl"
+                    class="text-lg"
+                    :class="{ 'border-destructive': errors.name_ar }"
+                />
+                <p v-if="errors.name_ar" class="text-sm text-destructive">
+                    {{ errors.name_ar }}
                 </p>
             </div>
 
@@ -100,7 +148,7 @@ const updateDescription = (value: string) => {
                         id="slug"
                         :model-value="slug"
                         @update:model-value="updateSlug"
-                        :placeholder="generateSlug(name) || 'category-slug'"
+                        :placeholder="generateSlug(nameEn) || 'category-slug'"
                         class="rounded-l-none"
                         :class="{ 'border-destructive': errors.slug }"
                     />
@@ -113,23 +161,44 @@ const updateDescription = (value: string) => {
                 </p>
             </div>
 
-            <!-- Description -->
+            <!-- Description - English -->
             <div class="space-y-2">
-                <Label for="description">Description</Label>
+                <Label for="description_en">Description (English)</Label>
                 <textarea
-                    id="description"
-                    :value="description"
-                    @input="updateDescription($event.target.value)"
+                    id="description_en"
+                    :value="descriptionEn"
+                    @input="updateDescriptionEn($event.target.value)"
                     placeholder="Describe this category and what products it contains..."
                     rows="4"
                     :maxlength="maxDescriptionLength"
                     class="flex min-h-[100px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                 ></textarea>
                 <p class="text-xs text-muted-foreground">
-                    {{ descriptionLength }}/{{ maxDescriptionLength }} characters
+                    {{ descriptionEnLength }}/{{ maxDescriptionLength }} characters
                 </p>
-                <p v-if="errors.description" class="text-sm text-destructive">
-                    {{ errors.description }}
+                <p v-if="errors.description_en" class="text-sm text-destructive">
+                    {{ errors.description_en }}
+                </p>
+            </div>
+
+            <!-- Description - Arabic -->
+            <div class="space-y-2">
+                <Label for="description_ar">Description (Arabic) - الوصف</Label>
+                <textarea
+                    id="description_ar"
+                    :value="descriptionAr"
+                    @input="updateDescriptionAr($event.target.value)"
+                    placeholder="وصف الفئة بالعربية..."
+                    dir="rtl"
+                    rows="4"
+                    :maxlength="maxDescriptionLength"
+                    class="flex min-h-[100px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                ></textarea>
+                <p class="text-xs text-muted-foreground">
+                    {{ descriptionArLength }}/{{ maxDescriptionLength }} characters
+                </p>
+                <p v-if="errors.description_ar" class="text-sm text-destructive">
+                    {{ errors.description_ar }}
                 </p>
             </div>
 

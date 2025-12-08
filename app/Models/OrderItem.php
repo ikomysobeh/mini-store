@@ -15,6 +15,8 @@ class OrderItem extends Model
         'quantity',
         'price',
         'product_name',
+        'product_name_en',
+        'product_name_ar',
         'is_donation_item',
         'variant_id',
         'selected_color',
@@ -58,5 +60,24 @@ class OrderItem extends Model
     public function variant()
     {
         return $this->belongsTo(ProductVariant::class);
+    }
+    
+    /**
+     * Get the product name attribute for the current locale.
+     */
+    public function getProductNameAttribute($value)
+    {
+        $locale = app()->getLocale();
+        
+        if ($locale === 'ar' && !empty($this->attributes['product_name_ar'])) {
+            return $this->attributes['product_name_ar'];
+        }
+        
+        if (!empty($this->attributes['product_name_en'])) {
+            return $this->attributes['product_name_en'];
+        }
+        
+        // Fallback to the original product_name column
+        return $value;
     }
 }

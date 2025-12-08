@@ -6,6 +6,11 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { ShoppingCart, Plus, Minus, CheckCircle, XCircle, AlertCircle, ChevronLeft, ChevronRight, Eye, UserPlus, LogIn, Truck } from 'lucide-vue-next';
 import { ref, computed, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
+import { useLocale } from '@/composables/useLocale';
+
+const { t } = useI18n();
+const { localizedUrl, cartAddUrl } = useLocale();
 
 // ============== INLINE AUTHENTICATION LOGIC ==============
 const page = usePage()
@@ -31,14 +36,14 @@ const currentUser = computed(() => {
 const showAuthModal = ref(false);
 
 const redirectToLogin = (returnUrl?: string) => {
-    const currentPath = returnUrl || (typeof window !== 'undefined' ? window.location.pathname : '/products')
+    const currentPath = returnUrl || (typeof window !== 'undefined' ? window.location.pathname : localizedUrl('/products'))
     const query = `?redirect=${encodeURIComponent(currentPath)}`
-    router.visit(`/login${query}`)
+    router.visit(localizedUrl(`/login${query}`))
 }
 const redirectToRegister = (returnUrl?: string) => {
-    const currentPath = returnUrl || (typeof window !== 'undefined' ? window.location.pathname : '/products')
+    const currentPath = returnUrl || (typeof window !== 'undefined' ? window.location.pathname : localizedUrl('/products'))
     const query = `?redirect=${encodeURIComponent(currentPath)}`
-    router.visit(`/register${query}`)
+    router.visit(localizedUrl(`/register${query}`))
 }
 
 // Show modal instead of redirecting
@@ -217,28 +222,28 @@ const stockStatusMessage = computed(() => {
             if (selectedVariant.value.stock > 0) {
                 return {
                     type: 'in-stock',
-                    message: `${selectedVariant.value.stock} in stock for this variant`
+                    message: `${selectedVariant.value.stock} ${t('product.inStockVariant')}`
                 };
             } else {
-                return { type: 'out-of-stock', message: 'This variant is out of stock' };
+                return { type: 'out-of-stock', message: t('product.outOfStock') };
             }
         } else {
             const availableVariants = product.variants.filter(v => v.stock > 0);
             if (availableVariants.length > 0) {
                 return {
                     type: 'variants-available',
-                    message: `${availableVariants.length} variants available (Total: ${currentStock.value} items)`
+                    message: `${availableVariants.length} ${t('product.variantsAvailable')} (${t('product.total')}: ${currentStock.value} ${t('product.items')})`
                 };
             } else {
-                return { type: 'out-of-stock', message: 'All variants are out of stock' };
+                return { type: 'out-of-stock', message: t('product.outOfStock') };
             }
         }
     }
 
     if (currentStock.value > 0) {
-        return { type: 'in-stock', message: `${currentStock.value} in stock` };
+        return { type: 'in-stock', message: `${currentStock.value} ${t('product.inStock')}` };
     } else {
-        return { type: 'out-of-stock', message: 'Out of stock' };
+        return { type: 'out-of-stock', message: t('product.outOfStock') };
     }
 });
 
@@ -307,7 +312,7 @@ const showMessage = (message, type) => {
 const addToCart = () => {
     requireAuth(() => {
         if (product.has_variants && !selectedVariant.value) {
-            showMessage('Please select both color and size before adding to cart.', 'warning');
+            showMessage(t('productDetail.selectColorSizeWarning'), 'warning');
             return;
         }
 
@@ -322,7 +327,7 @@ const addToCart = () => {
             data.variant_id = selectedVariant.value.id;
         }
 
-        fetch(`/cart/add/${product.id}`, {
+        fetch(cartAddUrl(product.id), {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -335,17 +340,17 @@ const addToCart = () => {
                 const jsonData = await response.json();
 
                 if (response.ok && jsonData.success) {
-                    showMessage(jsonData.message || 'Item added to cart successfully!', 'success');
+                    showMessage(jsonData.message || t('productDetail.addedToCartSuccess'), 'success');
                     
                     // ✅ UPDATED: Reload cart data after success
                     router.reload({ only: ['cartItems'] });
                 } else {
-                    showMessage(jsonData.message || 'Failed to add item to cart.', 'error');
+                    showMessage(jsonData.message || t('productDetail.addToCartFailed'), 'error');
                 }
             })
             .catch(error => {
                 console.error('Error:', error);
-                showMessage('Something went wrong. Please try again.', 'error');
+                showMessage(t('productDetail.somethingWentWrong'), 'error');
             })
             .finally(() => {
                 isAddingToCart.value = false;
@@ -369,7 +374,7 @@ const addToCart = () => {
                     @click="openLightbox"
                 />
                 <Badge v-if="product.is_donatable" class="absolute top-4 right-4 bg-warning/20 text-warning">
-                    Donation
+                    {{ t('product.donation') }}
                 </Badge>
 
                 <!-- Navigation arrows for multiple images -->
@@ -396,7 +401,7 @@ const addToCart = () => {
                 <!-- Zoom indicator -->
                 <div v-if="currentImage" class="absolute bottom-4 left-4 bg-black/50 text-white px-2 py-1 rounded text-sm opacity-0 group-hover:opacity-100 transition-opacity">
                     <Eye class="h-3 w-3 inline mr-1" />
-                    Click to zoom
+                    {{ t('product.clickToZoom') }}
                 </div>
             </div>
 
@@ -422,7 +427,7 @@ const addToCart = () => {
                     </button>
                 </div>
                 <p class="text-sm text-muted-foreground text-center">
-                    {{ product.images_count }} images available • Click thumbnails to view
+                    {{ product.images_count }} {{ t('product.imagesAvailable') }} • {{ t('product.clickThumbnails') }}
                 </p>
             </div>
         </div>
@@ -441,7 +446,7 @@ const addToCart = () => {
             <div class="space-y-2">
                 <span class="text-3xl font-bold text-primary">${{ formatPrice(currentPrice) }}</span>
                 <p v-if="product.is_donatable" class="text-sm text-muted-foreground">
-                    This is a donation item.
+                    {{ t('product.donationItem') }}
                 </p>
             </div>
 
@@ -460,7 +465,7 @@ const addToCart = () => {
 
             <!-- Color Selection -->
             <div v-if="product.has_variants && product.available_colors" class="space-y-3">
-                <h4 class="font-medium">Color:</h4>
+                <h4 class="font-medium">{{ t('product.selectColor') }}:</h4>
                 <div class="flex gap-2 flex-wrap">
                     <button
                         v-for="color in product.available_colors"
@@ -475,13 +480,13 @@ const addToCart = () => {
                     />
                 </div>
                 <p v-if="selectedColor" class="text-sm text-gray-600">
-                    Selected: {{ product.available_colors.find(c => c.id === selectedColor)?.name }}
+                    {{ t('product.selected') }}: {{ product.available_colors.find(c => c.id === selectedColor)?.name }}
                 </p>
             </div>
 
             <!-- Size Selection -->
             <div v-if="product.has_variants && availableSizes.length > 0" class="space-y-3">
-                <h4 class="font-medium">Size:</h4>
+                <h4 class="font-medium">{{ t('product.selectSize') }}:</h4>
                 <div class="flex gap-2 flex-wrap">
                     <button
                         v-for="size in availableSizes"
@@ -498,7 +503,7 @@ const addToCart = () => {
                     </button>
                 </div>
                 <p v-if="selectedSize" class="text-sm text-gray-600">
-                    Selected: {{ availableSizes.find(s => s.id === selectedSize)?.name }}
+                    {{ t('product.selected') }}: {{ availableSizes.find(s => s.id === selectedSize)?.name }}
                 </p>
             </div>
 
@@ -528,14 +533,14 @@ const addToCart = () => {
 
                 <!-- Variant selection reminder -->
                 <div v-if="product.has_variants && (!selectedColor || !selectedSize)" class="text-warning text-sm">
-                    Please select {{ !selectedColor ? 'color' : '' }}{{ !selectedColor && !selectedSize ? ' and ' : '' }}{{ !selectedSize ? 'size' : '' }}
+                    {{ t('product.pleaseSelect') }} {{ !selectedColor ? t('product.color') : '' }}{{ !selectedColor && !selectedSize ? ` ${t('product.and')} ` : '' }}{{ !selectedSize ? t('product.size') : '' }}
                 </div>
             </div>
 
             <!-- Quantity and Add to Cart -->
             <div v-if="canAddToCart || stockStatusMessage.type === 'variants-available'" class="space-y-4">
                 <div class="space-y-2">
-                    <label class="text-sm font-medium">Quantity</label>
+                    <label class="text-sm font-medium">{{ t('product.quantity') }}</label>
                     <div class="flex items-center space-x-3">
                         <div class="flex items-center border rounded-md">
                             <Button
@@ -568,7 +573,7 @@ const addToCart = () => {
                             </Button>
                         </div>
                         <span class="text-sm text-muted-foreground">
-                            Max: {{ maxQuantity }}
+                            {{ t('product.max') }}: {{ maxQuantity }}
                         </span>
                     </div>
                 </div>
@@ -583,7 +588,7 @@ const addToCart = () => {
                 >
                     <ShoppingCart v-if="!isAddingToCart" class="h-4 w-4 mr-2" />
                     <div v-else class="animate-spin h-4 w-4 mr-2 border-2 border-white border-t-transparent rounded-full"></div>
-                    Add to Cart
+                    {{ t('product.addToCart') }}
                 </Button>
 
                 <!-- Delivery Time Notice -->
@@ -592,10 +597,10 @@ const addToCart = () => {
                         <Truck class="h-5 w-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
                         <div class="flex-1">
                             <h4 class="text-sm font-semibold text-blue-900 dark:text-blue-300 mb-1">
-                                Information
+                                {{ t('productDetail.information') }}
                             </h4>
                             <p class="text-sm text-blue-800 dark:text-blue-400">
-                                Your order will be received within <strong>1 to 7 days</strong> after purchase.
+                                {{ t('productDetail.deliveryInfo') }}
                             </p>
                         </div>
                     </div>
@@ -604,7 +609,7 @@ const addToCart = () => {
 
             <!-- Selection Required Message -->
             <div v-else-if="product.has_variants && stockStatusMessage.type === 'variants-available'" class="p-4 bg-info/10 border border-info/20 rounded-lg">
-                <p class="text-info font-medium">Please select color and size to continue</p>
+                <p class="text-info font-medium">{{ t('product.pleaseSelectColorSize') }}</p>
             </div>
         </div>
     </div>
@@ -615,29 +620,29 @@ const addToCart = () => {
             <DialogHeader>
                 <DialogTitle class="flex items-center gap-2 text-xl">
                     <ShoppingCart class="h-5 w-5 text-primary" />
-                    Account Required
+                    {{ t('productDetail.accountRequired') }}
                 </DialogTitle>
                 <DialogDescription class="text-base pt-2">
-                    You need to be signed in to add items to your cart. Create an account or log in to continue shopping!
+                    {{ t('productDetail.accountRequiredDesc') }}
                 </DialogDescription>
             </DialogHeader>
 
             <div class="py-6 space-y-4">
                 <!-- Benefits list -->
                 <div class="bg-muted/50 rounded-lg p-4 space-y-2">
-                    <p class="text-sm font-medium">With an account you can:</p>
+                    <p class="text-sm font-medium">{{ t('productDetail.withAccountYouCan') }}</p>
                     <ul class="text-sm text-muted-foreground space-y-1">
                         <li class="flex items-center gap-2">
                             <CheckCircle class="h-4 w-4 text-success" />
-                            Save items to your cart
+                            {{ t('productDetail.saveItemsToCart') }}
                         </li>
                         <li class="flex items-center gap-2">
                             <CheckCircle class="h-4 w-4 text-success" />
-                            Track your orders
+                            {{ t('productDetail.trackYourOrders') }}
                         </li>
                         <li class="flex items-center gap-2">
                             <CheckCircle class="h-4 w-4 text-success" />
-                            Fast checkout
+                            {{ t('productDetail.fastCheckout') }}
                         </li>
                     </ul>
                 </div>
@@ -651,7 +656,7 @@ const addToCart = () => {
         class="w-full"
     >
         <UserPlus class="h-4 w-4 mr-2" />
-        Create Account
+        {{ t('productDetail.createAccount') }}
     </Button>
 
     <!-- Login Button (Secondary) -->
@@ -662,7 +667,7 @@ const addToCart = () => {
         class="w-full"
     >
         <LogIn class="h-4 w-4 mr-2" />
-        Log In
+        {{ t('productDetail.logIn') }}
     </Button>
 
     <!-- Cancel Button -->
@@ -672,7 +677,7 @@ const addToCart = () => {
         size="sm"
         class="w-full"
     >
-        Continue Browsing
+        {{ t('productDetail.continueBrowsing') }}
     </Button>
 </DialogFooter>
         </DialogContent>

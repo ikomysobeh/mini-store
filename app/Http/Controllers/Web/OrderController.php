@@ -6,7 +6,9 @@ use App\Http\Controllers\Controller;
 use App\Models\ProductVariant;
 use App\Services\CartService;
 use App\Services\StripeService;
+use App\Services\PayPalService;
 use App\Models\Order;
+use App\Models\Payment;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -16,11 +18,13 @@ class OrderController extends Controller
 {
     protected $cartService;
     protected $stripeService;
+    protected $payPalService;
 
-    public function __construct(CartService $cartService, StripeService $stripeService)
+    public function __construct(CartService $cartService, StripeService $stripeService, PayPalService $payPalService)
     {
         $this->cartService = $cartService;
         $this->stripeService = $stripeService;
+        $this->payPalService = $payPalService;
     }
 
     public function store(Request $request)
@@ -69,6 +73,17 @@ class OrderController extends Controller
    public function paymentSuccess(Request $request)
 {
     $sessionId = $request->get('session_id');
+    $paypalToken = $request->get('token');
+
+    if ($paypalToken) {
+        $paypalOrder = $this->finalizePayPalOrder($paypalToken);
+
+        if (!$paypalOrder) {
+            return redirect()->route('payment.cancel')->with('error', 'Unable to confirm PayPal payment.');
+        }
+
+        return $this->renderSuccessPage($paypalOrder);
+    }
 
     if (!$sessionId) {
         return redirect('/')->with('error', 'Invalid payment');
@@ -80,7 +95,6 @@ class OrderController extends Controller
         return redirect('/')->with('error', 'Order not found');
     }
 
-    // ✅ FIXED: Load all necessary relationships
     $order->load([
         'items.product',
         'items.variant.color',
@@ -88,8 +102,12 @@ class OrderController extends Controller
         'customer.user'
     ]);
 
-    return Inertia::render('Web/OrderSuccess', [
-        'order' => $order,
+    return $this->renderSuccessPage($order);
+}
+
+public function paymentCancel()
+{
+    return Inertia::render('Web/PaymentCancel', [
         // ✅ FIXED: Pass required navbar data
         'categories' => \App\Models\Category::withCount('products')->get(),
         'cartItems' => auth()->user() ? auth()->user()->cart?->items()->with('product')->get() ?? [] : [],
@@ -103,10 +121,53 @@ class OrderController extends Controller
     ]);
 }
 
-public function paymentCancel()
+protected function finalizePayPalOrder(string $paypalToken): ?Order
 {
-    return Inertia::render('Web/PaymentCancel', [
-        // ✅ FIXED: Pass required navbar data
+    $payment = Payment::where('gateway_payment_id', $paypalToken)->first();
+
+    if (!$payment) {
+        return null;
+    }
+
+    try {
+        $capture = $this->payPalService->captureOrder($paypalToken);
+    } catch (\Exception $e) {
+        Log::error('PayPal capture failed: ' . $e->getMessage());
+        return null;
+    }
+
+    $status = strtoupper(data_get($capture, 'status', ''));
+
+    if ($status !== 'COMPLETED') {
+        $payment->markAsFailed();
+        return null;
+    }
+
+    $payment->markAsCompleted();
+
+    $order = $payment->order;
+
+    if (!$order) {
+        return null;
+    }
+
+    $order->markAsPaid();
+    $order->update(['status' => Order::STATUS_SUCCESS]);
+
+    $order->load([
+        'items.product',
+        'items.variant.color',
+        'items.variant.size',
+        'customer.user'
+    ]);
+
+    return $order;
+}
+
+protected function renderSuccessPage(Order $order)
+{
+    return Inertia::render('Web/OrderSuccess', [
+        'order' => $order,
         'categories' => \App\Models\Category::withCount('products')->get(),
         'cartItems' => auth()->user() ? auth()->user()->cart?->items()->with('product')->get() ?? [] : [],
         'auth' => [

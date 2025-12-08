@@ -5,6 +5,9 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Plus, Minus, Trash2 } from 'lucide-vue-next';
 import { computed, ref, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
+
+const { t } = useI18n();
 
 interface CartItem {
     id: number;
@@ -123,7 +126,7 @@ const getItemTotal = (item: CartItem) => {
         <!-- Header with Clear Button -->
         <div class="flex justify-between items-center">
             <p class="text-sm text-muted-foreground">
-                {{ cartItems.length }} item{{ cartItems.length > 1 ? 's' : '' }} in your cart
+                {{ cartItems.length }} {{ t('cart.itemsInCart') }}
             </p>
             <Button
                 variant="outline"
@@ -132,7 +135,7 @@ const getItemTotal = (item: CartItem) => {
                 class="text-destructive hover:text-destructive"
             >
                 <Trash2 class="h-4 w-4 mr-2" />
-                Clear All Items
+                {{ t('cart.empty') }}
             </Button>
         </div>
 
@@ -171,7 +174,7 @@ const getItemTotal = (item: CartItem) => {
                             <!-- ✅ NEW: Variant Display -->
                             <div v-if="item.variant_display?.has_variant" class="text-sm text-muted-foreground space-y-1 mb-2">
                                 <div v-if="item.variant_display.color_name" class="flex items-center gap-2">
-                                    <span class="font-medium">Color:</span>
+                                    <span class="font-medium">{{ t('product.selectColor') }}:</span>
                                     <div class="flex items-center gap-1">
                                         <div 
                                             class="w-4 h-4 rounded-full border border-gray-300"
@@ -182,7 +185,7 @@ const getItemTotal = (item: CartItem) => {
                                 </div>
                                 
                                 <div v-if="item.variant_display.size_name" class="flex items-center gap-2">
-                                    <span class="font-medium">Size:</span>
+                                    <span class="font-medium">{{ t('product.selectSize') }}:</span>
                                     <span>{{ item.variant_display.size_name }}</span>
                                 </div>
                                 
@@ -198,14 +201,14 @@ const getItemTotal = (item: CartItem) => {
                                     variant="secondary"
                                     class="text-xs"
                                 >
-                                    Donation Item
+                                    {{ t('cart.donationItem') }}
                                 </Badge>
                                 <Badge
                                     v-if="item.product?.stock !== undefined && item.product.stock < 10"
                                     variant="outline"
                                     class="text-xs text-orange-600"
                                 >
-                                    Only {{ item.product.stock }} left
+                                    {{ t('cart.onlyLeft', { count: item.product.stock }) }}
                                 </Badge>
                             </div>
 
@@ -321,7 +324,7 @@ const getItemTotal = (item: CartItem) => {
                                ${{ formatPrice(getItemTotal(item)) }}
                             </div>
                             <div v-if="updatingItems.has(item.id)" class="text-xs text-muted-foreground">
-                                Updating...
+                                {{ t('cart.updating') }}
                             </div>
                         </div>
 
@@ -332,7 +335,7 @@ const getItemTotal = (item: CartItem) => {
                                 variant="ghost"
                                 @click="emit('removeItem', item.id)"
                                 class="text-destructive hover:text-destructive"
-                                title="Remove item"
+                                :title="t('cart.removeItem')"
                             >
                                 <Trash2 class="h-4 w-4" />
                             </Button>

@@ -9,6 +9,9 @@ import {
     Home,
     RefreshCw
 } from 'lucide-vue-next';
+import { useI18n } from 'vue-i18n';
+
+const { t } = useI18n();
 
 // Props for navbar data
 const { categories, cartItems, auth, settings } = defineProps({
@@ -37,7 +40,7 @@ const goHome = () => {
 
 <template>
     <div class="min-h-screen bg-background">
-        <Head title="Payment Cancelled" />
+        <Head :title="t('checkout.paymentCancelled')" />
 
         <!-- Navbar -->
         <Navbar
@@ -59,11 +62,11 @@ const goHome = () => {
 
                     <!-- Simple Message -->
                     <h1 class="text-2xl font-semibold text-foreground mb-3">
-                        Payment Cancelled
+                        {{ t('checkout.paymentCancelled') }}
                     </h1>
 
                     <p class="text-muted-foreground mb-8">
-                        No worries! Your items are still in your cart and no payment was made.
+                        {{ t('checkout.paymentCancelledMessage') }}
                     </p>
 
                     <!-- Simple Action Buttons -->
@@ -74,7 +77,7 @@ const goHome = () => {
                             class="w-full sm:w-auto"
                         >
                             <RefreshCw class="h-4 w-4 mr-2" />
-                            Try Again
+                            {{ t('checkout.tryAgain') }}
                         </Button>
 
                         <div class="flex flex-col sm:flex-row gap-2 justify-center">
@@ -84,7 +87,7 @@ const goHome = () => {
                                 class="sm:w-auto"
                             >
                                 <ShoppingCart class="h-4 w-4 mr-2" />
-                                View Cart
+                                {{ t('cart.viewCart') }}
                             </Button>
 
                             <Button
@@ -93,7 +96,7 @@ const goHome = () => {
                                 class="sm:w-auto"
                             >
                                 <Home class="h-4 w-4 mr-2" />
-                                Continue Shopping
+                                {{ t('cart.continueShopping') }}
                             </Button>
                         </div>
                     </div>

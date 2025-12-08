@@ -8,6 +8,11 @@ import {
     Truck, Shield, RotateCcw, Award
 } from 'lucide-vue-next';
 import { computed } from 'vue';
+import { useLocale } from '@/composables/useLocale';
+import { useI18n } from 'vue-i18n';
+
+const { t } = useI18n();
+const { localizedUrl } = useLocale();
 
 interface CartItem {
     id: number;
@@ -63,7 +68,7 @@ const formatPrice = (price: number) => {
                 <CardTitle class="flex items-center justify-between">
                     <div class="flex items-center space-x-2">
                         <ShoppingCart class="h-5 w-5" />
-                        <span>Shopping Cart</span>
+                        <span>{{ t('sidebar.shoppingCart') }}</span>
                     </div>
                     <Badge v-if="cartItems.length > 0" variant="secondary">
                         {{ cartItems.length }}
@@ -76,9 +81,9 @@ const formatPrice = (price: number) => {
                     <div class="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-3">
                         <ShoppingCart class="h-8 w-8 text-muted-foreground" />
                     </div>
-                    <p class="text-sm text-muted-foreground mb-3">Your cart is empty</p>
-                    <Button size="sm" variant="outline" as="a" href="/products">
-                        Start Shopping
+                    <p class="text-sm text-muted-foreground mb-3">{{ t('sidebar.cartEmpty') }}</p>
+                    <Button size="sm" variant="outline" as="a" :href="localizedUrl('/products')">
+                        {{ t('sidebar.startShopping') }}
                     </Button>
                 </div>
 
@@ -102,7 +107,7 @@ const formatPrice = (price: number) => {
                     </div>
 
                     <div v-if="cartItems.length > 3" class="text-center text-sm text-muted-foreground">
-                        +{{ cartItems.length - 3 }} more items
+                        {{ t('sidebar.moreItems', { count: cartItems.length - 3 }) }}
                     </div>
 
                     <Separator class="my-4" />
@@ -110,26 +115,26 @@ const formatPrice = (price: number) => {
                     <!-- ✅ UPDATED: Simplified Cart Totals (No Shipping) -->
                     <div class="space-y-3">
                         <div class="flex justify-between items-center text-sm">
-                            <span class="text-muted-foreground">Subtotal:</span>
+                            <span class="text-muted-foreground">{{ t('sidebar.subtotal') }}:</span>
                             <span class="font-medium">${{ formatPrice(cartTotal) }}</span>
                         </div>
 
                         <Separator />
                         
                         <div class="flex justify-between items-center font-semibold text-lg">
-                            <span>Total:</span>
+                            <span>{{ t('sidebar.total') }}:</span>
                             <span class="text-xl text-primary">${{ formatPrice(cartTotal) }}</span>
                         </div>
                     </div>
 
                     <!-- Cart Actions -->
                     <div class="space-y-2 pt-2">
-                        <Button class="w-full" variant="default" as="a" href="/checkout">
+                        <Button class="w-full" variant="default" as="a" :href="localizedUrl('/checkout')">
                             <ShoppingCart class="h-4 w-4 mr-2" />
-                            Checkout
+                            {{ t('sidebar.checkout') }}
                         </Button>
-                        <Button class="w-full" variant="outline" as="a" href="/cart">
-                            View Cart ({{ cartItems.length }})
+                        <Button class="w-full" variant="outline" as="a" :href="localizedUrl('/cart')">
+                            {{ t('sidebar.viewCart') }} ({{ cartItems.length }})
                         </Button>
                     </div>
                 </div>
@@ -141,7 +146,7 @@ const formatPrice = (price: number) => {
             <CardHeader class="pb-3">
                 <CardTitle class="flex items-center space-x-2">
                     <Star class="h-5 w-5" />
-                    <span>Product Details</span>
+                    <span>{{ t('sidebar.productDetails') }}</span>
                 </CardTitle>
             </CardHeader>
             <CardContent class="space-y-6">
@@ -153,7 +158,7 @@ const formatPrice = (price: number) => {
                         </Badge>
                         <div class="flex items-center space-x-1" v-if="currentProduct.rating">
                             <Star class="h-4 w-4 fill-warning text-warning" />
-                            <span class="text-sm">{{ currentProduct.rating }} ({{ currentProduct.reviews_count || 0 }} reviews)</span>
+                            <span class="text-sm">{{ currentProduct.rating }} ({{ currentProduct.reviews_count || 0 }} {{ t('sidebar.reviews') }})</span>
                         </div>
                     </div>
                 </div>
@@ -162,24 +167,24 @@ const formatPrice = (price: number) => {
 
                 <div class="space-y-4">
                     <div>
-                        <p class="text-sm mb-1">Price</p>
+                        <p class="text-sm mb-1">{{ t('sidebar.price') }}</p>
                         <p class="text-3xl font-bold">${{ formatPrice(currentProduct.price) }}</p>
                     </div>
 
                     <div>
-                        <p class="text-sm mb-2">Availability</p>
+                        <p class="text-sm mb-2">{{ t('sidebar.availability') }}</p>
                         <div class="flex items-center space-x-2">
                             <Badge :variant="(currentProduct.stock || 0) > 0 ? 'default' : 'destructive'">
-                                {{ (currentProduct.stock || 0) > 0 ? `${currentProduct.stock} in stock` : 'Out of stock' }}
+                                {{ (currentProduct.stock || 0) > 0 ? `${currentProduct.stock} ${t('sidebar.inStock')}` : t('sidebar.outOfStock') }}
                             </Badge>
                             <span v-if="(currentProduct.stock || 0) > 0 && (currentProduct.stock || 0) < 10" class="text-xs text-destructive">
-                                Only {{ currentProduct.stock }} left!
+                                {{ t('sidebar.onlyLeft', { count: currentProduct.stock }) }}
                             </span>
                         </div>
                     </div>
 
                     <div v-if="currentProduct.description" class="space-y-2">
-                        <p class="text-sm font-medium">Description</p>
+                        <p class="text-sm font-medium">{{ t('product.description') }}</p>
                         <p class="text-sm text-muted-foreground line-clamp-3">{{ currentProduct.description }}</p>
                     </div>
                 </div>
@@ -193,11 +198,11 @@ const formatPrice = (price: number) => {
                         variant="default"
                     >
                         <ShoppingCart class="h-4 w-4 mr-2" />
-                        Add to Cart
+                        {{ t('sidebar.addToCart') }}
                     </Button>
                     <Button class="w-full" variant="outline">
                         <Heart class="h-4 w-4 mr-2" />
-                        Add to Wishlist
+                        {{ t('sidebar.addToWishlist') }}
                     </Button>
                 </div>
             </CardContent>
@@ -206,7 +211,7 @@ const formatPrice = (price: number) => {
         <!-- Categories Quick Access -->
         <Card v-if="categories.length > 0">
             <CardHeader>
-                <CardTitle class="text-base">Shop by Category</CardTitle>
+                <CardTitle class="text-base">{{ t('sidebar.shopByCategory') }}</CardTitle>
             </CardHeader>
             <CardContent class="space-y-2">
                 <Button
@@ -216,15 +221,15 @@ const formatPrice = (price: number) => {
                     size="sm"
                     class="w-full justify-start"
                     as="a"
-                    :href="`/products?category=${category.slug}`"
+                    :href="localizedUrl(`/products?category=${category.slug}`)"
                 >
                     {{ category.name }}
                     <Badge v-if="category.products_count" variant="outline" class="ml-auto">
                         {{ category.products_count }}
                     </Badge>
                 </Button>
-                <Button v-if="categories.length > 6" variant="outline" size="sm" class="w-full" as="a" href="/products">
-                    View All Categories
+                <Button v-if="categories.length > 6" variant="outline" size="sm" class="w-full" as="a" :href="localizedUrl('/products')">
+                    {{ t('sidebar.viewAllCategories') }}
                 </Button>
             </CardContent>
         </Card>

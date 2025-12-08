@@ -240,6 +240,8 @@ class CartController extends Controller
                 'selected_size' => $sizeName !== 'Size' ? $sizeName : null,
                 'selected_color_hex' => $variant->color ? $variant->color->hex_code : null,
                 'product_name' => $productName,
+                'product_name_en' => $variant->product->name_en ?? $variant->product->name,
+                'product_name_ar' => $variant->product->name_ar,
                 'quantity' => $quantity,
                 'price' => $finalPrice,
             ]);
@@ -292,6 +294,8 @@ class CartController extends Controller
                     $cart->items()->create([
                         'product_id' => $product->id,
                         'product_name' => $productName,
+                        'product_name_en' => $product->name_en ?? $product->name,
+                        'product_name_ar' => $product->name_ar,
                         'quantity' => $quantity,
                         'price' => $product->price,
                         'is_donation_item' => true,
@@ -358,6 +362,8 @@ class CartController extends Controller
             $cart->items()->create([
                 'product_id' => $product->id,
                 'product_name' => $productName,
+                'product_name_en' => $product->name_en ?? $product->name,
+                'product_name_ar' => $product->name_ar,
                 'quantity' => $quantity,
                 'price' => $product->price,
             ]);

@@ -4,6 +4,9 @@ import Navbar from '@/components/Navbar.vue';
 import HeroSection from '@/components/home/HeroSection.vue';
 import FeaturedProducts from '@/components/home/FeaturedProducts.vue';
 import HomeSidebar from '@/components/home/HomeSidebar.vue';
+import { useI18n } from 'vue-i18n';
+
+const { t } = useI18n();
 
 const { featuredProducts, categories, settings, cartItems, auth } = defineProps({
     featuredProducts: { type: Array, required: true },
@@ -21,7 +24,7 @@ const user = auth.user;
 
 <template>
     <div class="min-h-screen bg-background text-foreground">
-        <Head :title="siteName" />
+        <Head :title="t('home.welcomeMessage')" />
 
         <!-- Navbar -->
         <Navbar

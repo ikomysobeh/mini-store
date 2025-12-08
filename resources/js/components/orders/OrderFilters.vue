@@ -5,6 +5,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Search, Filter, X } from 'lucide-vue-next';
 import { watch, ref } from 'vue';
+import { useI18n } from 'vue-i18n';
+
+const { t } = useI18n();
 
 const props = defineProps({
     search: { type: String, default: '' },
@@ -106,7 +109,7 @@ const hasActiveFilters = () => {
         <CardHeader>
             <CardTitle class="flex items-center">
                 <Filter class="h-5 w-5 mr-2" />
-                Filter Orders
+                {{ t('orders.filterOrders') }}
             </CardTitle>
         </CardHeader>
         <CardContent class="p-4">
@@ -115,14 +118,14 @@ const hasActiveFilters = () => {
 
                 <!-- Search Input -->
                 <div class="space-y-2">
-                    <Label for="search">Search Orders</Label>
+                    <Label for="search">{{ t('orders.searchOrders') }}</Label>
                     <div class="relative">
                         <Search class="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                         <Input
                             id="search"
                             v-model="localSearch"
                             @input="updateSearch(localSearch)"
-                            placeholder="Order ID, product name..."
+                            :placeholder="t('orders.searchPlaceholder')"
                             class="pl-10"
                         />
                     </div>
@@ -130,51 +133,51 @@ const hasActiveFilters = () => {
 
                 <!-- Status Filter -->
                 <div class="space-y-2">
-                    <Label for="status">Status</Label>
+                    <Label for="status">{{ t('checkout.status') }}</Label>
                     <select
                         id="status"
                         v-model="localStatus"
                         @change="updateStatus(localStatus)"
                         class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                     >
-                        <option value="">All Statuses</option>
-                        <option value="pending">Pending</option>
-                        <option value="processing">Processing</option>
-                        <option value="shipped">Shipped</option>
-                        <option value="delivered">Delivered</option>
-                        <option value="cancelled">Cancelled</option>
+                        <option value="">{{ t('orders.allStatuses') }}</option>
+                        <option value="pending">{{ t('orders.status.pending') }}</option>
+                        <option value="processing">{{ t('orders.status.processing') }}</option>
+                        <option value="shipped">{{ t('orders.status.shipped') }}</option>
+                        <option value="delivered">{{ t('orders.status.delivered') }}</option>
+                        <option value="cancelled">{{ t('orders.status.cancelled') }}</option>
                     </select>
                 </div>
 
                 <!-- Type Filter -->
                 <div class="space-y-2">
-                    <Label for="type">Order Type</Label>
+                    <Label for="type">{{ t('orders.orderType') }}</Label>
                     <select
                         id="type"
                         v-model="localType"
                         @change="updateType(localType)"
                         class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                     >
-                        <option value="">All Orders</option>
-                        <option value="purchase">Purchases</option>
-                        <option value="donation">Donations</option>
+                        <option value="">{{ t('orders.allOrders') }}</option>
+                        <option value="purchase">{{ t('orders.purchases') }}</option>
+                        <option value="donation">{{ t('orders.donations') }}</option>
                     </select>
                 </div>
 
                 <!-- Date Range Filter -->
                 <div class="space-y-2">
-                    <Label for="dateRange">Date Range</Label>
+                    <Label for="dateRange">{{ t('orders.dateRange') }}</Label>
                     <select
                         id="dateRange"
                         v-model="localDateRange"
                         @change="updateDateRange(localDateRange)"
                         class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                     >
-                        <option value="">All Time</option>
-                        <option value="last_month">Last Month</option>
-                        <option value="last_3_months">Last 3 Months</option>
-                        <option value="last_year">Last Year</option>
-                        <option value="this_year">This Year</option>
+                        <option value="">{{ t('orders.allTime') }}</option>
+                        <option value="last_month">{{ t('orders.lastMonth') }}</option>
+                        <option value="last_3_months">{{ t('orders.last3Months') }}</option>
+                        <option value="last_year">{{ t('orders.lastYear') }}</option>
+                        <option value="this_year">{{ t('orders.thisYear') }}</option>
                     </select>
                 </div>
 
@@ -187,7 +190,7 @@ const hasActiveFilters = () => {
                             class="flex-1"
                             size="sm"
                         >
-                            Apply
+                            {{ t('common.apply') }}
                         </Button>
                         <Button
                             @click="clearFilters"
@@ -205,19 +208,24 @@ const hasActiveFilters = () => {
             <!-- Active Filters Display -->
             <div v-if="hasActiveFilters()" class="mt-4 pt-4 border-t border-border">
                 <div class="flex items-center space-x-2 text-sm text-muted-foreground">
-                    <span>Active filters:</span>
+                    <span>{{ t('orders.activeFilters') }}</span>
                     <div class="flex flex-wrap gap-2">
                         <span v-if="localSearch" class="px-2 py-1 bg-info/20 text-info rounded text-xs">
-                            Search: "{{ localSearch }}"
+                            {{ t('common.search') }}: "{{ localSearch }}"
                         </span>
                         <span v-if="localStatus" class="px-2 py-1 bg-success/20 text-success rounded text-xs">
-                            Status: {{ localStatus.charAt(0).toUpperCase() + localStatus.slice(1) }}
+                            {{ t('checkout.status') }}: {{ t(`orders.status.${localStatus}`) }}
                         </span>
                         <span v-if="localType" class="px-2 py-1 bg-primary/20 text-primary rounded text-xs">
-                            Type: {{ localType.charAt(0).toUpperCase() + localType.slice(1) }}
+                            {{ t('orders.type') }}: {{ localType === 'purchase' ? t('orders.purchases') : t('orders.donations') }}
                         </span>
                         <span v-if="localDateRange" class="px-2 py-1 bg-warning/20 text-warning rounded text-xs">
-                            Range: {{ localDateRange.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase()) }}
+                            {{ t('orders.range') }}: {{ 
+                                localDateRange === 'last_month' ? t('orders.lastMonth') :
+                                localDateRange === 'last_3_months' ? t('orders.last3Months') :
+                                localDateRange === 'last_year' ? t('orders.lastYear') :
+                                localDateRange === 'this_year' ? t('orders.thisYear') : localDateRange
+                            }}
                         </span>
                     </div>
                 </div>

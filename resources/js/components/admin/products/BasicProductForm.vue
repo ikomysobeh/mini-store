@@ -128,35 +128,68 @@ const hasImages = computed(() => existingImages.value.length > 0 || selectedFile
         <!-- Left Column -->
         <div class="space-y-6">
 
-            <!-- Product Name -->
+            <!-- Product Name - English -->
             <div>
-                <Label for="name">Product Name *</Label>
+                <Label for="name_en">Product Name (English) *</Label>
                 <Input
-                    id="name"
-                    v-model="form.name"
+                    id="name_en"
+                    v-model="form.name_en"
                     type="text"
-                    required
                     class="mt-1"
-                    placeholder="Enter product name"
+                    placeholder="Enter product name in English"
                 />
-                <div v-if="form.errors?.name" class="text-red-500 text-sm mt-1">
-                    {{ form.errors.name }}
+                <div v-if="form.errors?.name_en" class="text-red-500 text-sm mt-1">
+                    {{ form.errors.name_en }}
                 </div>
             </div>
 
-            <!-- Description -->
+            <!-- Product Name - Arabic -->
             <div>
-                <Label for="description">Description</Label>
+                <Label for="name_ar">Product Name (Arabic) - اسم المنتج *</Label>
+                <Input
+                    id="name_ar"
+                    v-model="form.name_ar"
+                    type="text"
+                    class="mt-1"
+                    dir="rtl"
+                    placeholder="أدخل اسم المنتج بالعربية"
+                />
+                <div v-if="form.errors?.name_ar" class="text-red-500 text-sm mt-1">
+                    {{ form.errors.name_ar }}
+                </div>
+                <p class="text-xs text-gray-500 mt-1">At least one language (English or Arabic) is required</p>
+            </div>
+
+            <!-- Description - English -->
+            <div>
+                <Label for="description_en">Description (English)</Label>
                 <Textarea
-                    id="description"
-                    v-model="form.description"
+                    id="description_en"
+                    v-model="form.description_en"
                     rows="4"
                     class="mt-1"
-                    placeholder="Product description..."
+                    placeholder="Product description in English..."
                 />
-                <div v-if="form.errors?.description" class="text-red-500 text-sm mt-1">
-                    {{ form.errors.description }}
+                <div v-if="form.errors?.description_en" class="text-red-500 text-sm mt-1">
+                    {{ form.errors.description_en }}
                 </div>
+            </div>
+
+            <!-- Description - Arabic -->
+            <div>
+                <Label for="description_ar">Description (Arabic) - الوصف</Label>
+                <Textarea
+                    id="description_ar"
+                    v-model="form.description_ar"
+                    rows="4"
+                    class="mt-1"
+                    dir="rtl"
+                    placeholder="وصف المنتج بالعربية..."
+                />
+                <div v-if="form.errors?.description_ar" class="text-red-500 text-sm mt-1">
+                    {{ form.errors.description_ar }}
+                </div>
+                <p class="text-xs text-gray-500 mt-1">At least one language (English or Arabic) is required</p>
             </div>
 
             <!-- Price and Stock -->

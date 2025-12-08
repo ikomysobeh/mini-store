@@ -2,6 +2,11 @@
 import { Button } from '@/components/ui/button';
 import { ShoppingCart, ArrowRight, Sparkles, MessageCircle, Facebook } from 'lucide-vue-next';
 import { computed } from 'vue';
+import { useLocale } from '@/composables/useLocale';
+import { useI18n } from 'vue-i18n';
+
+const { t } = useI18n();
+const { localizedUrl } = useLocale();
 
 interface Props {
     siteName: string;
@@ -21,8 +26,8 @@ const {
     heroBackgroundOverlay = 'dark'
 } = defineProps<Props>();
 
-const defaultTitle = heroTitle || 'Discover Amazing Products';
-const defaultSubtitle = heroSubtitle || 'Premium quality items with modern design and exceptional value';
+const defaultTitle = computed(() => heroTitle || t('home.discoverProducts'));
+const defaultSubtitle = computed(() => heroSubtitle || t('home.premiumQuality'));
 
 // Convert to boolean properly
 const useBackground = computed(() => {
@@ -146,7 +151,7 @@ const getWhatsAppLink = (phoneNumber: string) => {
             <div :class="['inline-flex items-center px-4 py-2 rounded-full mb-6', textClasses.badgeBg]">
                 <Sparkles :class="['h-4 w-4 mr-2', textClasses.badge]" />
                 <span :class="['text-sm', textClasses.badge, 'opacity-90']">
-                    Welcome to {{ siteName }}
+                    {{ t('home.welcomeTo') }} {{ siteName }}
                 </span>
             </div>
 
@@ -167,10 +172,10 @@ const getWhatsAppLink = (phoneNumber: string) => {
                     :variant="useBackground && heroBackgroundUrl ? 'default' : 'secondary'"
                     :class="buttonClasses.primary"
                     as="a"
-                    href="/products"
+                    :href="localizedUrl('/products')"
                 >
                     <ShoppingCart class="h-5 w-5 mr-2" />
-                    Shop Now
+                    {{ t('home.shopNow') }}
                 </Button>
 
                 <Button
@@ -180,7 +185,7 @@ const getWhatsAppLink = (phoneNumber: string) => {
                     as="a"
                     href="#featured"
                 >
-                    View Featured
+                    {{ t('home.viewFeatured') }}
                     <ArrowRight class="h-5 w-5 ml-2" />
                 </Button>
             </div>
@@ -211,7 +216,7 @@ const getWhatsAppLink = (phoneNumber: string) => {
                         :class="['flex items-center gap-2 hover:opacity-80 transition-opacity', textClasses.contact]"
                     >
                         <MessageCircle class="h-4 w-4" />
-                        <span class="font-medium">Technical Support:</span>
+                        <span class="font-medium">{{ t('home.technicalSupport') }}:</span>
                         <span>963937671126</span>
                     </a>
                 </div>
@@ -225,7 +230,7 @@ const getWhatsAppLink = (phoneNumber: string) => {
                         :class="['inline-flex items-center gap-2 px-4 py-2 rounded-full transition-all hover:scale-105', textClasses.badgeBg]"
                     >
                         <Facebook class="h-4 w-4" />
-                        <span class="text-sm font-medium">Follow us on Facebook</span>
+                        <span class="text-sm font-medium">{{ t('home.followFacebook') }}</span>
                     </a>
                 </div>
             </div>

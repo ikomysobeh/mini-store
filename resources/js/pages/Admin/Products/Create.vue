@@ -15,10 +15,18 @@ const { categories } = defineProps({
     categories: { type: Array, required: true },
 });
 
-// Form data - ENHANCED with multiple images support
+// Form data - ENHANCED with multiple images support and bilingual fields
 const form = useForm({
+    // Bilingual fields
+    name_en: '',
+    name_ar: '',
+    description_en: '',
+    description_ar: '',
+    
+    // Legacy fields (for backward compatibility)
     name: '',
     description: '',
+    
     price: 0,
     stock: 0,
     category_id: '',

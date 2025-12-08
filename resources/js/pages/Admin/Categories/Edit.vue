@@ -16,8 +16,14 @@ const { category } = defineProps({
     category: { type: Object, required: true }
 });
 
-// Form state - Pre-populate with existing data
+// Form state - Pre-populate with existing data (Bilingual support)
 const form = useForm({
+    // Bilingual fields
+    name_en: category.name_en || category.name || '',
+    name_ar: category.name_ar || '',
+    description_en: category.description_en || category.description || '',
+    description_ar: category.description_ar || '',
+    // Legacy fields
     name: category.name || '',
     slug: category.slug || '',
     description: category.description || '',
@@ -34,13 +40,16 @@ const originalImage = category.image;
 
 // Computed properties
 const isFormValid = computed(() => {
-    return form.name && form.name.trim().length > 0;
+    return form.name_en && form.name_en.trim().length > 0 &&
+           form.name_ar && form.name_ar.trim().length > 0;
 });
 
 const hasUnsavedChanges = computed(() => {
-    return form.name !== category.name ||
+    return form.name_en !== (category.name_en || category.name || '') ||
+        form.name_ar !== (category.name_ar || '') ||
+        form.description_en !== (category.description_en || category.description || '') ||
+        form.description_ar !== (category.description_ar || '') ||
         form.slug !== category.slug ||
-        form.description !== (category.description || '') ||
         form.is_active !== Boolean(category.is_active) ||
         form.sort_order !== (category.sort_order || 0) ||
         form.image !== null ||
@@ -55,8 +64,8 @@ const generateSlug = (name) => {
 
 // Auto-generate slug (only if empty)
 const updateSlug = () => {
-    if (form.name && !form.slug) {
-        form.slug = generateSlug(form.name);
+    if (form.name_en && !form.slug) {
+        form.slug = generateSlug(form.name_en);
     }
 };
 
@@ -119,13 +128,17 @@ const updateCategory = (draft = false) => {
     console.log('Draft mode:', draft);
 
     if (!isFormValid.value) {
-        alert('Category name is required');
+        alert('Category names (English and Arabic) are required');
         return;
     }
 
-    if (!form.slug && form.name) {
-        form.slug = generateSlug(form.name);
+    if (!form.slug && form.name_en) {
+        form.slug = generateSlug(form.name_en);
     }
+
+    // Sync legacy fields
+    form.name = form.name_en;
+    form.description = form.description_en;
 
     // Handle draft mode
     const originalIsActive = form.is_active;
@@ -139,10 +152,14 @@ const updateCategory = (draft = false) => {
     if (form.image) {
         const formData = new FormData();
 
-        // Add all form fields explicitly
-        formData.append('name', form.name);
+        // Add all form fields explicitly - Bilingual
+        formData.append('name_en', form.name_en);
+        formData.append('name_ar', form.name_ar);
+        formData.append('description_en', form.description_en || '');
+        formData.append('description_ar', form.description_ar || '');
+        formData.append('name', form.name_en); // Legacy
         formData.append('slug', form.slug || '');
-        formData.append('description', form.description || '');
+        formData.append('description', form.description_en || ''); // Legacy
         formData.append('sort_order', form.sort_order.toString());
         formData.append('is_active', form.is_active ? '1' : '0');
         formData.append('remove_image', form.remove_image ? '1' : '0');
@@ -167,11 +184,15 @@ const updateCategory = (draft = false) => {
             }
         });
     } else {
-        // Regular JSON submission
+        // Regular JSON submission - Bilingual
         const submitData = {
-            name: form.name,
+            name_en: form.name_en,
+            name_ar: form.name_ar,
+            description_en: form.description_en || '',
+            description_ar: form.description_ar || '',
+            name: form.name_en, // Legacy
             slug: form.slug || '',
-            description: form.description || '',
+            description: form.description_en || '', // Legacy
             sort_order: parseInt(form.sort_order.toString()) || 0,
             is_active: Boolean(form.is_active),
             remove_image: Boolean(form.remove_image)
@@ -319,28 +340,46 @@ const logFormData = () => {
                 <!-- Main Form -->
                 <div class="lg:col-span-2 space-y-8">
 
-                    <!-- Basic Information -->
+                    <!-- Basic Information - Bilingual -->
                     <Card>
                         <CardHeader>
                             <CardTitle>Basic Information</CardTitle>
                         </CardHeader>
                         <CardContent class="space-y-6">
 
-                            <!-- Category Name -->
+                            <!-- Category Name - English -->
                             <div class="space-y-2">
-                                <Label for="name">
-                                    Category Name <span class="text-destructive">*</span>
+                                <Label for="name_en">
+                                    Category Name (English) <span class="text-destructive">*</span>
                                 </Label>
                                 <Input
-                                    id="name"
-                                    v-model="form.name"
+                                    id="name_en"
+                                    v-model="form.name_en"
                                     @input="updateSlug"
                                     placeholder="Electronics, Clothing, Books..."
                                     class="text-lg"
-                                    :class="{ 'border-destructive': form.errors.name }"
+                                    :class="{ 'border-destructive': form.errors.name_en }"
                                 />
-                                <p v-if="form.errors.name" class="text-sm text-destructive">
-                                    {{ form.errors.name }}
+                                <p v-if="form.errors.name_en" class="text-sm text-destructive">
+                                    {{ form.errors.name_en }}
+                                </p>
+                            </div>
+
+                            <!-- Category Name - Arabic -->
+                            <div class="space-y-2">
+                                <Label for="name_ar">
+                                    Category Name (Arabic) - اسم الفئة <span class="text-destructive">*</span>
+                                </Label>
+                                <Input
+                                    id="name_ar"
+                                    v-model="form.name_ar"
+                                    placeholder="أدخل اسم الفئة بالعربية"
+                                    dir="rtl"
+                                    class="text-lg"
+                                    :class="{ 'border-destructive': form.errors.name_ar }"
+                                />
+                                <p v-if="form.errors.name_ar" class="text-sm text-destructive">
+                                    {{ form.errors.name_ar }}
                                 </p>
                             </div>
 
@@ -354,31 +393,48 @@ const logFormData = () => {
                                     <Input
                                         id="slug"
                                         v-model="form.slug"
-                                        :placeholder="generateSlug(form.name) || 'category-slug'"
+                                        :placeholder="generateSlug(form.name_en) || 'category-slug'"
                                         class="rounded-l-none"
                                     />
                                 </div>
                                 <p class="text-xs text-muted-foreground">
-                                    Preview: /categories/{{ form.slug || generateSlug(form.name) || 'category-slug' }}
+                                    Preview: /categories/{{ form.slug || generateSlug(form.name_en) || 'category-slug' }}
                                 </p>
                                 <p v-if="form.errors.slug" class="text-sm text-destructive">
                                     {{ form.errors.slug }}
                                 </p>
                             </div>
 
-                            <!-- Description -->
+                            <!-- Description - English -->
                             <div class="space-y-2">
-                                <Label for="description">Description</Label>
+                                <Label for="description_en">Description (English)</Label>
                                 <textarea
-                                    id="description"
-                                    v-model="form.description"
+                                    id="description_en"
+                                    v-model="form.description_en"
                                     placeholder="Describe this category and what products it contains..."
                                     rows="4"
                                     maxlength="500"
                                     class="flex min-h-[100px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                                 ></textarea>
                                 <p class="text-xs text-muted-foreground">
-                                    {{ form.description.length }}/500 characters
+                                    {{ form.description_en?.length || 0 }}/500 characters
+                                </p>
+                            </div>
+
+                            <!-- Description - Arabic -->
+                            <div class="space-y-2">
+                                <Label for="description_ar">Description (Arabic) - الوصف</Label>
+                                <textarea
+                                    id="description_ar"
+                                    v-model="form.description_ar"
+                                    placeholder="وصف الفئة بالعربية..."
+                                    dir="rtl"
+                                    rows="4"
+                                    maxlength="500"
+                                    class="flex min-h-[100px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                                ></textarea>
+                                <p class="text-xs text-muted-foreground">
+                                    {{ form.description_ar?.length || 0 }}/500 characters
                                 </p>
                             </div>
 

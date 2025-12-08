@@ -15,13 +15,16 @@ const getCategoryName = (categorySlug: string) => {
     const category = categories.find(cat => cat.slug === categorySlug);
     return category ? category.name : categorySlug;
 };
+
+import { useI18n } from 'vue-i18n';
+const { t } = useI18n();
 </script>
 
 <template>
     <div class="mb-8">
-        <h1 class="text-3xl font-bold mb-2">All Products</h1>
+        <h1 class="text-3xl font-bold mb-2">{{ t('nav.products') }}</h1>
         <p class="text-muted-foreground">
-            {{ totalProducts.toLocaleString() }} products found
+            {{ totalProducts.toLocaleString() }} {{ t('nav.products') }}
             <span v-if="selectedCategory" class="ml-2">
                 in <span class="capitalize font-medium">{{ getCategoryName(selectedCategory) }}</span>
             </span>

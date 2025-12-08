@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Product URL Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .product { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        .product h3 { margin-top: 0; color: #333; }
+        .url-test { margin: 10px 0; }
+        .url-test a { display: inline-block; padding: 8px 15px; margin: 5px; background: #007bff; color: white; text-decoration: none; border-radius: 4px; }
+        .url-test a:hover { background: #0056b3; }
+        .info { background: #f8f9fa; padding: 10px; margin: 10px 0; border-left: 4px solid #007bff; }
+        .warning { background: #fff3cd; padding: 10px; margin: 10px 0; border-left: 4px solid #ffc107; }
+    </style>
+</head>
+<body>
+    <h1>Product URL Testing</h1>
+    
+    <div class="info">
+        <strong>Instructions:</strong>
+        <ol>
+            <li>Click on the links below to test each product in both languages</li>
+            <li>Verify that the product page loads correctly</li>
+            <li>Check that the language switcher works on the product page</li>
+            <li>Verify that product names and descriptions appear in the correct language</li>
+        </ol>
+    </div>
+
+    <div class="warning">
+        <strong>Note:</strong> Products without Arabic translations (slug_ar is empty) will use the English slug for both languages.
+    </div>
+
+    <h2>Test Products</h2>
+
+    <!-- Product 11: test 1 (Has both EN and AR) -->
+    <div class="product">
+        <h3>Product 11: test 1 / تسيت 1</h3>
+        <p><strong>English Name:</strong> test 1</p>
+        <p><strong>Arabic Name:</strong> تسيت 1</p>
+        <p><strong>English Slug:</strong> test-1</p>
+        <p><strong>Arabic Slug:</strong> tsyt-1</p>
+        <div class="url-test">
+            <a href="http://127.0.0.1:8000/en/products/test-1" target="_blank">View in English</a>
+            <a href="http://127.0.0.1:8000/ar/products/tsyt-1" target="_blank">View in Arabic</a>
+        </div>
+    </div>
+
+    <!-- Product 12: test 2 (Has both EN and AR) -->
+    <div class="product">
+        <h3>Product 12: test 2 / تسيت 2</h3>
+        <p><strong>English Name:</strong> test 2</p>
+        <p><strong>Arabic Name:</strong> تسيت 2</p>
+        <p><strong>English Slug:</strong> test-2</p>
+        <p><strong>Arabic Slug:</strong> tsyt-2</p>
+        <div class="url-test">
+            <a href="http://127.0.0.1:8000/en/products/test-2" target="_blank">View in English</a>
+            <a href="http://127.0.0.1:8000/ar/products/tsyt-2" target="_blank">View in Arabic</a>
+        </div>
+    </div>
+
+    <!-- Product 10: test (English only) -->
+    <div class="product">
+        <h3>Product 10: test (English Only)</h3>
+        <p><strong>English Name:</strong> test</p>
+        <p><strong>Arabic Name:</strong> (empty)</p>
+        <p><strong>English Slug:</strong> test</p>
+        <p><strong>Arabic Slug:</strong> (empty)</p>
+        <div class="url-test">
+            <a href="http://127.0.0.1:8000/en/products/test" target="_blank">View in English</a>
+            <a href="http://127.0.0.1:8000/ar/products/test" target="_blank">View in Arabic (fallback)</a>
+        </div>
+    </div>
+
+    <h2>Home Page Tests</h2>
+    <div class="product">
+        <h3>Home Page</h3>
+        <div class="url-test">
+            <a href="http://127.0.0.1:8000/en" target="_blank">English Home</a>
+            <a href="http://127.0.0.1:8000/ar" target="_blank">Arabic Home</a>
+        </div>
+    </div>
+
+    <h2>Products Listing Tests</h2>
+    <div class="product">
+        <h3>Products Page</h3>
+        <div class="url-test">
+            <a href="http://127.0.0.1:8000/en/products" target="_blank">English Products</a>
+            <a href="http://127.0.0.1:8000/ar/products" target="_blank">Arabic Products</a>
+        </div>
+    </div>
+
+    <h2>Expected Behavior</h2>
+    <div class="info">
+        <ul>
+            <li><strong>Product 11 & 12:</strong> Should display in the correct language based on the URL</li>
+            <li><strong>Product 10:</strong> Should work in both languages but show English content</li>
+            <li><strong>Language Switcher:</strong> Should reload the page with the new locale prefix</li>
+            <li><strong>Navigation:</strong> All links should maintain the current locale</li>
+        </ul>
+    </div>
+</body>
+</html>

@@ -5,6 +5,11 @@ import PageHeader from '@/components/products/PageHeader.vue';
 import ProductFilters from '@/components/products/ProductFilters.vue';
 import ProductsGrid from '@/components/products/ProductsGrid.vue';
 import { ref, computed, watch, nextTick } from 'vue';
+import { useI18n } from 'vue-i18n';
+import { useLocale } from '@/composables/useLocale';
+
+const { t } = useI18n();
+const { localizedUrl } = useLocale();
 
 const { products, categories, filters, auth, cartItems, settings } = defineProps({
     products: { type: Object, required: true },
@@ -82,7 +87,7 @@ const applyFilters = () => {
     if (onlyDonatable.value) params.donatable = true;
     if (sortBy.value && sortBy.value !== 'name') params.sort = sortBy.value;
 
-    router.get('/products', params, {
+    router.get(localizedUrl('/products'), params, {
         preserveState: true,
         preserveScroll: true,
     });
@@ -108,7 +113,7 @@ const clearFilters = () => {
         });
 
         // Navigate to clean URL
-        router.get('/products', {}, {
+        router.get(localizedUrl('/products'), {}, {
             preserveState: false, // Don't preserve state to ensure fresh load
             preserveScroll: false,
         });
@@ -150,7 +155,7 @@ watch([selectedCategory, onlyDonatable, sortBy], ([newCategory, newDonatable, ne
 
 <template>
     <div class="min-h-screen bg-background text-foreground">
-        <Head title="Products" />
+        <Head :title="t('nav.products')" />
 
         <!-- Navbar -->
         <Navbar

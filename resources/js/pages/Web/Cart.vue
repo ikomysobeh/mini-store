@@ -8,6 +8,11 @@ import EmptyCart from '@/components/cart/EmptyCart.vue';
 import CartItemsList from '@/components/cart/CartItemsList.vue';
 import OrderSummary from '@/components/cart/OrderSummary.vue';
 import { ref, computed, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
+import { useLocale } from '@/composables/useLocale';
+
+const { t } = useI18n();
+const { localizedUrl } = useLocale();
 
 const { cart, categories, auth, settings } = defineProps({
     cart: { type: Object, default: null },
@@ -53,10 +58,10 @@ const total = computed(() => {
 const isEmpty = computed(() => cartItems.value.length === 0);
 
 // Breadcrumb items
-const breadcrumbItems = [
-    { label: 'Home', href: '/' },
-    { label: 'Shopping Cart', isActive: true }
-];
+const breadcrumbItems = computed(() => [
+    { label: t('nav.home'), href: localizedUrl('/') },
+    { label: t('cart.title'), isActive: true }
+]);
 
 // Cart management functions
 const updateQuantity = (itemId, newQuantity) => {
@@ -71,7 +76,7 @@ const updateQuantity = (itemId, newQuantity) => {
     updatingItems.value.add(itemId);
 
     setTimeout(() => {
-        router.patch(`/cart/update/${itemId}`, {
+        router.patch(localizedUrl(`/cart/update/${itemId}`), {
             quantity: newQuantity
         }, {
             preserveState: true,
@@ -99,8 +104,8 @@ const decrementQuantity = (itemId) => {
 };
 
 const removeItem = (itemId) => {
-    if (confirm('Remove this item from your cart?')) {
-        router.delete(`/cart/remove/${itemId}`, {
+    if (confirm(t('cart.remove') + '?')) {
+        router.delete(localizedUrl(`/cart/remove/${itemId}`), {
             preserveState: true,
             preserveScroll: true,
             onSuccess: () => {
@@ -114,8 +119,8 @@ const removeItem = (itemId) => {
 };
 
 const clearCart = () => {
-    if (confirm('Are you sure you want to clear your entire cart?')) {
-        router.delete('/cart/clear', {
+    if (confirm(t('cart.empty') + '?')) {
+        router.delete(localizedUrl('/cart/clear'), {
             preserveState: true,
             onSuccess: () => {
                 quantities.value = {};
@@ -129,14 +134,14 @@ const clearCart = () => {
 
 const proceedToCheckout = () => {
     if (user) {
-        router.visit('/checkout');
+        router.visit(localizedUrl('/checkout'));
     } else {
-        router.visit('/login?redirect=checkout');
+        router.visit(localizedUrl('/login?redirect=checkout'));
     }
 };
 
 const applyPromoCode = (code) => {
-    router.post('/cart/apply-promo', {
+    router.post(localizedUrl('/cart/apply-promo'), {
         code: code
     }, {
         preserveState: true,
@@ -147,7 +152,7 @@ const applyPromoCode = (code) => {
 
 <template>
     <div class="min-h-screen bg-background text-foreground">
-        <Head title="Shopping Cart" />
+        <Head :title="t('cart.title')" />
 
         <Navbar
             :categories="categories"

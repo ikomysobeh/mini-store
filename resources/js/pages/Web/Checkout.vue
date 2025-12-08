@@ -4,6 +4,11 @@ import Navbar from '@/components/Navbar.vue'
 import EmptyCartState from '@/components/checkout/EmptyCartState.vue'
 import CheckoutContent from '@/components/checkout/CheckoutContent.vue'
 import { computed } from 'vue'
+import { useI18n } from 'vue-i18n';
+import { useLocale } from '@/composables/useLocale';
+
+const { t } = useI18n();
+const { localizedUrl } = useLocale();
 
 // ENHANCED: Add existingCustomerData prop
 const { cartItems, categories, auth, settings, shippingMethods, paymentMethods, existingCustomerData } = defineProps<{
@@ -25,7 +30,7 @@ const hasDonationItems = computed(() => cartItems.some((item: any) => item.is_do
 
 // Event handlers
 const removeItem = (itemId: number) => {
-    router.delete(`/cart/remove/${itemId}`, {
+    router.delete(localizedUrl(`/cart/remove/${itemId}`), {
         preserveState: true
     })
 }
@@ -39,7 +44,7 @@ const processPayment = () => {
 
 <template>
     <div class="min-h-screen bg-background text-foreground">
-        <Head title="Checkout" />
+        <Head :title="t('checkout.title')" />
 
         <!-- Navbar -->
         <Navbar

@@ -113,6 +113,9 @@ class FortifyServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Ignore default Fortify routes - we'll register them with locale prefix
+        Fortify::ignoreRoutes();
+
         Fortify::createUsersUsing(CreateNewUser::class);
         Fortify::updateUserProfileInformationUsing(UpdateUserProfileInformation::class);
         Fortify::updateUserPasswordsUsing(UpdateUserPassword::class);
@@ -208,6 +211,7 @@ class FortifyServiceProvider extends ServiceProvider
                 'siteName' => $settings['site_name'] ?? config('app.name', 'Laravel'),
                 'siteTagline' => $settings['site_tagline'] ?? '',
                 'status' => session('status'),
+                'locale' => app()->getLocale(), // Add locale for i18n
             ], $data);
 
             return Inertia::render($view, $authData);
@@ -222,6 +226,7 @@ class FortifyServiceProvider extends ServiceProvider
                 'siteName' => config('app.name', 'Laravel'),
                 'siteTagline' => '',
                 'status' => session('status'),
+                'locale' => app()->getLocale(), // Add locale for i18n
             ], $data);
 
             return Inertia::render($view, $fallbackData);

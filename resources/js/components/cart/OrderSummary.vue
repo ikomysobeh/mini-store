@@ -5,6 +5,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { CreditCard, Shield, ShoppingCart, ArrowLeft } from 'lucide-vue-next';
 import { ref, computed } from 'vue';
+import { useI18n } from 'vue-i18n';
+
+const { t } = useI18n();
 
 interface Props {
     subtotal: number;
@@ -69,14 +72,14 @@ const proceedToCheckout = () => {
                 <CardHeader>
                     <CardTitle class="flex items-center space-x-2">
                         <CreditCard class="h-5 w-5" />
-                        <span>Order Summary</span>
+                        <span>{{ t('checkout.orderSummary') }}</span>
                     </CardTitle>
                 </CardHeader>
                 <CardContent class="space-y-4">
 
                     <!-- Subtotal -->
                     <div class="flex justify-between text-base">
-                        <span>Subtotal ({{ itemCount }} items)</span>
+                        <span>{{ t('cart.subtotal') }} ({{ itemCount }} {{ t('cart.itemsInCart') }})</span>
                         <span class="font-medium">${{ formatPrice(subtotal) }}</span>
                     </div>
 
@@ -85,7 +88,7 @@ const proceedToCheckout = () => {
 
                     <!-- Total -->
                     <div class="flex justify-between text-xl font-bold">
-                        <span>Total</span>
+                        <span>{{ t('cart.total') }}</span>
                         <span class="text-primary">${{ formatPrice(total) }}</span>
                     </div>
 
@@ -97,17 +100,17 @@ const proceedToCheckout = () => {
                         :disabled="updatingItems.size > 0"
                     >
                         <CreditCard class="h-4 w-4 mr-2" />
-                        {{ user ? 'Proceed to Checkout' : 'Login & Checkout' }}
+                        {{ user ? t('cart.proceedToCheckout') : t('nav.login') + ' & ' + t('cart.checkout') }}
                     </Button>
 
                     <p v-if="!user" class="text-xs text-center text-muted-foreground">
-                        You'll be redirected to login first
+                        {{ t('cart.youllBeRedirected') }}
                     </p>
 
                     <!-- Security Notice -->
                     <div class="flex items-center justify-center space-x-2 text-xs text-muted-foreground mt-4 p-3 bg-muted/50 rounded-lg">
                         <Shield class="h-3 w-3" />
-                        <span>256-bit SSL Secure Checkout</span>
+                        <span>{{ t('cart.secureCheckout') }}</span>
                     </div>
                 </CardContent>
             </Card>

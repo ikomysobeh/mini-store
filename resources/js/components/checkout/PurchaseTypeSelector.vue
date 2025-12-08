@@ -2,6 +2,9 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ShoppingCart, Heart, Gift } from 'lucide-vue-next';
+import { useI18n } from 'vue-i18n';
+
+const { t, locale } = useI18n();
 
 interface Props {
     selectedType: 'purchase' | 'donation';
@@ -21,7 +24,7 @@ const props = withDefaults(defineProps<Props>(), {
 const emit = defineEmits<Emits>();
 
 const formatPrice = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
+    return new Intl.NumberFormat(locale.value === 'ar' ? 'ar-SY' : 'en-US', {
         style: 'currency',
         currency: 'USD'
     }).format(amount);
@@ -30,7 +33,7 @@ const formatPrice = (amount: number) => {
 
 <template>
     <div class="space-y-4">
-        <h3 class="text-lg font-semibold">Choose Payment Type</h3>
+        <h3 class="text-lg font-semibold">{{ t('checkout.choosePaymentType') }}</h3>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
 
@@ -53,15 +56,15 @@ const formatPrice = (amount: number) => {
                             <ShoppingCart class="h-5 w-5" />
                         </div>
                         <div>
-                            <h4 class="font-semibold ">Purchase</h4>
-                            <Badge v-if="selectedType === 'purchase'" class="mt-1 bg-primary">Selected</Badge>
+                            <h4 class="font-semibold ">{{ t('checkout.purchase') }}</h4>
+                            <Badge v-if="selectedType === 'purchase'" class="mt-1 bg-primary">{{ t('checkout.selected') }}</Badge>
                         </div>
                     </div>
                     <p class="text-sm text-muted-foreground mb-3">
-                        Buy products with standard pricing and shipping
+                        {{ t('checkout.purchaseDesc') }}
                     </p>
                     <div class="text-lg font-bold">{{ formatPrice(totalAmount) }}</div>
-                    <p class="text-xs text-muted-foreground mt-1">+ shipping costs</p>
+                    <p class="text-xs text-muted-foreground mt-1">{{ t('checkout.plusShipping') }}</p>
                 </CardContent>
             </Card>
 
@@ -86,20 +89,20 @@ const formatPrice = (amount: number) => {
                             <Heart class="h-5 w-5" />
                         </div>
                         <div>
-                            <h4 class="font-semibold">Donation</h4>
-                            <Badge v-if="selectedType === 'donation'" variant="destructive" class="mt-1">Selected</Badge>
-                            <Badge v-else-if="!hasDonationItems" variant="outline" class="mt-1">Not Available</Badge>
+                            <h4 class="font-semibold">{{ t('checkout.donation') }}</h4>
+                            <Badge v-if="selectedType === 'donation'" variant="destructive" class="mt-1">{{ t('checkout.selected') }}</Badge>
+                            <Badge v-else-if="!hasDonationItems" variant="outline" class="mt-1">{{ t('checkout.notAvailable') }}</Badge>
                         </div>
                     </div>
                     <p class="text-sm text-muted-foreground mb-3">
                         {{ hasDonationItems
-                        ? 'Support our cause - tax exempt, no shipping'
-                        : 'No donatable items in cart'
+                        ? t('checkout.donationDesc')
+                        : t('checkout.noDonationItems')
                         }}
                     </p>
                     <div class="text-lg font-bold">{{ formatPrice(totalAmount) }}</div>
                     <p class="text-xs text-muted-foreground mt-1">
-                        {{ hasDonationItems ? 'No additional fees' : 'Add donatable items' }}
+                        {{ hasDonationItems ? t('checkout.noAdditionalFees') : t('checkout.addDonatableItems') }}
                     </p>
                 </CardContent>
             </Card>
@@ -110,12 +113,12 @@ const formatPrice = (amount: number) => {
             <div class="flex items-start space-x-3">
                 <Gift class="h-5 w-5 text-warning mt-0.5" />
                 <div class="text-sm text-warning">
-                    <p class="font-medium">Donation Mode Benefits:</p>
+                    <p class="font-medium">{{ t('checkout.donationModeBenefits') }}</p>
                     <ul class="list-disc list-inside mt-1 space-y-1">
-                        <li>Tax-exempt contribution</li>
-                        <li>No shipping costs</li>
-                        <li>Supporting a good cause</li>
-                        <li>Email receipt for tax purposes</li>
+                        <li>{{ t('checkout.taxExemptContribution') }}</li>
+                        <li>{{ t('checkout.noShippingCosts') }}</li>
+                        <li>{{ t('checkout.supportingCause') }}</li>
+                        <li>{{ t('checkout.emailReceiptTax') }}</li>
                     </ul>
                 </div>
             </div>

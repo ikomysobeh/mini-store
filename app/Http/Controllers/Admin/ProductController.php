@@ -302,8 +302,16 @@ class ProductController extends Controller
             ]);
 
             $validated = $request->validate([
-                'name' => 'required|string|max:255|unique:products,name',
+                // Bilingual fields - at least one language required
+                'name_en' => 'required_without:name_ar|string|max:255',
+                'name_ar' => 'required_without:name_en|string|max:255',
+                'description_en' => 'required_without:description_ar|string|nullable',
+                'description_ar' => 'required_without:description_en|string|nullable',
+                
+                // Legacy fields (for backward compatibility)
+                'name' => 'nullable|string|max:255',
                 'description' => 'nullable|string',
+                
                 'price' => 'required|numeric|min:0',
                 'stock' => 'required|integer|min:0',
                 'category_id' => 'required|exists:categories,id',
@@ -323,19 +331,25 @@ class ProductController extends Controller
             ]);
 
             DB::transaction(function () use ($validated, $request) {
-                // Generate unique slug
-                $slug = $this->generateUniqueSlug($validated['name']);
-
+                // Prepare bilingual data
                 $productData = [
-                    'name' => $validated['name'],
-                    'slug' => $slug,
-                    'description' => $validated['description'],
+                    'name_en' => $validated['name_en'] ?? null,
+                    'name_ar' => $validated['name_ar'] ?? null,
+                    'description_en' => $validated['description_en'] ?? null,
+                    'description_ar' => $validated['description_ar'] ?? null,
                     'price' => $validated['price'],
                     'stock' => $validated['stock'],
                     'category_id' => $validated['category_id'],
                     'is_active' => $request->boolean('is_active', true),
                     'is_donatable' => $request->boolean('is_donatable', false),
                 ];
+                
+                // Legacy fields for backward compatibility
+                $productData['name'] = $validated['name_en'] ?? $validated['name_ar'] ?? '';
+                $productData['description'] = $validated['description_en'] ?? $validated['description_ar'] ?? '';
+                
+                // Auto-generate slugs (handled by model boot method, but we can set legacy slug here)
+                $productData['slug'] = Str::slug($productData['name']);
 
                 // Handle single image upload (keep existing functionality)
                 if ($request->hasFile('image')) {
@@ -713,8 +727,16 @@ class ProductController extends Controller
     {
         try {
             $validated = $request->validate([
-                'name' => 'required|string|max:255',
+                // Bilingual fields - at least one language required
+                'name_en' => 'required_without:name_ar|string|max:255',
+                'name_ar' => 'required_without:name_en|string|max:255',
+                'description_en' => 'required_without:description_ar|string|nullable',
+                'description_ar' => 'required_without:description_en|string|nullable',
+                
+                // Legacy fields (for backward compatibility)
+                'name' => 'nullable|string|max:255',
                 'description' => 'nullable|string',
+                
                 'price' => 'required|numeric|min:0',
                 'stock' => 'required|integer|min:0',
                 'category_id' => 'required|exists:categories,id',
@@ -742,16 +764,24 @@ class ProductController extends Controller
 
             DB::beginTransaction();
 
-            // Update basic product info
-            $product->update([
-                'name' => $validated['name'],
-                'description' => $validated['description'],
+            // Update basic product info with bilingual fields
+            $updateData = [
+                'name_en' => $validated['name_en'] ?? null,
+                'name_ar' => $validated['name_ar'] ?? null,
+                'description_en' => $validated['description_en'] ?? null,
+                'description_ar' => $validated['description_ar'] ?? null,
                 'price' => $validated['price'],
                 'stock' => $validated['stock'],
                 'category_id' => $validated['category_id'],
                 'is_active' => $validated['is_active'] ?? true,
                 'is_donatable' => $validated['is_donatable'] ?? false,
-            ]);
+            ];
+            
+            // Legacy fields for backward compatibility
+            $updateData['name'] = $validated['name_en'] ?? $validated['name_ar'] ?? '';
+            $updateData['description'] = $validated['description_en'] ?? $validated['description_ar'] ?? '';
+            
+            $product->update($updateData);
 
             // Handle single image upload (keep existing functionality)
             if ($request->hasFile('image')) {

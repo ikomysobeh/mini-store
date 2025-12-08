@@ -90,6 +90,7 @@ class CheckoutController extends Controller
         // SIMPLIFIED: Updated validation rules (removed unwanted fields)
         $validated = $request->validate([
             'is_donation' => 'required|boolean',
+            'payment_method' => 'required|string|in:stripe,paypal',
             // Customer/Donor information (always required)
             'first_name' => 'required|string|max:255',
             'last_name' => 'required|string|max:255',
@@ -176,7 +177,7 @@ class CheckoutController extends Controller
             'shipping' => 0,
             'status' => Order::STATUS_PENDING,
             'is_donation' => $validated['is_donation'],
-            'payment_method' => 'stripe',
+            'payment_method' => $validated['payment_method'],
             'notes' => $validated['notes'],
         ]);
 
@@ -208,6 +209,15 @@ class CheckoutController extends Controller
             Log::info('✅ Admin notification created for order: ' . $order->id);
         } catch (\Exception $e) {
             Log::error('❌ Failed to create admin notification for order ' . $order->id . ': ' . $e->getMessage());
+        }
+
+        if ($validated['payment_method'] === 'paypal') {
+            return response()->json([
+                'success' => true,
+                'order_id' => $order->id,
+                'payment_method' => 'paypal',
+                'total' => $order->total,
+            ]);
         }
 
         // Stripe checkout

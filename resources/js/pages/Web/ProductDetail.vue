@@ -7,6 +7,12 @@ import SuccessMessage from '@/components/common/SuccessMessage.vue';
 import ProductDetails from '@/components/product/ProductDetails.vue';
 import ProductDescription from '@/components/product/ProductDescription.vue';
 import RelatedProducts from '@/components/product/RelatedProducts.vue';
+import { useI18n } from 'vue-i18n';
+import { computed } from 'vue';
+import { useLocale } from '@/composables/useLocale';
+
+const { t } = useI18n();
+const { localizedUrl } = useLocale();
 
 const { product, relatedProducts, categories, auth, cartItems, settings } = defineProps({
     product: { type: Object, required: true },
@@ -21,15 +27,15 @@ const siteName = settings.site_name || 'Elegant Store';
 const user = auth.user;
 
 // Breadcrumb items
-const breadcrumbItems = [
-    { label: 'Home', href: '/' },
-    { label: 'Products', href: '/products' },
+const breadcrumbItems = computed(() => [
+    { label: t('nav.home'), href: localizedUrl('/') },
+    { label: t('nav.products'), href: localizedUrl('/products') },
     {
         label: product.category?.name || 'Uncategorized',
-        href: `/products?category=${product.category?.slug}`
+        href: localizedUrl(`/products?category=${product.category?.slug}`)
     },
     { label: product.name, isActive: true }
-];
+]);
 </script>
 
 <template>
@@ -51,7 +57,7 @@ const breadcrumbItems = [
             <Breadcrumb :items="breadcrumbItems" />
 
             <!-- Back Button Component -->
-            <BackButton href="/products" label="Back to Products" />
+            <BackButton :href="localizedUrl('/products')" :label="t('common.back')" />
 
             <!-- Success Message Component -->
             <SuccessMessage icon="cart" :dismissible="true" />
@@ -69,7 +75,7 @@ const breadcrumbItems = [
             <!-- Related Products Component -->
             <RelatedProducts
                 :products="relatedProducts"
-                title="You might also like"
+                :title="t('home.featuredProducts')"
                 :maxItems="4"
             />
 

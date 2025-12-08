@@ -5,6 +5,9 @@ import { Button } from '@/components/ui/button';
 import { Calendar, Package, Heart, Palette, Ruler, ShoppingCart, Eye, CreditCard } from 'lucide-vue-next';
 import { router } from '@inertiajs/vue3';
 import { ref } from 'vue';
+import { useI18n } from 'vue-i18n';
+
+const { t, locale } = useI18n();
 
 interface VariantDisplay {
     color?: {
@@ -49,14 +52,14 @@ const { order } = defineProps<{
 const isRetryingPayment = ref(false);
 
 const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('en-US', {
+    return new Intl.NumberFormat(locale.value === 'ar' ? 'ar-SY' : 'en-US', {
         style: 'currency',
         currency: 'USD'
     }).format(price);
 };
 
 const formatDate = (date: string) => {
-    return new Date(date).toLocaleDateString('en-US', {
+    return new Date(date).toLocaleDateString(locale.value === 'ar' ? 'ar-SY' : 'en-US', {
         day: '2-digit',
         month: 'short',
         year: 'numeric'
@@ -64,7 +67,7 @@ const formatDate = (date: string) => {
 };
 
 const getStatusColor = (status: string) => {
-    const colors = {
+    const colors: Record<string, string> = {
         pending: 'bg-yellow-500/20 text-yellow-700 dark:text-yellow-400',
         processing: 'bg-blue-500/20 text-blue-700 dark:text-blue-400',
         failed: 'bg-red-500/20 text-red-700 dark:text-red-400',
@@ -129,17 +132,17 @@ const totalQuantity = order.items.reduce((sum, item) => sum + item.quantity, 0);
                 <div>
                     <div class="flex items-center space-x-3 mb-2">
                         <h3 class="text-lg font-semibold text-foreground">
-                            Order #{{ order.id }}
+                            {{ t('orders.orderNumber') }}{{ order.id }}
                         </h3>
                         <Badge :class="getStatusColor(order.status)">
-                            {{ order.status.charAt(0).toUpperCase() + order.status.slice(1) }}
+                            {{ t(`orders.status.${order.status}`) }}
                         </Badge>
                         <Badge v-if="order.is_donation" class="bg-warning/20 text-warning">
                             <Heart class="h-3 w-3 mr-1" />
-                            Donation
+                            {{ t('checkout.donation') }}
                         </Badge>
                         <Badge v-if="canRetryPayment()" variant="destructive">
-                            Unpaid
+                            {{ t('orders.unpaid') }}
                         </Badge>
                     </div>
                     <div class="flex items-center text-sm text-muted-foreground space-x-4">
@@ -149,11 +152,11 @@ const totalQuantity = order.items.reduce((sum, item) => sum + item.quantity, 0);
                         </div>
                         <div class="flex items-center">
                             <Package class="h-4 w-4 mr-1" />
-                            {{ order.items.length }} items ({{ totalQuantity }} qty)
+                            {{ order.items.length }} {{ t('orders.items') }} ({{ totalQuantity }} {{ t('product.quantity').toLowerCase() }})
                         </div>
                         <div v-if="variantItemsCount > 0" class="flex items-center">
                             <Palette class="h-4 w-4 mr-1" />
-                            {{ variantItemsCount }} variants
+                            {{ variantItemsCount }} {{ t('orders.variants') }}
                         </div>
                     </div>
                 </div>
@@ -170,10 +173,10 @@ const totalQuantity = order.items.reduce((sum, item) => sum + item.quantity, 0);
                     <CreditCard class="h-5 w-5 text-yellow-600 dark:text-yellow-400 mt-0.5" />
                     <div class="flex-1">
                         <h4 class="text-sm font-medium text-yellow-800 dark:text-yellow-300">
-                            Payment Required
+                            {{ t('orders.paymentRequired') }}
                         </h4>
                         <p class="text-sm text-yellow-700 dark:text-yellow-400 mt-1">
-                            This order is awaiting payment. Complete your payment to process this order.
+                            {{ t('orders.paymentRequiredMessage') }}
                         </p>
                     </div>
                 </div>
@@ -226,20 +229,20 @@ const totalQuantity = order.items.reduce((sum, item) => sum + item.quantity, 0);
                         <!-- No Variant Badge -->
                         <div v-else class="mt-1">
                             <Badge variant="outline" class="text-xs">
-                                Standard Product
+                                {{ t('orders.standardProduct') }}
                             </Badge>
                         </div>
 
                         <div class="flex items-center space-x-2 mt-1">
                             <span class="text-sm text-muted-foreground">
-                                Qty: {{ item.quantity }}
+                                {{ t('product.quantity') }}: {{ item.quantity }}
                             </span>
                             <span class="text-sm font-medium text-foreground">
-                                {{ formatPrice(item.price) }} each
+                                {{ formatPrice(item.price) }} {{ t('orders.each') }}
                             </span>
                             <Badge v-if="item.is_donation_item" variant="outline" class="text-xs">
                                 <Heart class="h-3 w-3 mr-1 text-red-500" />
-                                Donation
+                                {{ t('checkout.donation') }}
                             </Badge>
                         </div>
                     </div>
@@ -255,14 +258,14 @@ const totalQuantity = order.items.reduce((sum, item) => sum + item.quantity, 0);
                 <!-- Show more items indicator -->
                 <div v-if="order.items.length > 3" class="text-center py-2">
                     <span class="text-sm text-muted-foreground">
-                        + {{ order.items.length - 3 }} more items
+                        {{ t('orders.moreItems', { count: order.items.length - 3 }) }}
                     </span>
                 </div>
             </div>
 
             <!-- Variant Summary (if order has variants) -->
             <div v-if="variantItemsCount > 0" class="mb-4 p-3 bg-info/10 rounded-lg">
-                <h5 class="text-sm font-medium text-info mb-2">Variant Summary:</h5>
+                <h5 class="text-sm font-medium text-info mb-2">{{ t('orders.variantSummary') }}</h5>
                 <div class="flex flex-wrap gap-2">
                     <div
                         v-for="item in order.items.filter(i => i.variant_display)"
@@ -277,8 +280,8 @@ const totalQuantity = order.items.reduce((sum, item) => sum + item.quantity, 0);
                         ></div>
                         <!-- Variant text -->
                         <span class="text-info">
-                            {{ item.variant_display?.color?.name || 'No Color' }} /
-                            {{ item.variant_display?.size?.name || 'No Size' }}
+                            {{ item.variant_display?.color?.name || t('orders.noColor') }} /
+                            {{ item.variant_display?.size?.name || t('orders.noSize') }}
                         </span>
                         <span class="text-info/80">(×{{ item.quantity }})</span>
                     </div>
@@ -288,7 +291,7 @@ const totalQuantity = order.items.reduce((sum, item) => sum + item.quantity, 0);
             <!-- Actions -->
             <div class="flex items-center justify-between pt-4 border-t border-border">
                 <div class="text-sm text-muted-foreground">
-                    {{ totalQuantity }} items • {{ variantItemsCount }} with variants
+                    {{ totalQuantity }} {{ t('orders.items') }} • {{ variantItemsCount }} {{ t('orders.variants') }}
                 </div>
                 <div class="flex space-x-3">
                     <!-- Pay Now button for pending orders -->
@@ -301,7 +304,7 @@ const totalQuantity = order.items.reduce((sum, item) => sum + item.quantity, 0);
                         class="bg-green-600 hover:bg-green-700"
                     >
                         <CreditCard class="h-4 w-4 mr-2" />
-                        {{ isRetryingPayment ? 'Processing...' : 'Pay Now' }}
+                        {{ isRetryingPayment ? t('checkout.processing') : t('checkout.payNow') }}
                     </Button>
 
                     
@@ -314,7 +317,7 @@ const totalQuantity = order.items.reduce((sum, item) => sum + item.quantity, 0);
                         @click="reorderItems"
                     >
                         <ShoppingCart class="h-4 w-4 mr-2" />
-                        Reorder
+                        {{ t('orders.reorder') }}
                     </Button>
                 </div>
             </div>

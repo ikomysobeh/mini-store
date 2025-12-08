@@ -7,6 +7,11 @@ import OrderStats from '@/components/orders/OrderStats.vue';
 import Pagination from '@/components/common/Pagination.vue';
 import { Package, ShoppingBag } from 'lucide-vue-next';
 import { ref, computed, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
+import { useLocale } from '@/composables/useLocale';
+
+const { t } = useI18n();
+const { localizedUrl } = useLocale();
 
 // ✅ FIX: Proper prop types with defaults
 const props = defineProps({
@@ -57,9 +62,9 @@ console.log('🔍 Orders Index - Initial Data:', {
 const page = usePage();
 const auth = computed(() => page.props.auth);
 const user = computed(() => auth.value?.user);
-const cartItems = computed(() => page.props.cartItems || []);
-const categories = computed(() => page.props.categories || []);
-const settings = computed(() => page.props.settings || {});
+const cartItems = computed(() => (page.props.cartItems as any[]) || []);
+const categories = computed(() => (page.props.categories as any[]) || []);
+const settings = computed(() => (page.props.settings as Record<string, any>) || {});
 
 const siteName = computed(() => settings.value.site_name || 'Elegant Store');
 
@@ -100,7 +105,7 @@ const applyFilters = () => {
     console.log('🚀 Applying filters with params:', params);
     console.log('🌐 Current URL params will be:', new URLSearchParams(params).toString());
 
-    router.get('/my-orders', params, {
+    router.get(localizedUrl('/my-orders'), params, {
         preserveState: true,
         preserveScroll: true,
         onStart: () => {
@@ -125,7 +130,7 @@ const clearFilters = () => {
     selectedType.value = '';
     selectedDateRange.value = '';
 
-    router.get('/my-orders', {}, {
+    router.get(localizedUrl('/my-orders'), {}, {
         onSuccess: () => {
             console.log('✅ Filters cleared successfully');
         }
@@ -143,13 +148,13 @@ const goToPage = (url: string) => {
 };
 
 const goToShop = () => {
-    router.visit('/products');
+    router.visit(localizedUrl('/products'));
 };
 </script>
 
 <template>
     <div class="min-h-screen bg-background">
-        <Head title="My Orders" />
+        <Head :title="t('orders.myOrders')" />
 
         <!-- Use shared data from middleware -->
         <Navbar
@@ -164,8 +169,8 @@ const goToShop = () => {
 
             <!-- Page Header -->
             <div class="mb-8">
-                <h1 class="text-3xl font-bold text-foreground mb-2">My Orders</h1>
-                <p class="text-muted-foreground">Track and manage your order history</p>
+                <h1 class="text-3xl font-bold text-foreground mb-2">{{ t('orders.myOrders') }}</h1>
+                <p class="text-muted-foreground">{{ t('orders.trackHistory') }}</p>
             </div>
 
             <!-- ✅ FIX: Only show stats if there are orders -->
@@ -189,12 +194,12 @@ const goToShop = () => {
                 <div v-if="!hasOrders" class="text-center py-16 bg-card rounded-lg border border-border">
                     <Package class="h-20 w-20 text-muted-foreground mx-auto mb-4" />
                     <h3 class="text-xl font-semibold text-card-foreground mb-2">
-                        {{ hasFiltersApplied ? 'No Orders Found' : 'No Orders Yet' }}
+                        {{ hasFiltersApplied ? t('orders.noOrdersFound') : t('orders.noOrdersYet') }}
                     </h3>
                     <p class="text-muted-foreground mb-6 max-w-md mx-auto">
                         {{ hasFiltersApplied 
-                            ? 'No orders match your current filters. Try adjusting your search criteria.' 
-                            : "You haven't placed any orders yet. Start shopping to see your orders here!" 
+                            ? t('orders.noOrdersMatch') 
+                            : t('orders.noOrdersStartShopping') 
                         }}
                     </p>
                     
@@ -205,7 +210,7 @@ const goToShop = () => {
                             @click="clearFilters"
                             class="px-6 py-3 bg-secondary text-secondary-foreground rounded-md hover:bg-secondary/90 transition-colors"
                         >
-                            Clear Filters
+                            {{ t('orders.clearFilters') }}
                         </button>
                         <button
                             v-else
@@ -213,7 +218,7 @@ const goToShop = () => {
                             class="px-6 py-3 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors flex items-center gap-2"
                         >
                             <ShoppingBag class="h-5 w-5" />
-                            Start Shopping
+                            {{ t('home.shopNow') }}
                         </button>
                     </div>
                 </div>

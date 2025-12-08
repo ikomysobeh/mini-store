@@ -2,8 +2,12 @@
 <script setup lang="ts">
 import { Card, CardContent } from '@/components/ui/card';
 import { ShoppingCart, Heart, DollarSign, Calendar, TrendingUp } from 'lucide-vue-next';
+import { useI18n } from 'vue-i18n';
+import { computed } from 'vue';
 
-const { stats } = defineProps({
+const { t } = useI18n();
+
+const props = defineProps({
     stats: { type: Object, required: true }
 });
 
@@ -11,38 +15,38 @@ const formatPrice = (price) => {
     return `$${parseFloat(price || 0).toFixed(2)}`;
 };
 
-const statsConfig = [
+const statsConfig = computed(() => [
     {
-        label: 'Total Orders',
-        value: stats.total_orders,
+        label: t('orders.totalOrders'),
+        value: props.stats.total_orders,
         icon: ShoppingCart,
         color: 'text-info'
     },
     {
-        label: 'Purchases',
-        value: stats.total_purchases,
+        label: t('orders.purchases'),
+        value: props.stats.total_purchases,
         icon: ShoppingCart,
         color: 'text-success'
     },
     {
-        label: 'Donations',
-        value: stats.total_donations,
+        label: t('orders.donations'),
+        value: props.stats.total_donations,
         icon: Heart,
         color: 'text-warning'
     },
     {
-        label: 'Total Spent',
-        value: formatPrice(stats.total_spent),
+        label: t('orders.totalSpent'),
+        value: formatPrice(props.stats.total_spent),
         icon: DollarSign,
         color: 'text-primary'
     },
     {
-        label: 'This Year',
-        value: formatPrice(stats.this_year_spent),
+        label: t('orders.thisYear'),
+        value: formatPrice(props.stats.this_year_spent),
         icon: TrendingUp,
         color: 'text-secondary'
     }
-];
+]);
 </script>
 
 <template>

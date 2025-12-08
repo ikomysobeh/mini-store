@@ -8,6 +8,17 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Head, useForm } from '@inertiajs/vue3';
 import { LoaderCircle, Eye, EyeOff, Heart } from 'lucide-vue-next';
 import { ref } from 'vue';
+import { useI18n } from 'vue-i18n';
+import { usePage } from '@inertiajs/vue3';
+
+const { t, locale } = useI18n();
+const page = usePage();
+
+// Get localized URL
+const getLocalizedUrl = (path: string) => {
+    const currentLocale = locale.value || page.props.locale || 'en';
+    return `/${currentLocale}${path}`;
+};
 
 defineProps<{
     status?: string;
@@ -46,7 +57,7 @@ const submit = () => {
 
 <template>
     <div class="min-h-screen flex items-center justify-center bg-background p-4">
-        <Head title="Log in" />
+        <Head :title="t('auth.signIn')" />
 
         <div class="w-full max-w-sm">
             <!-- Logo and Brand Section -->
@@ -61,9 +72,9 @@ const submit = () => {
                 </div>
 
                 <div class="text-center space-y-2">
-                    <h1 class="text-2xl font-semibold">Welcome back</h1>
+                    <h1 class="text-2xl font-semibold">{{ t('auth.welcomeBack') }}</h1>
                     <p class="text-sm text-muted-foreground">
-                        Enter your email below to sign in to your account
+                        {{ t('auth.signInPrompt') }}
                     </p>
                 </div>
             </div>
@@ -79,12 +90,12 @@ const submit = () => {
                     <form @submit.prevent="submit" class="space-y-4">
                         <!-- Email Field -->
                         <div class="space-y-2">
-                            <Label for="email">Email</Label>
+                            <Label for="email">{{ t('auth.email') }}</Label>
                             <Input
                                 id="email"
                                 v-model="form.email"
                                 type="email"
-                                placeholder="m@example.com"
+                                :placeholder="t('auth.emailPlaceholder')"
                                 required
                                 autofocus
                                 :disabled="form.processing"
@@ -96,12 +107,13 @@ const submit = () => {
 
                         <!-- Password Field -->
                         <div class="space-y-2">
-                        
+                            <Label for="password">{{ t('auth.password') }}</Label>
                             <div class="relative">
                                 <Input
                                     id="password"
                                     v-model="form.password"
                                     :type="showPassword ? 'text' : 'password'"
+                                    :placeholder="t('auth.passwordPlaceholder')"
                                     required
                                     :disabled="form.processing"
                                     class="pr-10"
@@ -131,14 +143,14 @@ const submit = () => {
                                 :disabled="form.processing"
                             />
                             <Label for="remember" class="text-sm cursor-pointer">
-                                Remember me
+                                {{ t('auth.rememberMe') }}
                             </Label>
                         </div>
 
                         <!-- Submit Button -->
                         <Button type="submit" class="w-full" :disabled="form.processing">
                             <LoaderCircle v-if="form.processing" class="mr-2 h-4 w-4 animate-spin" />
-                            Sign In
+                            {{ t('auth.signIn') }}
                         </Button>
                     </form>
                 </CardContent>
@@ -146,9 +158,9 @@ const submit = () => {
 
             <!-- Register Link -->
             <div v-if="canRegister" class="mt-4 text-center text-sm">
-                Don't have an account?
+                {{ t('auth.dontHaveAccount') }}
                 <a href="/register" class="underline underline-offset-4 hover:text-primary">
-                    Sign up
+                    {{ t('auth.signUp') }}
                 </a>
             </div>
         </div>

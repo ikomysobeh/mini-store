@@ -6,6 +6,9 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Head, useForm } from '@inertiajs/vue3';
 import { LoaderCircle, Eye, EyeOff, Heart } from 'lucide-vue-next';
 import { ref } from 'vue';
+import { useI18n } from 'vue-i18n';
+
+const { t } = useI18n();
 
 // IMPORTANT: Do NOT import any admin components here!
 // import NotificationBell from '@/components/admin/NotificationBell.vue'; // ❌ REMOVE THIS
@@ -37,7 +40,7 @@ const submit = () => {
 
 <template>
     <div class="flex min-h-screen flex-col items-center justify-center bg-background text-foreground p-6 md:p-10">
-        <Head title="Register" />
+        <Head :title="t('auth.createAccount')" />
 
         <div class="w-full max-w-sm">
             <div class="flex flex-col space-y-2 text-center mb-8">
@@ -51,9 +54,9 @@ const submit = () => {
                     </div>
                 </div>
 
-                <h1 class="text-2xl font-semibold tracking-tight">Create an account</h1>
+                <h1 class="text-2xl font-semibold tracking-tight">{{ t('auth.createAccount') }}</h1>
                 <p class="text-sm text-muted-foreground">
-                    Enter your details below to create your account
+                    {{ t('auth.createAccountPrompt') }}
                 </p>
             </div>
 
@@ -63,12 +66,12 @@ const submit = () => {
                     <form @submit.prevent="submit" class="grid gap-4">
                     <!-- Name -->
                     <div class="grid gap-2">
-                        <Label for="name">Full Name</Label>
+                        <Label for="name">{{ t('auth.fullName') }}</Label>
                         <Input
                             id="name"
                             v-model="form.name"
                             type="text"
-                            placeholder="John Doe"
+                            :placeholder="t('auth.fullNamePlaceholder')"
                             autocomplete="name"
                             required
                             autofocus
@@ -81,12 +84,12 @@ const submit = () => {
 
                     <!-- Email -->
                     <div class="grid gap-2">
-                        <Label for="email">Email</Label>
+                        <Label for="email">{{ t('auth.email') }}</Label>
                         <Input
                             id="email"
                             v-model="form.email"
                             type="email"
-                            placeholder="name@example.com"
+                            :placeholder="t('auth.emailPlaceholder')"
                             autocomplete="email"
                             required
                             :disabled="form.processing"
@@ -98,13 +101,13 @@ const submit = () => {
 
                     <!-- Password -->
                     <div class="grid gap-2">
-                        <Label for="password">Password</Label>
+                        <Label for="password">{{ t('auth.password') }}</Label>
                         <div class="relative">
                             <Input
                                 id="password"
                                 v-model="form.password"
                                 :type="showPassword ? 'text' : 'password'"
-                                placeholder="Create a password"
+                                :placeholder="t('auth.createPassword')"
                                 autocomplete="new-password"
                                 required
                                 :disabled="form.processing"
@@ -128,13 +131,13 @@ const submit = () => {
 
                     <!-- Confirm Password -->
                     <div class="grid gap-2">
-                        <Label for="password_confirmation">Confirm Password</Label>
+                        <Label for="password_confirmation">{{ t('auth.confirmPassword') }}</Label>
                         <div class="relative">
                             <Input
                                 id="password_confirmation"
                                 v-model="form.password_confirmation"
                                 :type="showPasswordConfirmation ? 'text' : 'password'"
-                                placeholder="Confirm your password"
+                                :placeholder="t('auth.confirmPasswordPlaceholder')"
                                 autocomplete="new-password"
                                 required
                                 :disabled="form.processing"
@@ -159,7 +162,7 @@ const submit = () => {
                     <!-- Submit Button -->
                     <Button type="submit" class="w-full" :disabled="form.processing">
                         <LoaderCircle v-if="form.processing" class="mr-2 h-4 w-4 animate-spin" />
-                        Create account
+                        {{ t('auth.createAccountButton') }}
                     </Button>
                 </form>
                 </CardContent>
@@ -167,9 +170,9 @@ const submit = () => {
 
             <!-- Login Link -->
             <div class="mt-4 text-center text-sm text-muted-foreground">
-                Already have an account?
+                {{ t('auth.alreadyHaveAccount') }}
                 <a href="/login" class="underline underline-offset-4 hover:text-primary">
-                    Sign in
+                    {{ t('auth.signIn') }}
                 </a>
             </div>
         </div>

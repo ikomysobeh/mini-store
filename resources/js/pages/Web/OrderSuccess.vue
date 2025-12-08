@@ -5,6 +5,9 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { CheckCircle, Package, Heart, Home, Eye, MessageCircle, Facebook } from 'lucide-vue-next';
+import { useI18n } from 'vue-i18n';
+
+const { t } = useI18n();
 
 // Props with safe defaults
 const props = defineProps({
@@ -41,7 +44,7 @@ const getWhatsAppLink = (phoneNumber: string) => {
 
 <template>
     <div class="min-h-screen bg-background">
-        <Head title="Payment Successful" />
+        <Head :title="t('checkout.paymentSuccessful')" />
 
         <!-- Navbar -->
        
@@ -57,20 +60,20 @@ const getWhatsAppLink = (phoneNumber: string) => {
 
                     <!-- Success Message -->
                     <h1 class="text-3xl font-bold text-foreground mb-3">
-                        {{ order?.is_donation ? '🎉 Thank You!' : '✅ Payment Successful!' }}
+                        {{ order?.is_donation ? '🎉 ' + t('checkout.thankYou') : '✅ ' + t('checkout.paymentSuccessful') }}
                     </h1>
 
                     <p class="text-muted-foreground mb-6 text-lg">
                         {{ order?.is_donation
-                        ? 'Your generous donation means the world to us!'
-                        : 'Your order has been confirmed and payment processed.'
+                        ? t('checkout.donationMessage')
+                        : t('checkout.orderConfirmedMessage')
                         }}
                     </p>
 
                     <!-- ✅ NEW: Contact Information Section -->
                     <div class="mb-8 pb-6 border-b">
                         <p class="text-sm font-medium text-foreground mb-4">
-                            You can contact us:
+                            {{ t('checkout.contactUs') }}:
                         </p>
                         
                         <div class="max-w-lg mx-auto space-y-3">
@@ -99,7 +102,7 @@ const getWhatsAppLink = (phoneNumber: string) => {
                                     class="flex items-center gap-2 text-foreground hover:text-primary transition-colors"
                                 >
                                     <MessageCircle class="h-4 w-4 text-green-600" />
-                                    <span class="font-medium">Technical Support:</span>
+                                    <span class="font-medium">{{ t('checkout.technicalSupport') }}:</span>
                                     <span>963937671126</span>
                                 </a>
                             </div>
@@ -113,7 +116,7 @@ const getWhatsAppLink = (phoneNumber: string) => {
                                     class="inline-flex items-center gap-2 px-4 py-2 bg-muted/50 hover:bg-muted rounded-full transition-all hover:scale-105 text-sm"
                                 >
                                     <Facebook class="h-4 w-4 text-blue-600" />
-                                    <span class="font-medium">Follow us on Facebook</span>
+                                    <span class="font-medium">{{ t('checkout.followFacebook') }}</span>
                                 </a>
                             </div>
                         </div>
@@ -125,24 +128,24 @@ const getWhatsAppLink = (phoneNumber: string) => {
                             <div class="flex items-center justify-center mb-4">
                                 <component :is="order?.is_donation ? Heart : Package" class="h-5 w-5 text-muted-foreground mr-2" />
                                 <h2 class="font-semibold text-lg">
-                                    {{ order?.is_donation ? 'Donation' : 'Order' }} Summary
+                                    {{ order?.is_donation ? t('checkout.donationSummary') : t('checkout.orderSummary') }}
                                 </h2>
                             </div>
 
                             <div class="space-y-3">
                                 <div class="flex justify-between items-center">
-                                    <span class="text-muted-foreground">{{ order?.is_donation ? 'Donation' : 'Order' }} #</span>
+                                    <span class="text-muted-foreground">{{ order?.is_donation ? t('checkout.donation') : t('checkout.order') }} #</span>
                                     <Badge variant="secondary" class="font-mono">{{ order?.id || 'N/A' }}</Badge>
                                 </div>
 
                                 <div class="flex justify-between items-center">
-                                    <span class="text-muted-foreground">Amount</span>
+                                    <span class="text-muted-foreground">{{ t('checkout.amount') }}</span>
                                     <span class="text-2xl font-bold text-green-600">${{ formatPrice(order?.total) }}</span>
                                 </div>
 
                                 <div class="flex justify-between items-center">
-                                    <span class="text-muted-foreground">Status</span>
-                                    <Badge class="bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-400">Paid</Badge>
+                                    <span class="text-muted-foreground">{{ t('checkout.status') }}</span>
+                                    <Badge class="bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-400">{{ t('checkout.paid') }}</Badge>
                                 </div>
                             </div>
                         </CardContent>
@@ -156,7 +159,7 @@ const getWhatsAppLink = (phoneNumber: string) => {
                             class="w-full"
                         >
                             <Home class="h-4 w-4 mr-2" />
-                            Continue Shopping
+                            {{ t('cart.continueShopping') }}
                         </Button>
 
                         <Button
@@ -166,7 +169,7 @@ const getWhatsAppLink = (phoneNumber: string) => {
                             class="w-full"
                         >
                             <Eye class="h-4 w-4 mr-2" />
-                            View {{ order?.is_donation ? 'Donations' : 'Orders' }}
+                            {{ t('checkout.view') }} {{ order?.is_donation ? t('nav.donations') : t('nav.orders') }}
                         </Button>
                     </div>
 
@@ -174,8 +177,8 @@ const getWhatsAppLink = (phoneNumber: string) => {
                     <div class="mt-8 pt-6 border-t">
                         <p class="text-muted-foreground">
                             {{ order?.is_donation
-                            ? '🙏 Your support helps us make a difference!'
-                            : '🎉 Thank you for choosing us!'
+                            ? '🙏 ' + t('checkout.thankYouSupport')
+                            : '🎉 ' + t('checkout.thankYouChoosing')
                             }}
                         </p>
                     </div>

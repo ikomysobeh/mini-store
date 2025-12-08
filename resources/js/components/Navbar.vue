@@ -20,6 +20,12 @@ import {
     ShoppingBag
 } from 'lucide-vue-next';
 import { ref, computed, onMounted, onUnmounted } from 'vue';
+import LanguageSwitcher from '@/components/LanguageSwitcher.vue';
+import { useI18n } from 'vue-i18n';
+import { usePage } from '@inertiajs/vue3';
+
+const { t, locale } = useI18n();
+const page = usePage();
 
 const { categories, cartItems, user, siteName, settings } = defineProps({
     categories: { type: Array, default: () => [] },
@@ -141,7 +147,7 @@ const handleDropdownItemClick = (href) => {
     userDropdownOpen.value = false;
     cartDropdownOpen.value = false;
     if (href) {
-        router.visit(href);
+        router.visit(getLocalizedUrl(href));
     }
 };
 
@@ -150,10 +156,16 @@ const formatPrice = (price) => {
     return parseFloat(price || 0).toFixed(2);
 };
 
+// Get localized URL
+const getLocalizedUrl = (path) => {
+    const currentLocale = locale.value || page.props.locale || 'en';
+    return `/${currentLocale}${path}`;
+};
+
 // ✅ NEW: Go to cart page
 const goToCart = () => {
     cartDropdownOpen.value = false;
-    router.visit('/cart');
+    router.visit(getLocalizedUrl('/cart'));
 };
 
 // Close mobile menu when navigating
@@ -200,7 +212,7 @@ onUnmounted(() => {
                         variant="ghost"
                         :class="getCategoryButtonClass()"
                         as="a"
-                        :href="`/products?category=${category.slug}`"
+                        :href="getLocalizedUrl(`/products?category=${category.slug}`)"
                     >
                         {{ category.name }}
                     </Button>
@@ -208,6 +220,9 @@ onUnmounted(() => {
 
                 <!-- Desktop Right Side -->
                 <div class="hidden md:flex items-center space-x-4">
+                    <!-- Language Switcher -->
+                    <LanguageSwitcher />
+                    
                     <!-- ✅ NEW: Cart Dropdown -->
                     <div class="relative" ref="cartDropdownRef">
                         <Button 
@@ -240,15 +255,15 @@ onUnmounted(() => {
                                 <!-- Cart Header -->
                                 <div class="px-4 py-3 border-b border-border">
                                     <div class="flex items-center justify-between">
-                                        <h3 class="text-sm font-semibold">Shopping Cart</h3>
-                                        <Badge variant="secondary">{{ cartItemsCount }} items</Badge>
+                                        <h3 class="text-sm font-semibold">{{ t('cart.title') }}</h3>
+                                        <Badge variant="secondary">{{ cartItemsCount }} {{ t('cart.itemsInCart') }}</Badge>
                                     </div>
                                 </div>
 
                                 <!-- Empty Cart -->
                                 <div v-if="cartItems.length === 0" class="px-4 py-8 text-center">
                                     <ShoppingCart class="h-12 w-12 text-muted-foreground mx-auto mb-2" />
-                                    <p class="text-sm text-muted-foreground">Your cart is empty</p>
+                                    <p class="text-sm text-muted-foreground">{{ t('cart.empty') }}</p>
                                 </div>
 
                                 <!-- Cart Items (Show first 3) -->
@@ -285,16 +300,16 @@ onUnmounted(() => {
                                     <!-- Cart Footer -->
                                     <div class="px-4 py-3 border-t border-border space-y-3">
                                         <div class="flex justify-between items-center font-semibold">
-                                            <span>Total:</span>
+                                            <span>{{ t('cart.total') }}:</span>
                                             <span class="text-lg text-primary">${{ formatPrice(cartTotal) }}</span>
                                         </div>
                                         <Button class="w-full" @click="goToCart">
                                             <Eye class="h-4 w-4 mr-2" />
-                                            View Cart
+                                            {{ t('cart.title') }}
                                         </Button>
-                                        <Button class="w-full" variant="outline" as="a" href="/checkout" @click="cartDropdownOpen = false">
+                                        <Button class="w-full" variant="outline" as="a" :href="getLocalizedUrl('/checkout')" @click="cartDropdownOpen = false">
                                             <ShoppingBag class="h-4 w-4 mr-2" />
-                                            Checkout
+                                            {{ t('checkout.title') }}
                                         </Button>
                                     </div>
                                 </div>
@@ -308,7 +323,7 @@ onUnmounted(() => {
                         variant="outline"
                         class="relative"
                         as="a"
-                        href="/my-orders"
+                        :href="getLocalizedUrl('/my-orders')"
                         title="My Orders"
                     >
                         <History class="h-5 w-5" />
@@ -363,7 +378,7 @@ onUnmounted(() => {
                                         :disabled="isLoggingOut"
                                     >
                                         <Home class="mr-2 h-4 w-4" />
-                                        <span>Home</span>
+                                        <span>{{ t('nav.home') }}</span>
                                     </button>
                                 </div>
 
@@ -374,7 +389,7 @@ onUnmounted(() => {
                                         class="w-full px-3 py-2 text-left text-sm text-destructive hover:bg-destructive/10 flex items-center transition-colors disabled:opacity-50"
                                     >
                                         <LogOut class="mr-2 h-4 w-4" />
-                                        <span>{{ isLoggingOut ? 'Logging out...' : 'Log out' }}</span>
+                                        <span>{{ isLoggingOut ? '...' : t('nav.logout') }}</span>
                                     </button>
                                 </div>
                             </div>
@@ -383,19 +398,22 @@ onUnmounted(() => {
 
                     <!-- Guest Login/Register -->
                     <div v-else class="flex items-center space-x-2">
-                        <Button variant="ghost" size="sm" as="a" href="/login">
-                            Login
+                        <Button variant="ghost" size="sm" as="a" :href="getLocalizedUrl('/login')">
+                            {{ t('nav.login') }}
                         </Button>
-                        <Button size="sm" as="a" href="/register">
-                            Sign Up
+                        <Button size="sm" as="a" :href="getLocalizedUrl('/register')">
+                            {{ t('nav.register') }}
                         </Button>
                     </div>
                 </div>
 
                 <!-- Mobile menu button -->
                 <div class="md:hidden flex items-center space-x-2">
+                    <!-- Language Switcher -->
+                    <LanguageSwitcher />
+
                     <!-- Mobile Cart -->
-                    <Button variant="outline" size="sm" class="relative" as="a" href="/cart">
+                    <Button variant="outline" size="sm" class="relative" as="a" :href="getLocalizedUrl('/cart')">
                         <ShoppingCart class="h-4 w-4" />
                         <Badge
                             v-if="cartItemsCount > 0"
@@ -412,7 +430,7 @@ onUnmounted(() => {
                         size="sm"
                         class="relative"
                         as="a"
-                        href="/my-orders"
+                        :href="getLocalizedUrl('/my-orders')"
                     >
                         <History class="h-4 w-4" />
                     </Button>
@@ -437,14 +455,14 @@ onUnmounted(() => {
                     <div class="flex flex-col space-y-2">
                         <!-- Mobile Categories -->
                         <div v-if="categories.length > 0" class="space-y-2">
-                            <p class="px-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Categories</p>
+                            <p class="px-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">{{ t('common.category') }}</p>
                             <Button
                                 v-for="category in categories"
                                 :key="category.id"
                                 variant="ghost"
                                 :class="getCategoryButtonClass() + ' justify-start'"
                                 as="a"
-                                :href="`/products?category=${category.slug}`"
+                                :href="getLocalizedUrl(`/products?category=${category.slug}`)"
                                 @click="closeMobileMenu"
                             >
                                 {{ category.name }}
@@ -482,7 +500,7 @@ onUnmounted(() => {
                                 :disabled="isLoggingOut"
                             >
                                 <Home class="mr-2 h-4 w-4" />
-                                Home
+                                {{ t('nav.home') }}
                             </Button>
 
                             <Separator class="my-2" />
@@ -494,7 +512,7 @@ onUnmounted(() => {
                                 :disabled="isLoggingOut"
                             >
                                 <LogOut class="mr-2 h-4 w-4" />
-                                {{ isLoggingOut ? 'Logging out...' : 'Logout' }}
+                                {{ isLoggingOut ? '...' : t('nav.logout') }}
                             </Button>
                         </div>
 
@@ -505,21 +523,21 @@ onUnmounted(() => {
                                 variant="ghost"
                                 class="justify-start w-full"
                                 as="a"
-                                href="/login"
+                                :href="getLocalizedUrl('/login')"
                                 @click="closeMobileMenu"
                             >
                                 <User class="mr-2 h-4 w-4" />
-                                Login
+                                {{ t('nav.login') }}
                             </Button>
                             <Button
                                 variant="outline"
                                 class="justify-start w-full"
                                 as="a"
-                                href="/register"
+                                :href="getLocalizedUrl('/register')"
                                 @click="closeMobileMenu"
                             >
                                 <User class="mr-2 h-4 w-4" />
-                                Sign Up
+                                {{ t('nav.register') }}
                             </Button>
                         </div>
                     </div>

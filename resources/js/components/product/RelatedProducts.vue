@@ -3,6 +3,11 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ShoppingCart, Heart } from 'lucide-vue-next';
+import { useLocale } from '@/composables/useLocale';
+import { useI18n } from 'vue-i18n';
+
+const { t } = useI18n();
+const { localizedUrl, productUrl } = useLocale();
 
 interface Product {
     id: number;
@@ -52,9 +57,9 @@ const visibleProducts = products.slice(0, maxItems);
                 variant="outline"
                 size="sm"
                 as="a"
-                href="/products"
+                :href="localizedUrl('/products')"
             >
-                View All
+                {{ t('productDetail.viewAll') }}
             </Button>
         </div>
 
@@ -76,13 +81,13 @@ const visibleProducts = products.slice(0, maxItems);
                     <!-- Badges -->
                     <div class="absolute top-3 left-3">
                         <Badge v-if="product.is_donatable" class="bg-warning text-warning-foreground">
-                            Donation
+                            {{ t('product.donation') }}
                         </Badge>
                         <Badge v-else-if="product.stock < 10 && product.stock > 0" variant="destructive">
-                            Only {{ product.stock }} left
+                            {{ t('productDetail.onlyLeft', { count: product.stock }) }}
                         </Badge>
                         <Badge v-else-if="product.stock === 0" variant="destructive">
-                            Out of Stock
+                            {{ t('product.outOfStock') }}
                         </Badge>
                         <Badge v-else-if="product.original_price && product.original_price > product.price" class="bg-destructive/80 text-destructive-foreground">
                             {{ Math.round(((product.original_price - product.price) / product.original_price) * 100) }}% OFF
@@ -108,16 +113,16 @@ const visibleProducts = products.slice(0, maxItems);
                             variant="secondary"
                             class="shadow-lg"
                             as="a"
-                            :href="`/products/${product.slug}`"
+                            :href="productUrl(product.slug)"
                         >
-                            Quick View
+                            {{ t('productDetail.quickView') }}
                         </Button>
                     </div>
                 </div>
 
                 <CardContent class="p-4 space-y-3">
                     <h3 class="font-semibold line-clamp-2 group-hover:text-primary transition-colors">
-                        <a :href="`/products/${product.slug}`" class="hover:underline">
+                        <a :href="productUrl(product.slug)" class="hover:underline">
                             {{ product.name }}
                         </a>
                     </h3>
@@ -142,10 +147,10 @@ const visibleProducts = products.slice(0, maxItems);
                                 size="sm"
                                 variant="outline"
                                 as="a"
-                                :href="`/products/${product.slug}`"
+                                :href="productUrl(product.slug)"
                                 class="hover:scale-105 transition-all duration-300"
                             >
-                                View
+                                {{ t('productDetail.view') }}
                             </Button>
                     
                         </div>
@@ -156,8 +161,8 @@ const visibleProducts = products.slice(0, maxItems);
 
         <!-- View More Button -->
         <div v-if="products.length > maxItems" class="text-center">
-            <Button variant="outline" as="a" href="/products">
-                View More Products ({{ products.length - maxItems }} more)
+            <Button variant="outline" as="a" :href="localizedUrl('/products')">
+                {{ t('productDetail.viewMoreProducts', { count: products.length - maxItems }) }}
             </Button>
         </div>
     </div>

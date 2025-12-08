@@ -5,15 +5,22 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
+use App\Traits\TranslatableProductTrait;
 
 class Product extends Model
 {
-    use HasFactory;
+    use HasFactory, TranslatableProductTrait;
 
     protected $fillable = [
         'name',
         'slug',
         'description',
+        'name_ar',
+        'name_en',
+        'slug_ar',
+        'slug_en',
+        'description_ar',
+        'description_en',
         'price',
         'stock',
         'image',
@@ -177,13 +184,87 @@ class Product extends Model
         return $this->image ? asset('storage/' . $this->image) : null;
     }
 
+    /**
+     * Get the route key for the model.
+     */
+    public function getRouteKeyName()
+    {
+        // Always use 'slug' as the route key - we handle locale in resolveRouteBinding
+        return 'slug';
+    }
+    
+    /**
+     * Retrieve the model for a bound value.
+     * This method tries to find the product by any of the slug columns.
+     */
+    public function resolveRouteBinding($value, $field = null)
+    {
+        // Try to find by localized slug first based on current locale
+        $locale = app()->getLocale();
+        
+        // Try locale-specific slug first
+        if ($locale === 'ar') {
+            $product = $this->where('slug_ar', $value)->first();
+            if ($product) return $product;
+        } elseif ($locale === 'en') {
+            $product = $this->where('slug_en', $value)->first();
+            if ($product) return $product;
+        }
+        
+        // Try the other locale's slug (in case user switched languages)
+        $product = $this->where('slug_en', $value)->first();
+        if ($product) return $product;
+        
+        $product = $this->where('slug_ar', $value)->first();
+        if ($product) return $product;
+        
+        // Fallback to default slug column
+        $product = $this->where('slug', $value)->first();
+        if ($product) return $product;
+        
+        // Last resort: try to find by ID if the value is numeric
+        if (is_numeric($value)) {
+            return $this->find($value);
+        }
+        
+        return null;
+    }
+
     protected static function boot()
     {
         parent::boot();
 
         static::creating(function ($product) {
+            // Auto-generate English slug if name_en is provided
+            if (!empty($product->name_en) && empty($product->slug_en)) {
+                $product->slug_en = Str::slug($product->name_en);
+            }
+            
+            // Auto-generate Arabic slug if name_ar is provided
+            if (!empty($product->name_ar) && empty($product->slug_ar)) {
+                $product->slug_ar = Str::slug($product->name_ar);
+            }
+            
+            // IMPORTANT: Always populate the fallback slug column for route binding
             if (empty($product->slug)) {
-                $product->slug = Str::slug($product->name);
+                $product->slug = $product->slug_en ?? $product->slug_ar ?? Str::slug($product->name ?? 'product');
+            }
+        });
+        
+        static::updating(function ($product) {
+            // Auto-update English slug if name_en changed
+            if ($product->isDirty('name_en') && !empty($product->name_en)) {
+                $product->slug_en = Str::slug($product->name_en);
+            }
+            
+            // Auto-update Arabic slug if name_ar changed
+            if ($product->isDirty('name_ar') && !empty($product->name_ar)) {
+                $product->slug_ar = Str::slug($product->name_ar);
+            }
+            
+            // Update fallback slug if needed
+            if (($product->isDirty('name_en') || $product->isDirty('name_ar')) && empty($product->slug)) {
+                $product->slug = $product->slug_en ?? $product->slug_ar ?? Str::slug($product->name ?? 'product');
             }
         });
     }

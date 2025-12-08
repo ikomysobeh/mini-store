@@ -5,6 +5,11 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Heart, Star, ShoppingCart, Search, Gift } from 'lucide-vue-next';
 import { ref } from 'vue';
+import { useI18n } from 'vue-i18n';
+import { useLocale } from '@/composables/useLocale';
+
+const { t } = useI18n();
+const { localizedUrl, productUrl, cartAddUrl } = useLocale();
 
 interface Product {
     id: number;
@@ -71,7 +76,7 @@ const getCategoryName = (categorySlug: string) => {
 
 const addToWishlist = (productId: number) => {
     if (!props.user) {
-        router.visit('/login');
+        router.visit(localizedUrl('/login'));
         return;
     }
 
@@ -82,7 +87,7 @@ const addToWishlist = (productId: number) => {
     }
 
     // Send to backend
-    router.post('/wishlist/toggle', { product_id: productId }, {
+    router.post(localizedUrl('/wishlist/toggle'), { product_id: productId }, {
         preserveState: true,
         preserveScroll: true
     });
@@ -90,13 +95,13 @@ const addToWishlist = (productId: number) => {
 
 const addToCart = (productId: number) => {
     if (!props.user) {
-        router.visit('/login');
+        router.visit(localizedUrl('/login'));
         return;
     }
 
     addingToCart.value.add(productId);
 
-    router.post(`/cart/add/${productId}`, { quantity: 1 }, {
+    router.post(cartAddUrl(productId), { quantity: 1 }, {
         preserveState: true,
         preserveScroll: true,
         onFinish: () => {
@@ -127,7 +132,7 @@ const getDiscountPercentage = (original: number, current: number) => {
         <div v-if="hasActiveFilters" class="flex flex-wrap gap-2">
             <Badge v-if="activeFilters.search" variant="secondary" class="px-3 py-1">
                 <Search class="h-3 w-3 mr-1" />
-                Search: {{ activeFilters.search }}
+                {{ t('common.search') }}: {{ activeFilters.search }}
             </Badge>
             <Badge v-if="activeFilters.category" variant="secondary" class="px-3 py-1 capitalize">
                 <span class="capitalize">{{ getCategoryName(activeFilters.category) }}</span>
@@ -171,7 +176,7 @@ const getDiscountPercentage = (original: number, current: number) => {
                             Only {{ product.stock }} left
                         </Badge>
                         <Badge v-if="product.stock === 0 && !product.is_donatable" variant="destructive">
-                            Out of Stock
+                            {{ t('product.outOfStock') }}
                         </Badge>
                         <Badge v-if="product.original_price && product.original_price > product.price" class="bg-destructive/80 text-destructive-foreground">
                             {{ getDiscountPercentage(product.original_price, product.price) }}% OFF
@@ -209,9 +214,9 @@ const getDiscountPercentage = (original: number, current: number) => {
                             variant="secondary"
                             class="shadow-lg"
                             as="a"
-                            :href="`/products/${product.slug}`"
+                            :href="productUrl(product.slug)"
                         >
-                            Quick View
+                            {{ t('product.viewDetails') }}
                         </Button>
                     </div>
                 </div>
@@ -219,7 +224,7 @@ const getDiscountPercentage = (original: number, current: number) => {
                 <CardContent class="p-4 space-y-3">
                     <div class="flex items-start justify-between">
                         <h3 class="font-semibold line-clamp-2 group-hover:text-primary transition-colors flex-1">
-                            <a :href="`/products/${product.slug}`" class="hover:underline">
+                            <a :href="productUrl(product.slug)" class="hover:underline">
                                 {{ product.name }}
                             </a>
                         </h3>
@@ -236,10 +241,10 @@ const getDiscountPercentage = (original: number, current: number) => {
                     <!-- Stock Status -->
                     <div class="text-xs">
                         <span v-if="product.stock > 0" class="text-success font-medium">
-                            {{ product.stock }} in stock
+                            {{ product.stock }} {{ t('product.inStock') }}
                         </span>
                         <span v-else-if="!product.is_donatable" class="text-destructive font-medium">
-                            Out of stock
+                            {{ t('product.outOfStock') }}
                         </span>
                         <span v-else class="text-info font-medium">
                             Available for donation
@@ -263,9 +268,9 @@ const getDiscountPercentage = (original: number, current: number) => {
                                 variant="outline"
                                 class="hover:scale-105 transition-all duration-300"
                                 as="a"
-                                :href="`/products/${product.slug}`"
+                                :href="productUrl(product.slug)"
                             >
-                                View
+                                {{ t('product.viewDetails') }}
                             </Button>
                         </div>
                     </div>
@@ -289,7 +294,7 @@ const getDiscountPercentage = (original: number, current: number) => {
                 <Button variant="outline" @click="clearFilters" v-if="hasActiveFilters">
                     Clear Filters
                 </Button>
-                <Button as="a" href="/products">
+                <Button as="a" :href="localizedUrl('/products')">
                     Browse All Products
                 </Button>
             </div>

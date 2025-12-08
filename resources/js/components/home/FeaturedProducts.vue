@@ -7,6 +7,11 @@ import {
     ShoppingCart, Heart, Star, ArrowRight, Package, Gift
 } from 'lucide-vue-next';
 import { ref } from 'vue';
+import { useLocale } from '@/composables/useLocale';
+import { useI18n } from 'vue-i18n';
+
+const { localizedUrl, productUrl, cartAddUrl } = useLocale();
+const { t } = useI18n();
 
 interface Product {
     id: number;
@@ -45,7 +50,7 @@ const addToWishlist = (productId: number, event: Event) => {
     event.stopPropagation(); // ✅ Prevent card click
 
     if (!user) {
-        router.visit('/login');
+        router.visit(localizedUrl('/login'));
         return;
     }
 
@@ -56,7 +61,7 @@ const addToWishlist = (productId: number, event: Event) => {
     }
 
     // Send to backend
-    router.post('/wishlist/toggle', { product_id: productId }, {
+    router.post(localizedUrl('/wishlist/toggle'), { product_id: productId }, {
         preserveState: true,
         preserveScroll: true
     });
@@ -65,7 +70,7 @@ const addToWishlist = (productId: number, event: Event) => {
 const addToCart = (productId: number, event: Event) => {
     event.stopPropagation(); // ✅ Prevent card click
 
-    router.post(`/cart/add/${productId}`, { quantity: 1 }, {
+    router.post(cartAddUrl(productId), { quantity: 1 }, {
         preserveState: true,
         preserveScroll: true
     });
@@ -73,15 +78,15 @@ const addToCart = (productId: number, event: Event) => {
 
 // ✅ NEW: Navigate to product page
 const goToProduct = (slug: string) => {
-    router.visit(`/products/${slug}`);
+    router.visit(productUrl(slug));
 };
 </script>
 
 <template>
     <section id="featured" class="space-y-8">
         <div class="text-center">
-            <h2 class="text-3xl font-bold mb-2">Featured Products</h2>
-            <p class="text-muted-foreground">Handpicked items just for you</p>
+            <h2 class="text-3xl font-bold mb-2">{{ t('home.featuredProducts') }}</h2>
+            <p class="text-muted-foreground">{{ t('home.shopNow') }}</p>
         </div>
 
         <div v-if="featuredProducts.length" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
@@ -125,14 +130,14 @@ const goToProduct = (slug: string) => {
                     <div class="absolute top-3 left-3 flex flex-col space-y-2">
                         <Badge v-if="product.is_donatable" variant="secondary" class="bg-warning text-warning-foreground">
                             <Gift class="h-3 w-3 mr-1" />
-                            Donation
+                            {{ t('product.donation') }}
                         </Badge>
                         <Badge v-if="product.is_featured" variant="secondary" class="bg-info text-info-foreground">
                             <Star class="h-3 w-3 mr-1" />
-                            Featured
+                            {{ t('featuredProducts.featured') }}
                         </Badge>
                         <Badge v-if="product.stock < 10 && product.stock > 0" variant="destructive">
-                            Only {{ product.stock }} left
+                            {{ t('productDetail.onlyLeft', { count: product.stock }) }}
                         </Badge>
                         <Badge v-if="product.original_price && product.original_price > product.price" variant="secondary" class="bg-destructive/80 text-destructive-foreground">
                             {{ Math.round(((product.original_price - product.price) / product.original_price) * 100) }}% OFF
@@ -180,10 +185,10 @@ const goToProduct = (slug: string) => {
             <div class="w-24 h-24 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
                 <Package class="h-12 w-12 text-muted-foreground" />
             </div>
-            <h3 class="text-xl font-semibold mb-2">No Featured Products</h3>
-            <p class="text-muted-foreground mb-6">Check back soon for amazing deals!</p>
-            <Button variant="outline" as="a" href="/products">
-                Browse All Products
+            <h3 class="text-xl font-semibold mb-2">{{ t('featuredProducts.noProducts') }}</h3>
+            <p class="text-muted-foreground mb-6">{{ t('featuredProducts.checkBack') }}</p>
+            <Button variant="outline" as="a" :href="localizedUrl('/products')">
+                {{ t('featuredProducts.browseAll') }}
             </Button>
         </div>
 
@@ -194,9 +199,9 @@ const goToProduct = (slug: string) => {
                 variant="outline"
                 class="transition-all duration-300 hover:scale-105"
                 as="a"
-                href="/products"
+                :href="localizedUrl('/products')"
             >
-                View All Products
+                {{ t('featuredProducts.viewAll') }}
                 <ArrowRight class="h-4 w-4 ml-2" />
             </Button>
         </div>

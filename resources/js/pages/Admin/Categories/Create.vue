@@ -17,8 +17,14 @@ const breadcrumbs = [
     { label: 'Create Category', isActive: true }
 ];
 
-// Form state
+// Form state - Bilingual support
 const form = useForm({
+    // Bilingual fields
+    name_en: '',
+    name_ar: '',
+    description_en: '',
+    description_ar: '',
+    // Legacy fields
     name: '',
     slug: '',
     description: '',
@@ -32,7 +38,8 @@ const imagePreview = ref<string | null>(null);
 
 // Computed properties
 const isFormValid = computed(() => {
-    return form.name && form.name.trim().length > 0;
+    return form.name_en && form.name_en.trim().length > 0 && 
+           form.name_ar && form.name_ar.trim().length > 0;
 });
 
 // Header configuration using your existing props structure
@@ -57,7 +64,7 @@ const headerActions = computed(() => [
 
 const statusIndicators = computed(() => [
     {
-        label: isFormValid.value ? 'Form is valid' : 'Category name is required',
+        label: isFormValid.value ? 'Form is valid' : 'Category names (EN & AR) are required',
         color: isFormValid.value ? 'green' as const : 'red' as const,
         active: true
     },
@@ -68,17 +75,27 @@ const statusIndicators = computed(() => [
     }
 ]);
 
-// Event handlers
-const handleNameUpdate = (value: string) => {
-    form.name = value;
+// Event handlers - Bilingual
+const handleNameEnUpdate = (value: string) => {
+    form.name_en = value;
+    form.name = value; // Keep legacy field in sync
+};
+
+const handleNameArUpdate = (value: string) => {
+    form.name_ar = value;
 };
 
 const handleSlugUpdate = (value: string) => {
     form.slug = value;
 };
 
-const handleDescriptionUpdate = (value: string) => {
-    form.description = value;
+const handleDescriptionEnUpdate = (value: string) => {
+    form.description_en = value;
+    form.description = value; // Keep legacy field in sync
+};
+
+const handleDescriptionArUpdate = (value: string) => {
+    form.description_ar = value;
 };
 
 const handleActiveUpdate = (value: boolean) => {
@@ -106,14 +123,18 @@ const handleImageRemoved = () => {
 // Form submission methods
 const saveCategory = (draft = false) => {
     if (!isFormValid.value) {
-        alert('Category name is required');
+        alert('Category names (English and Arabic) are required');
         return;
     }
 
     // Auto-generate slug if not provided
-    if (!form.slug && form.name) {
-        form.slug = form.name.toLowerCase().replace(/[^\w ]+/g, '').replace(/ +/g, '-');
+    if (!form.slug && form.name_en) {
+        form.slug = form.name_en.toLowerCase().replace(/[^\w ]+/g, '').replace(/ +/g, '-');
     }
+
+    // Sync legacy fields
+    form.name = form.name_en;
+    form.description = form.description_en;
 
     const formData = { ...form.data() };
     if (draft) {
@@ -192,17 +213,21 @@ const goBack = () => {
                 <!-- Main Form Column -->
                 <div class="lg:col-span-2 space-y-8">
 
-                    <!-- Basic Information -->
+                    <!-- Basic Information - Bilingual -->
                     <BasicInformationForm
-                        :name="form.name"
+                        :name-en="form.name_en"
+                        :name-ar="form.name_ar"
+                        :description-en="form.description_en"
+                        :description-ar="form.description_ar"
                         :slug="form.slug"
-                        :description="form.description"
                         :errors="form.errors"
                         :auto-generate-slug="true"
                         :max-description-length="500"
-                        @update:name="handleNameUpdate"
+                        @update:name-en="handleNameEnUpdate"
+                        @update:name-ar="handleNameArUpdate"
                         @update:slug="handleSlugUpdate"
-                        @update:description="handleDescriptionUpdate"
+                        @update:description-en="handleDescriptionEnUpdate"
+                        @update:description-ar="handleDescriptionArUpdate"
                     />
 
 
@@ -230,9 +255,9 @@ const goBack = () => {
 
                     <!-- Live Preview -->
                     <LivePreview
-                        :name="form.name"
+                        :name="form.name_en"
                         :slug="form.slug"
-                        :description="form.description"
+                        :description="form.description_en"
                         :image-preview="imagePreview"
                         title="Preview"
                         base-url="/categories"

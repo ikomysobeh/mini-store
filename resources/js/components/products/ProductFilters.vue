@@ -9,6 +9,9 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Search, Filter, X } from 'lucide-vue-next';
 import { computed } from 'vue';
+import { useI18n } from 'vue-i18n';
+
+const { t } = useI18n();
 
 interface Category {
     id: number;
@@ -99,7 +102,7 @@ const clearFilters = () => {
             <Button variant="outline" @click="toggleFilters" class="w-full justify-between">
                 <div class="flex items-center space-x-2">
                     <Filter class="h-4 w-4" />
-                    <span>Filters</span>
+                    <span>{{ t('common.filter') }}</span>
                 </div>
                 <Badge v-if="hasActiveFilters" variant="secondary">
                     {{ activeFiltersCount }}
@@ -112,14 +115,14 @@ const clearFilters = () => {
             <CardContent class="p-6 space-y-6">
                 <!-- Search -->
                 <div class="space-y-2">
-                    <Label for="search">Search Products</Label>
+                    <Label for="search">{{ t('common.search') }}</Label>
                     <div class="relative">
                         <Search class="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                         <Input
                             id="search"
                             :value="searchTerm"
                             @input="handleSearchInput"
-                            placeholder="Search products..."
+                            :placeholder="t('common.search') + '...'"
                             class="pl-10"
                         />
                     </div>
@@ -129,7 +132,7 @@ const clearFilters = () => {
 
                 <!-- Categories -->
                 <div class="space-y-3">
-                    <Label>Categories</Label>
+                    <Label>{{ t('common.category') }}</Label>
                     <div class="space-y-2 max-h-64 overflow-y-auto">
                         <!-- All Categories Option -->
                         <div class="flex items-center space-x-2">
@@ -143,7 +146,7 @@ const clearFilters = () => {
                                 class="text-sm font-normal cursor-pointer"
                                 @click="handleAllCategoriesClick"
                             >
-                                All Categories
+                                {{ t('common.allCategories') }}
                             </Label>
                         </div>
 
@@ -197,7 +200,7 @@ const clearFilters = () => {
 
                 <!-- Sort By -->
                 <div class="space-y-3">
-                    <Label for="sort">Sort By</Label>
+                    <Label for="sort">{{ t('common.sort') }}</Label>
                     <Select :value="sortBy" @update:value="handleSortChange">
                         <SelectTrigger>
                             <SelectValue placeholder="Sort products" />

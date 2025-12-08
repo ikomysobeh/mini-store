@@ -3,6 +3,9 @@
 import { router } from '@inertiajs/vue3';
 import { Heart, ShoppingCart } from 'lucide-vue-next';
 import { ref, computed } from 'vue';
+import { useLocale } from '@/composables/useLocale';
+
+const { localizedUrl, productUrl, cartAddUrl } = useLocale();
 
 const { product, viewMode, user } = defineProps({
     product: { type: Object, required: true },
@@ -31,7 +34,7 @@ const formatCurrency = (amount) => {
 };
 
 const goToProduct = () => {
-    router.visit(`/products/${product.slug}`);
+    router.visit(productUrl(product.slug));
 };
 
 const addToCart = (event) => {
@@ -39,14 +42,14 @@ const addToCart = (event) => {
 
     // If product has variants, redirect to product page for selection
     if (product.has_variants) {
-        router.visit(`/products/${product.slug}`);
+        router.visit(productUrl(product.slug));
         return;
     }
 
     // For products without variants, add directly to cart
     isLoading.value = true;
 
-    router.post(`/products/${product.id}/add-to-cart`, {
+    router.post(cartAddUrl(product.id), {
         quantity: 1
     }, {
         preserveScroll: true,

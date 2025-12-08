@@ -18,10 +18,18 @@ const { product, categories, existingVariants } = defineProps({
     existingVariants: { type: Array, default: () => [] },
 });
 
-// Form data - ENHANCED with multiple images support
+// Form data - ENHANCED with multiple images support and bilingual fields
 const form = useForm({
+    // Bilingual fields
+    name_en: product.name_en || '',
+    name_ar: product.name_ar || '',
+    description_en: product.description_en || '',
+    description_ar: product.description_ar || '',
+    
+    // Legacy fields (for backward compatibility)
     name: product.name,
     description: product.description,
+    
     price: product.price,
     stock: product.stock,
     category_id: product.category_id,
