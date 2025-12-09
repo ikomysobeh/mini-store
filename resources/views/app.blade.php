@@ -1,5 +1,10 @@
 <!DOCTYPE html>
-<html lang="{{ app()->getLocale() }}" dir="{{ app()->getLocale() === 'ar' ? 'rtl' : 'ltr' }}"  @class(['dark' => ($appearance ?? 'system') == 'dark'])>
+@php
+    $isAdmin = request()->is('admin*');
+    $htmlLang = $isAdmin ? 'en' : app()->getLocale();
+    $htmlDir = $isAdmin ? 'ltr' : (app()->getLocale() === 'ar' ? 'rtl' : 'ltr');
+@endphp
+<html lang="{{ $htmlLang }}" dir="{{ $htmlDir }}" @class(['dark' => ($appearance ?? 'system') == 'dark'])>
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">

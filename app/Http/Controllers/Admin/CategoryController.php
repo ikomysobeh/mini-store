@@ -19,8 +19,10 @@ class CategoryController extends Controller
         // Search filter
         if ($request->search) {
             $query->where(function($q) use ($request) {
-                $q->where('name', 'like', '%' . $request->search . '%')
-                    ->orWhere('description', 'like', '%' . $request->search . '%')
+                $q->where('name_en', 'like', '%' . $request->search . '%')
+                    ->orWhere('name_ar', 'like', '%' . $request->search . '%')
+                    ->orWhere('description_en', 'like', '%' . $request->search . '%')
+                    ->orWhere('description_ar', 'like', '%' . $request->search . '%')
                     ->orWhere('slug', 'like', '%' . $request->search . '%');
             });
         }
@@ -54,13 +56,9 @@ class CategoryController extends Controller
         ]);
 
         Category::create([
-            'name' => $request->name_en, // Fallback
             'name_en' => $request->name_en,
             'name_ar' => $request->name_ar,
             'slug' => Str::slug($request->name_en),
-            'slug_en' => Str::slug($request->name_en),
-            'slug_ar' => Str::slug($request->name_ar),
-            'description' => $request->description_en, // Fallback
             'description_en' => $request->description_en,
             'description_ar' => $request->description_ar,
             'is_active' => $request->is_active,
@@ -100,13 +98,9 @@ class CategoryController extends Controller
         ]);
 
         $category->update([
-            'name' => $request->name_en, // Fallback
             'name_en' => $request->name_en,
             'name_ar' => $request->name_ar,
             'slug' => Str::slug($request->name_en),
-            'slug_en' => Str::slug($request->name_en),
-            'slug_ar' => Str::slug($request->name_ar),
-            'description' => $request->description_en, // Fallback
             'description_en' => $request->description_en,
             'description_ar' => $request->description_ar,
             'is_active' => $request->is_active,

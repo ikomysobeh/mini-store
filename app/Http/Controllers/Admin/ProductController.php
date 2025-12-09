@@ -29,8 +29,10 @@ class ProductController extends Controller
             // Search filter
             if ($request->search) {
                 $query->where(function($q) use ($request) {
-                    $q->where('name', 'like', '%' . $request->search . '%')
-                        ->orWhere('description', 'like', '%' . $request->search . '%')
+                    $q->where('name_en', 'like', '%' . $request->search . '%')
+                        ->orWhere('name_ar', 'like', '%' . $request->search . '%')
+                        ->orWhere('description_en', 'like', '%' . $request->search . '%')
+                        ->orWhere('description_ar', 'like', '%' . $request->search . '%')
                         ->orWhere('slug', 'like', '%' . $request->search . '%');
                 });
             }
@@ -308,10 +310,6 @@ class ProductController extends Controller
                 'description_en' => 'required_without:description_ar|string|nullable',
                 'description_ar' => 'required_without:description_en|string|nullable',
                 
-                // Legacy fields (for backward compatibility)
-                'name' => 'nullable|string|max:255',
-                'description' => 'nullable|string',
-                
                 'price' => 'required|numeric|min:0',
                 'stock' => 'required|integer|min:0',
                 'category_id' => 'required|exists:categories,id',
@@ -344,12 +342,8 @@ class ProductController extends Controller
                     'is_donatable' => $request->boolean('is_donatable', false),
                 ];
                 
-                // Legacy fields for backward compatibility
-                $productData['name'] = $validated['name_en'] ?? $validated['name_ar'] ?? '';
-                $productData['description'] = $validated['description_en'] ?? $validated['description_ar'] ?? '';
-                
-                // Auto-generate slugs (handled by model boot method, but we can set legacy slug here)
-                $productData['slug'] = Str::slug($productData['name']);
+                // Auto-generate slug from English name
+                $productData['slug'] = Str::slug($validated['name_en'] ?? $validated['name_ar'] ?? 'product');
 
                 // Handle single image upload (keep existing functionality)
                 if ($request->hasFile('image')) {
@@ -733,10 +727,6 @@ class ProductController extends Controller
                 'description_en' => 'required_without:description_ar|string|nullable',
                 'description_ar' => 'required_without:description_en|string|nullable',
                 
-                // Legacy fields (for backward compatibility)
-                'name' => 'nullable|string|max:255',
-                'description' => 'nullable|string',
-                
                 'price' => 'required|numeric|min:0',
                 'stock' => 'required|integer|min:0',
                 'category_id' => 'required|exists:categories,id',
@@ -756,8 +746,8 @@ class ProductController extends Controller
 
             Log::info('Product update request data', [
                 'all_data' => $request->all(),
-                'has_name' => $request->has('name'),
-                'name_value' => $request->get('name'),
+                'has_name_en' => $request->has('name_en'),
+                'name_en_value' => $request->get('name_en'),
                 'method' => $request->method(),
                 'content_type' => $request->header('Content-Type'),
             ]);
@@ -775,11 +765,8 @@ class ProductController extends Controller
                 'category_id' => $validated['category_id'],
                 'is_active' => $validated['is_active'] ?? true,
                 'is_donatable' => $validated['is_donatable'] ?? false,
+                'slug' => Str::slug($validated['name_en'] ?? $validated['name_ar'] ?? 'product'),
             ];
-            
-            // Legacy fields for backward compatibility
-            $updateData['name'] = $validated['name_en'] ?? $validated['name_ar'] ?? '';
-            $updateData['description'] = $validated['description_en'] ?? $validated['description_ar'] ?? '';
             
             $product->update($updateData);
 

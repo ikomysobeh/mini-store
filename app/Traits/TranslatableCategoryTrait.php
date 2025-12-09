@@ -6,62 +6,54 @@ trait TranslatableCategoryTrait
 {
     /**
      * Get the name attribute for the current locale.
-     * Returns name_ar if locale is 'ar' and field is not null,
-     * else returns name_en, else falls back to old 'name' column.
+     * Returns name_ar if locale is 'ar', else returns name_en.
      */
     public function getNameAttribute($value)
     {
         $locale = app()->getLocale();
-        
-        if ($locale === 'ar' && !empty($this->attributes['name_ar'])) {
-            return $this->attributes['name_ar'];
+
+        $nameAr = $this->attributes['name_ar'] ?? null;
+        $nameEn = $this->attributes['name_en'] ?? null;
+
+        if ($locale === 'ar' && !empty($nameAr)) {
+            return $nameAr;
         }
-        
-        if (!empty($this->attributes['name_en'])) {
-            return $this->attributes['name_en'];
+
+        if (!empty($nameEn)) {
+            return $nameEn;
         }
-        
-        // Fallback to the original name column
+
         return $value;
     }
 
     /**
-     * Get the slug attribute for the current locale.
+     * Get the slug attribute.
+     * Slug is language-independent (always uses English slug for URLs).
      */
     public function getSlugAttribute($value)
     {
-        $locale = app()->getLocale();
-        
-        if ($locale === 'ar' && !empty($this->attributes['slug_ar'])) {
-            return $this->attributes['slug_ar'];
-        }
-        
-        if (!empty($this->attributes['slug_en'])) {
-            return $this->attributes['slug_en'];
-        }
-        
-        // Fallback to the original slug column
         return $value;
     }
 
     /**
      * Get the description attribute for the current locale.
-     * Returns description_ar if locale is 'ar' and field is not null,
-     * else returns description_en, else falls back to old 'description' column.
+     * Returns description_ar if locale is 'ar', else returns description_en.
      */
     public function getDescriptionAttribute($value)
     {
         $locale = app()->getLocale();
-        
-        if ($locale === 'ar' && !empty($this->attributes['description_ar'])) {
-            return $this->attributes['description_ar'];
+
+        $descAr = $this->attributes['description_ar'] ?? null;
+        $descEn = $this->attributes['description_en'] ?? null;
+
+        if ($locale === 'ar' && !empty($descAr)) {
+            return $descAr;
         }
-        
-        if (!empty($this->attributes['description_en'])) {
-            return $this->attributes['description_en'];
+
+        if (!empty($descEn)) {
+            return $descEn;
         }
-        
-        // Fallback to the original description column
+
         return $value;
     }
 }
