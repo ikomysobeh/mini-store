@@ -316,7 +316,7 @@
         "welcomeBack": "Welcome back",
         "signInPrompt": "Enter your email below to sign in to your account",
         "email": "Email",
-        "emailPlaceholder": "m@example.com",
+        "emailPlaceholder": "m{'@'}example.com",
         "password": "Password",
         "passwordPlaceholder": "Enter your password",
         "rememberMe": "Remember me",

@@ -310,7 +310,7 @@ return [
     // again if the session expires.
     //
     // If false, system will take app.php locale attribute
-    'useAcceptLanguageHeader' => true,
+    'useAcceptLanguageHeader' => false,
 
     // If `hideDefaultLocaleInURL` is true, then a url without locale
     // is identical with the same url with default locale.
@@ -332,7 +332,7 @@ return [
     // If you want to display the locales in particular order in the language selector you should write the order here.
     //CAUTION: Please consider using the appropriate locale code otherwise it will not work
     //Example: 'localesOrder' => ['es','en'],
-    'localesOrder' => [],
+    'localesOrder' => ['ar', 'en'],
 
     // If you want to use custom language URL segments like 'at' instead of 'de-AT', you can map them to allow the
     // LanguageNegotiator to assign the desired locales based on HTTP Accept Language Header. For example, if you want

@@ -25,9 +25,9 @@ use Laravel\Fortify\Http\Controllers\PasswordResetLinkController;
 use Laravel\Fortify\Http\Controllers\RegisteredUserController;
 use Laravel\Fortify\Http\Controllers\VerifyEmailController;
 
-// Redirect root to default locale
+// Redirect root to default locale (Arabic)
 Route::get('/', function () {
-    return redirect('/en');
+    return redirect('/ar');
 });
 
 Route::group(
