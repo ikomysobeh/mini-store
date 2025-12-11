@@ -86,11 +86,11 @@ class Product extends Model
     {
         return $this->belongsToMany(Size::class, 'product_variants')
             ->distinct()
-            ->select(['sizes.id', 'sizes.name', 'sizes.category_type', 'sizes.sort_order'])
+            ->select(['sizes.id', 'sizes.name_en', 'sizes.name_ar', 'sizes.category_type', 'sizes.sort_order'])
             ->where('product_variants.is_active', 1)
             ->where('sizes.is_active', 1)
             ->orderBy('sizes.sort_order')
-            ->orderBy('sizes.name');
+            ->orderByRaw("COALESCE(sizes.name_en, sizes.name_ar)");
     }
 
     // Alternative approach - get all colors/sizes without DISTINCT issues
@@ -113,8 +113,7 @@ class Product extends Model
                 ->where('is_active', 1);
         })
             ->where('is_active', 1)
-            ->orderBy('sort_order')
-            ->orderBy('name')
+            ->ordered()
             ->get();
     }
 

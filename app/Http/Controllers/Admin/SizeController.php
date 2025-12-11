@@ -17,7 +17,8 @@ class SizeController extends Controller
         // Search functionality
         if ($request->search) {
             $query->where(function($q) use ($request) {
-                $q->where('name', 'like', '%' . $request->search . '%')
+                $q->where('name_en', 'like', '%' . $request->search . '%')
+                    ->orWhere('name_ar', 'like', '%' . $request->search . '%')
                     ->orWhere('category_type', 'like', '%' . $request->search . '%');
             });
         }
@@ -36,7 +37,7 @@ class SizeController extends Controller
         $sortBy = $request->get('sort', 'sort_order');
         $direction = $request->get('direction', 'asc');
 
-        $allowedSorts = ['name', 'category_type', 'is_active', 'sort_order', 'created_at'];
+        $allowedSorts = ['name_en', 'name_ar', 'category_type', 'is_active', 'sort_order', 'created_at'];
         if (in_array($sortBy, $allowedSorts)) {
             $query->orderBy($sortBy, $direction);
         } else {
@@ -62,19 +63,35 @@ class SizeController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'name' => 'required|string|max:255',
+            'name_en' => 'nullable|string|max:255',
+            'name_ar' => 'nullable|string|max:255',
             'category_type' => 'required|string|max:255',
             'is_active' => 'boolean',
             'sort_order' => 'integer|min:0',
         ]);
 
-        // Check uniqueness within category
-        $exists = Size::where('name', $validated['name'])
-            ->where('category_type', $validated['category_type'])
-            ->exists();
+        // Ensure at least one name is provided
+        if (empty($validated['name_en']) && empty($validated['name_ar'])) {
+            return back()->withErrors(['name_en' => 'At least one name (English or Arabic) is required']);
+        }
 
-        if ($exists) {
-            return back()->withErrors(['name' => 'Size already exists in this category']);
+        // Check uniqueness within category for both languages
+        if (!empty($validated['name_en'])) {
+            $exists = Size::where('name_en', $validated['name_en'])
+                ->where('category_type', $validated['category_type'])
+                ->exists();
+            if ($exists) {
+                return back()->withErrors(['name_en' => 'English size name already exists in this category']);
+            }
+        }
+
+        if (!empty($validated['name_ar'])) {
+            $exists = Size::where('name_ar', $validated['name_ar'])
+                ->where('category_type', $validated['category_type'])
+                ->exists();
+            if ($exists) {
+                return back()->withErrors(['name_ar' => 'Arabic size name already exists in this category']);
+            }
         }
 
         $validated['sort_order'] = $validated['sort_order'] ??
@@ -111,20 +128,37 @@ class SizeController extends Controller
     public function update(Request $request, Size $size)
     {
         $validated = $request->validate([
-            'name' => 'required|string|max:255',
+            'name_en' => 'nullable|string|max:255',
+            'name_ar' => 'nullable|string|max:255',
             'category_type' => 'required|string|max:255',
             'is_active' => 'boolean',
             'sort_order' => 'integer|min:0',
         ]);
 
-        // Check uniqueness within category (excluding current record)
-        $exists = Size::where('name', $validated['name'])
-            ->where('category_type', $validated['category_type'])
-            ->where('id', '!=', $size->id)
-            ->exists();
+        // Ensure at least one name is provided
+        if (empty($validated['name_en']) && empty($validated['name_ar'])) {
+            return back()->withErrors(['name_en' => 'At least one name (English or Arabic) is required']);
+        }
 
-        if ($exists) {
-            return back()->withErrors(['name' => 'Size already exists in this category']);
+        // Check uniqueness within category (excluding current record)
+        if (!empty($validated['name_en'])) {
+            $exists = Size::where('name_en', $validated['name_en'])
+                ->where('category_type', $validated['category_type'])
+                ->where('id', '!=', $size->id)
+                ->exists();
+            if ($exists) {
+                return back()->withErrors(['name_en' => 'English size name already exists in this category']);
+            }
+        }
+
+        if (!empty($validated['name_ar'])) {
+            $exists = Size::where('name_ar', $validated['name_ar'])
+                ->where('category_type', $validated['category_type'])
+                ->where('id', '!=', $size->id)
+                ->exists();
+            if ($exists) {
+                return back()->withErrors(['name_ar' => 'Arabic size name already exists in this category']);
+            }
         }
 
         $size->update($validated);

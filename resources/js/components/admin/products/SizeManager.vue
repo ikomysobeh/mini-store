@@ -12,33 +12,82 @@ const { sizes } = defineProps({
 
 const emit = defineEmits(['update:sizes']);
 
-// New size name
-const newSizeName = ref('');
+// New size names (English and Arabic)
+const newSizeNameEn = ref('');
+const newSizeNameAr = ref('');
 
-// Common size options
+// Common size options with translations
 const commonSizes = [
-    { category: 'clothing', sizes: ['XS', 'S', 'M', 'L', 'XL', 'XXL'] },
-    { category: 'shoes', sizes: ['36', '37', '38', '39', '40', '41', '42', '43', '44', '45'] },
-    { category: 'general', sizes: ['Small', 'Medium', 'Large', 'One Size'] }
+    { 
+        category: 'clothing', 
+        sizes: [
+            { en: 'XS', ar: 'صغير جداً' },
+            { en: 'S', ar: 'صغير' },
+            { en: 'M', ar: 'متوسط' },
+            { en: 'L', ar: 'كبير' },
+            { en: 'XL', ar: 'كبير جداً' },
+            { en: 'XXL', ar: 'كبير جداً جداً' }
+        ]
+    },
+    { 
+        category: 'shoes', 
+        sizes: [
+            { en: '36', ar: '٣٦' },
+            { en: '37', ar: '٣٧' },
+            { en: '38', ar: '٣٨' },
+            { en: '39', ar: '٣٩' },
+            { en: '40', ar: '٤٠' },
+            { en: '41', ar: '٤١' },
+            { en: '42', ar: '٤٢' },
+            { en: '43', ar: '٤٣' },
+            { en: '44', ar: '٤٤' },
+            { en: '45', ar: '٤٥' }
+        ]
+    },
+    { 
+        category: 'general', 
+        sizes: [
+            { en: 'Small', ar: 'صغير' },
+            { en: 'Medium', ar: 'متوسط' },
+            { en: 'Large', ar: 'كبير' },
+            { en: 'One Size', ar: 'مقاس واحد' }
+        ]
+    }
 ];
 
 // Generate unique ID for new sizes
 const generateId = () => 'temp_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
 
 // Add new size
-const addSize = (sizeName = null) => {
-    const name = (sizeName || newSizeName.value).trim();
+const addSize = (sizeData = null) => {
+    let nameEn, nameAr;
+    
+    if (sizeData) {
+        // Adding from common sizes
+        nameEn = sizeData.en;
+        nameAr = sizeData.ar;
+    } else {
+        // Adding from form inputs
+        nameEn = newSizeNameEn.value.trim();
+        nameAr = newSizeNameAr.value.trim();
+    }
 
-    if (!name) return;
+    // At least one name must be provided
+    if (!nameEn && !nameAr) return;
 
-    // Check if size already exists
-    if (sizes.some(size => size.name.toLowerCase() === name.toLowerCase())) {
+    // Check if size already exists (check both English and Arabic names)
+    if (sizes.some(size => 
+        (nameEn && size.name_en?.toLowerCase() === nameEn.toLowerCase()) ||
+        (nameAr && size.name_ar === nameAr)
+    )) {
         return;
     }
 
     const updatedSizes = [...sizes, {
         id: generateId(),
-        name: name,
+        name_en: nameEn,
+        name_ar: nameAr,
+        name: nameEn || nameAr, // Fallback for display
         category_type: 'general',
         is_active: true,
     }];
@@ -46,7 +95,8 @@ const addSize = (sizeName = null) => {
     emit('update:sizes', updatedSizes);
 
     // Reset form
-    newSizeName.value = '';
+    newSizeNameEn.value = '';
+    newSizeNameAr.value = '';
 };
 
 // Remove size
@@ -57,9 +107,12 @@ const removeSize = (sizeId) => {
 
 // Add multiple common sizes
 const addCommonSizes = (sizeList) => {
-    sizeList.forEach(sizeName => {
-        if (!sizes.some(size => size.name.toLowerCase() === sizeName.toLowerCase())) {
-            addSize(sizeName);
+    sizeList.forEach(sizeData => {
+        if (!sizes.some(size => 
+            (sizeData.en && size.name_en?.toLowerCase() === sizeData.en.toLowerCase()) ||
+            (sizeData.ar && size.name_ar === sizeData.ar)
+        )) {
+            addSize(sizeData);
         }
     });
 };
@@ -78,22 +131,38 @@ const handleEnter = (event) => {
         <div class="space-y-3 p-4 border rounded-lg bg-muted/20">
             <Label class="text-sm font-medium">Add New Size</Label>
 
-            <div class="flex gap-2">
-                <Input
-                    v-model="newSizeName"
-                    placeholder="Size name (e.g., M)"
-                    @keydown.enter="handleEnter"
-                    class="flex-1 h-9"
-                />
+            <div class="space-y-2">
+                <div class="flex gap-2">
+                    <div class="flex-1">
+                        <Label class="text-xs text-muted-foreground">Name (English)</Label>
+                        <Input
+                            v-model="newSizeNameEn"
+                            placeholder="e.g., Medium"
+                            @keydown.enter="handleEnter"
+                            class="h-9 mt-1"
+                        />
+                    </div>
+                    <div class="flex-1">
+                        <Label class="text-xs text-muted-foreground">Name (Arabic)</Label>
+                        <Input
+                            v-model="newSizeNameAr"
+                            placeholder="مثال: متوسط"
+                            @keydown.enter="handleEnter"
+                            class="h-9 mt-1"
+                            dir="rtl"
+                        />
+                    </div>
+                </div>
 
                 <Button
                     type="button"
                     @click="addSize()"
                     size="sm"
-                    :disabled="!newSizeName.trim()"
+                    :disabled="!newSizeNameEn.trim() && !newSizeNameAr.trim()"
+                    class="w-full"
                 >
                     <Plus class="h-4 w-4 mr-1" />
-                    Add
+                    Add Size
                 </Button>
             </div>
         </div>
@@ -112,15 +181,15 @@ const handleEnter = (event) => {
                     <div class="flex flex-wrap gap-1">
                         <Button
                             v-for="size in category.sizes"
-                            :key="size"
+                            :key="size.en"
                             type="button"
                             variant="outline"
                             size="sm"
                             @click="addSize(size)"
-                            :disabled="sizes.some(s => s.name === size)"
+                            :disabled="sizes.some(s => s.name_en === size.en || s.name_ar === size.ar)"
                             class="h-7 px-2 text-xs"
                         >
-                            {{ size }}
+                            {{ size.en }} / {{ size.ar }}
                         </Button>
                     </div>
                     <Button
@@ -147,8 +216,13 @@ const handleEnter = (event) => {
                     class="flex items-center justify-between p-3 border rounded-lg bg-background hover:bg-muted/50 transition-colors"
                 >
                     <div class="flex items-center space-x-3">
-                        <div class="px-2 py-1 bg-primary/10 text-primary rounded text-sm font-medium">
-                            {{ size.name }}
+                        <div class="space-y-1">
+                            <div class="px-2 py-1 bg-primary/10 text-primary rounded text-sm font-medium">
+                                {{ size.name_en || size.name }}
+                            </div>
+                            <div v-if="size.name_ar" class="px-2 py-1 bg-secondary/10 text-secondary-foreground rounded text-sm" dir="rtl">
+                                {{ size.name_ar }}
+                            </div>
                         </div>
                     </div>
 

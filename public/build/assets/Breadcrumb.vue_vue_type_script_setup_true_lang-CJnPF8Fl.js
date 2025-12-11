@@ -1,6 +1,0 @@
-import{c as m}from"./index-BUn4p9PZ.js";import{C as u}from"./chevron-right-DsnNsYDb.js";import{H as f}from"./house-CE27jCRI.js";import{d,h as t,g as a,F as p,p as h,a as o,i as c,u as n,t as l,n as _,o as e}from"./app-BKweO40s.js";/**
- * @license lucide-vue-next v0.468.0 - ISC
- *
- * This source code is licensed under the ISC license.
- * See the LICENSE file in the root directory of this source tree.
- */const A=m("MinusIcon",[["path",{d:"M5 12h14",key:"1ays0h"}]]),x={class:"flex items-center space-x-2 text-sm mb-6","aria-label":"Breadcrumb"},k={class:"flex items-center space-x-2"},y={class:"flex items-center space-x-1"},g=["href"],F=d({__name:"Breadcrumb",props:{items:{}},setup(i){return(b,v)=>(e(),t("nav",x,[a("ol",k,[(e(!0),t(p,null,h(i.items,(s,r)=>(e(),t("li",{key:r,class:"flex items-center space-x-2"},[r>0?(e(),o(n(u),{key:0,class:"h-4 w-4 text-muted-foreground"})):c("",!0),a("div",y,[r===0?(e(),o(n(f),{key:0,class:"h-4 w-4"})):c("",!0),s.href&&!s.isActive?(e(),t("a",{key:1,href:s.href,class:"text-muted-foreground hover:text-foreground transition-colors"},l(s.label),9,g)):(e(),t("span",{key:2,class:_(["font-medium text-foreground",{"text-primary":s.isActive}])},l(s.label),3))])]))),128))])]))}});export{A as M,F as _};

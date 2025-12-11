@@ -188,9 +188,9 @@ onUnmounted(() => {
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex items-center justify-between h-16">
                 <!-- Logo & Brand -->
-                <a href="/" class="flex items-center space-x-3 group">
+                <a href="/" class="flex items-center space-x-2 sm:space-x-3 group">
                     <!-- Logo Image or Fallback -->
-                    <div v-if="logoUrl" class="w-10 h-10 rounded-xl overflow-hidden flex items-center justify-center bg-white border">
+                    <div v-if="logoUrl" class="w-8 h-8 sm:w-10 sm:h-10 rounded-xl overflow-hidden flex items-center justify-center bg-white border flex-shrink-0">
                         <img
                             :src="logoUrl"
                             :alt="siteName + ' Logo'"
@@ -198,10 +198,10 @@ onUnmounted(() => {
                             @error="$event.target.style.display = 'none'"
                         />
                     </div>
-                    <div v-else class="w-10 h-10 bg-primary rounded-xl flex items-center justify-center">
-                        <span class="text-primary-foreground font-bold text-lg">{{ siteName.charAt(0) }}</span>
+                    <div v-else class="w-8 h-8 sm:w-10 sm:h-10 bg-primary rounded-xl flex items-center justify-center flex-shrink-0">
+                        <span class="text-primary-foreground font-bold text-base sm:text-lg">{{ siteName.charAt(0) }}</span>
                     </div>
-                    <span class="font-bold text-xl text-primary">{{ siteName }}</span>
+                    <span class="font-bold text-base sm:text-lg md:text-xl text-primary truncate">{{ siteName }}</span>
                 </a>
 
                 <!-- Desktop Categories -->

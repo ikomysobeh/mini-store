@@ -25,16 +25,37 @@ const switchLanguage = (newLocale: string) => {
     const currentPath = window.location.pathname;
     let newPath: string;
 
-    // Remove any existing locale prefix
-    const pathWithoutLocale = currentPath.replace(/^\/(en|ar)/, '') || '/';
+    console.log('🔄 Language Switch Debug:');
+    console.log('  Current locale:', currentLocale.value);
+    console.log('  Target locale:', newLocale);
+    console.log('  Current path:', currentPath);
 
-    if (newLocale === 'ar') {
-        // Add Arabic prefix
-        newPath = '/ar' + pathWithoutLocale;
-    } else {
-        // Add English prefix (explicit)
-        newPath = '/en' + pathWithoutLocale;
+    // Clean pathname: remove /public/ and any existing locale prefix
+    let cleanPath = currentPath
+        .replace(/\/public/g, '')      // Remove /public/ (production issue)
+        .replace(/^\/(en|ar)/, '');    // Remove existing locale prefix
+    
+    // Ensure cleanPath starts with / and isn't empty
+    if (!cleanPath || cleanPath === '') {
+        cleanPath = '/';
+    } else if (!cleanPath.startsWith('/')) {
+        cleanPath = '/' + cleanPath;
     }
+
+    console.log('  Clean path:', cleanPath);
+
+    // Build new path based on locale
+    // Always use explicit locale prefix for both languages
+    if (newLocale === 'ar') {
+        // Arabic - use /ar prefix explicitly
+        newPath = `/ar${cleanPath}`;
+    } else {
+        // English - use /en prefix
+        newPath = `/en${cleanPath}`;
+    }
+
+    console.log('  New path:', newPath);
+    console.log('  Full URL:', window.location.origin + newPath);
 
     // Use full page reload to ensure server-side locale is set correctly
     window.location.href = newPath;

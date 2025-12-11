@@ -509,8 +509,19 @@ class ProductController extends Controller
                 if (is_array($sizeData)) {
                     // Check if it's a temporary ID (new size)
                     if (isset($sizeData['id']) && strpos($sizeData['id'], 'temp_') === 0) {
-                        // FIXED: Check if size with this name already exists
-                        $existingSize = Size::where('name', $sizeData['name'])
+                        // Get the size names (use name_en/name_ar, fallback to name)
+                        $sizeNameEn = $sizeData['name_en'] ?? $sizeData['name'] ?? null;
+                        $sizeNameAr = $sizeData['name_ar'] ?? null;
+                        
+                        // FIXED: Check if size with this name already exists (using name_en column)
+                        $existingSize = Size::where(function($query) use ($sizeNameEn, $sizeNameAr) {
+                            if ($sizeNameEn) {
+                                $query->where('name_en', $sizeNameEn);
+                            }
+                            if ($sizeNameAr) {
+                                $query->orWhere('name_ar', $sizeNameAr);
+                            }
+                        })
                             ->where('category_type', $sizeData['category_type'] ?? 'general')
                             ->first();
 
@@ -520,13 +531,15 @@ class ProductController extends Controller
                             Log::info('Using existing size', [
                                 'temp_id' => $sizeData['id'],
                                 'existing_id' => $existingSize->id,
-                                'name' => $sizeData['name']
+                                'name_en' => $sizeNameEn,
+                                'name_ar' => $sizeNameAr
                             ]);
                         } else {
                             // Create new size only if it doesn't exist
                             try {
                                 $size = Size::create([
-                                    'name' => $sizeData['name'],
+                                    'name_en' => $sizeNameEn,
+                                    'name_ar' => $sizeNameAr,
                                     'category_type' => $sizeData['category_type'] ?? 'general',
                                     'is_active' => true,
                                     'sort_order' => 0
@@ -535,12 +548,20 @@ class ProductController extends Controller
                                 Log::info('Created new size', [
                                     'temp_id' => $sizeData['id'],
                                     'real_id' => $size->id,
-                                    'name' => $sizeData['name']
+                                    'name_en' => $sizeNameEn,
+                                    'name_ar' => $sizeNameAr
                                 ]);
                             } catch (\Illuminate\Database\QueryException $e) {
                                 // If still fails due to race condition, try to get the existing one
                                 if (strpos($e->getMessage(), 'sizes_name_unique') !== false || strpos($e->getMessage(), 'Duplicate entry') !== false) {
-                                    $existingSize = Size::where('name', $sizeData['name'])
+                                    $existingSize = Size::where(function($query) use ($sizeNameEn, $sizeNameAr) {
+                                        if ($sizeNameEn) {
+                                            $query->where('name_en', $sizeNameEn);
+                                        }
+                                        if ($sizeNameAr) {
+                                            $query->orWhere('name_ar', $sizeNameAr);
+                                        }
+                                    })
                                         ->where('category_type', $sizeData['category_type'] ?? 'general')
                                         ->first();
                                     if ($existingSize) {
@@ -740,8 +761,11 @@ class ProductController extends Controller
                 'delete_images.*' => 'integer|exists:product_images,id',
                 'primary_image_id' => 'nullable|integer|exists:product_images,id',
                 'variants' => 'nullable|array',
+                'variants.*' => 'nullable|array',
                 'colors' => 'nullable|array',
+                'colors.*' => 'nullable|array',
                 'sizes' => 'nullable|array',
+                'sizes.*' => 'nullable|array',
             ]);
 
             Log::info('Product update request data', [
@@ -809,18 +833,112 @@ class ProductController extends Controller
                 $this->updatePrimaryImage($product, $request->input('primary_image_id'));
             }
 
+            // FIXED: Handle variants update - process colors, sizes, and variants
+            $colorsData = $request->input('colors', []);
+            $sizesData = $request->input('sizes', []);
+            $variantsData = $request->input('variants', []);
 
+            Log::info('Update - Variant data received', [
+                'colors_count' => count($colorsData),
+                'sizes_count' => count($sizesData),
+                'variants_count' => count($variantsData),
+                'colors_data' => $colorsData,
+                'sizes_data' => $sizesData,
+            ]);
+
+            if (!empty($variantsData)) {
+                // Separate existing variants from new ones
+                $existingVariants = [];
+                $newVariants = [];
+                $newColors = [];
+                $newSizes = [];
+
+                foreach ($variantsData as $variantData) {
+                    if (isset($variantData['id']) && is_numeric($variantData['id'])) {
+                        // Existing variant - update it
+                        $existingVariants[] = $variantData;
+                    } else {
+                        // New variant - needs color/size creation
+                        $newVariants[] = $variantData;
+                        
+                        // Collect colors and sizes from new variants
+                        if (isset($variantData['color_id'])) {
+                            $colorId = $variantData['color_id'];
+                            if (!isset($newColors[$colorId])) {
+                                $newColors[$colorId] = [
+                                    'id' => $colorId,
+                                    'name' => $variantData['color_name'] ?? 'Unknown',
+                                    'hex_code' => $variantData['color_hex'] ?? '#000000',
+                                ];
+                            }
+                        }
+                        
+                        if (isset($variantData['size_id'])) {
+                            $sizeId = $variantData['size_id'];
+                            if (!isset($newSizes[$sizeId])) {
+                                $newSizes[$sizeId] = [
+                                    'id' => $sizeId,
+                                    'name' => $variantData['size_name'] ?? 'Unknown',
+                                    'name_en' => $variantData['size_name'] ?? 'Unknown',
+                                    'name_ar' => $variantData['size_name'] ?? 'Unknown',
+                                    'category_type' => 'general',
+                                ];
+                            }
+                        }
+                    }
+                }
+
+                // Also check sizes data for new sizes
+                if (!empty($sizesData)) {
+                    foreach ($sizesData as $sizeData) {
+                        if (isset($sizeData['id']) && strpos($sizeData['id'], 'temp_') === 0) {
+                            $newSizes[$sizeData['id']] = $sizeData;
+                        }
+                    }
+                }
+
+                Log::info('Separated variants', [
+                    'existing_count' => count($existingVariants),
+                    'new_count' => count($newVariants),
+                    'new_colors_count' => count($newColors),
+                    'new_sizes_count' => count($newSizes),
+                ]);
+
+                // Update existing variants
+                if (!empty($existingVariants)) {
+                    Log::info('Updating existing variants');
+                    $this->updateProductVariants($product, $existingVariants);
+                }
+
+                // Create new variants (with new colors/sizes)
+                if (!empty($newVariants) && (!empty($newColors) || !empty($newSizes))) {
+                    Log::info('Creating new variants with new colors/sizes');
+                    $this->createProductVariants($product, array_values($newColors), array_values($newSizes), $newVariants);
+                }
+            }
 
             DB::commit();
 
             return redirect()->route('admin.products.index')
                 ->with('success', 'Product updated successfully!');
 
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            DB::rollback();
+            Log::error('Product update validation failed', [
+                'product_id' => $product->id,
+                'errors' => $e->errors(),
+                'message' => $e->getMessage(),
+            ]);
+
+            return back()
+                ->withInput()
+                ->withErrors($e->errors());
         } catch (\Exception $e) {
             DB::rollback();
             Log::error('Product update failed: ' . $e->getMessage(), [
                 'product_id' => $product->id,
                 'request_data' => $request->all(),
+                'trace' => $e->getTraceAsString(),
             ]);
 
             return back()
@@ -837,7 +955,9 @@ class ProductController extends Controller
 
         $productCode = strtoupper(substr($productName, 0, 3));
         $colorCode = $color ? strtoupper(substr($color->name, 0, 3)) : 'COL';
-        $sizeCode = $size ? strtoupper(substr($size->name, 0, 3)) : 'SIZ';
+        // Use name_en for size code, fallback to name_ar if name_en is empty
+        $sizeName = $size ? ($size->name_en ?: $size->name_ar) : 'SIZ';
+        $sizeCode = $sizeName ? strtoupper(substr($sizeName, 0, 3)) : 'SIZ';
 
         return "{$productCode}-{$colorCode}-{$sizeCode}-{$productId}";
     }
@@ -917,13 +1037,13 @@ class ProductController extends Controller
 
     // Helper methods remain the same...
 
-    // HELPER: Update product variants safely
+    // HELPER: Update product variants safely (only updates existing variants)
     private function updateProductVariants(Product $product, array $variants)
     {
         try {
             foreach ($variants as $variantData) {
+                // Only update existing variants (those with numeric IDs)
                 if (isset($variantData['id']) && is_numeric($variantData['id'])) {
-                    // Update existing variant
                     $variant = ProductVariant::where('id', $variantData['id'])
                         ->where('product_id', $product->id)
                         ->first();
@@ -933,21 +1053,13 @@ class ProductController extends Controller
                             'price_adjustment' => $variantData['price_adjustment'] ?? 0,
                             'is_active' => $variantData['is_active'] ?? true,
                         ]);
-                    }
-                } else {
-                    // Create new variant (similar to createProductVariants)
-                    // This handles variants created by adding new colors/sizes
-                    if (isset($variantData['color_id']) && isset($variantData['size_id'])) {
-                        ProductVariant::create([
-                            'product_id' => $product->id,
-                            'color_id' => $variantData['color_id'],
-                            'size_id' => $variantData['size_id'],
-                            'stock' => $variantData['stock'] ?? 0,
-                            'price_adjustment' => $variantData['price_adjustment'] ?? 0,
-                            'is_active' => $variantData['is_active'] ?? true,
+                        Log::info('Updated existing variant', [
+                            'variant_id' => $variant->id,
+                            'stock' => $variantData['stock'],
                         ]);
                     }
                 }
+                // Note: New variants (with temp IDs) are handled by createProductVariants
             }
         } catch (Exception $e) {
             Log::error('Variant update failed: ' . $e->getMessage());

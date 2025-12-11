@@ -190,34 +190,44 @@ const getWhatsAppLink = (phoneNumber: string) => {
                 </Button>
             </div>
 
-            <!-- ✅ UPDATED: WhatsApp Contact Information -->
-            <div :class="['max-w-3xl mx-auto space-y-3', textClasses.contact]">
-                <div class="flex flex-col sm:flex-row items-center justify-center gap-4 text-sm">
+            <!-- ✅ Custom Order Button -->
+            <div class="mb-6">
+                <a 
+                    :href="getWhatsAppLink('963937671126')"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="inline-flex items-center gap-3 px-6 py-3 bg-green-500 hover:bg-green-600 text-white font-semibold rounded-full shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
+                >
+                    <MessageCircle class="h-5 w-5" />
+                    <span>{{ t('home.customOrder') }}</span>
+                </a>
+            </div>
+
+            <!-- ✅ UPDATED: WhatsApp Contact Information - Button Style -->
+            <div :class="['max-w-3xl mx-auto space-y-4', textClasses.contact]">
+                <div class="flex flex-col sm:flex-row items-center justify-center gap-3">
                     <!-- WhatsApp for Initiative -->
                     <a 
                         :href="getWhatsAppLink('963944255208')"
                         target="_blank"
                         rel="noopener noreferrer"
-                        :class="['flex items-center gap-2 hover:opacity-80 transition-opacity', textClasses.contact]"
+                        :class="['inline-flex items-center gap-2 px-4 py-2.5 rounded-full border-2 border-green-400/50 bg-green-500/20 hover:bg-green-500/40 transition-all duration-300 hover:scale-105 cursor-pointer', textClasses.contact]"
                     >
-                        <MessageCircle class="h-4 w-4" />
+                        <MessageCircle class="h-4 w-4 text-green-400" />
                         <span class="font-medium">3lmni al 9aid:</span>
-                        <span>963944255208</span>
+                        <span class="font-semibold">963944255208</span>
                     </a>
-
-                    <!-- Separator -->
-                    <span class="hidden sm:inline">|</span>
 
                     <!-- WhatsApp for Technical Issues -->
                     <a 
                         :href="getWhatsAppLink('963937671126')"
                         target="_blank"
                         rel="noopener noreferrer"
-                        :class="['flex items-center gap-2 hover:opacity-80 transition-opacity', textClasses.contact]"
+                        :class="['inline-flex items-center gap-2 px-4 py-2.5 rounded-full border-2 border-green-400/50 bg-green-500/20 hover:bg-green-500/40 transition-all duration-300 hover:scale-105 cursor-pointer', textClasses.contact]"
                     >
-                        <MessageCircle class="h-4 w-4" />
+                        <MessageCircle class="h-4 w-4 text-green-400" />
                         <span class="font-medium">{{ t('home.technicalSupport') }}:</span>
-                        <span>963937671126</span>
+                        <span class="font-semibold">963937671126</span>
                     </a>
                 </div>
 
@@ -227,10 +237,10 @@ const getWhatsAppLink = (phoneNumber: string) => {
                         href="https://www.facebook.com/share/1KAWdthyWQ/" 
                         target="_blank"
                         rel="noopener noreferrer"
-                        :class="['inline-flex items-center gap-2 px-4 py-2 rounded-full transition-all hover:scale-105', textClasses.badgeBg]"
+                        :class="['inline-flex items-center gap-2 px-4 py-2.5 rounded-full border-2 border-blue-400/50 bg-blue-500/20 hover:bg-blue-500/40 transition-all duration-300 hover:scale-105 cursor-pointer', textClasses.contact]"
                     >
-                        <Facebook class="h-4 w-4" />
-                        <span class="text-sm font-medium">{{ t('home.followFacebook') }}</span>
+                        <Facebook class="h-4 w-4 text-blue-400" />
+                        <span class="font-medium">{{ t('home.followFacebook') }}</span>
                     </a>
                 </div>
             </div>

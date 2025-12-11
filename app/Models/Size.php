@@ -4,13 +4,15 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Traits\TranslatableProductTrait;
 
 class Size extends Model
 {
-    use HasFactory;
+    use HasFactory, TranslatableProductTrait;
 
     protected $fillable = [
-        'name',
+        'name_en',
+        'name_ar',
         'category_type',
         'is_active',
         'sort_order',
@@ -19,6 +21,10 @@ class Size extends Model
     protected $casts = [
         'is_active' => 'boolean',
         'sort_order' => 'integer',
+    ];
+
+    protected $appends = [
+        'name',
     ];
 
     // Relationships
@@ -45,7 +51,11 @@ class Size extends Model
 
     public function scopeOrdered($query)
     {
-        return $query->orderBy('sizes.sort_order')->orderBy('sizes.name');
+        $locale = app()->getLocale();
+        $nameColumn = $locale === 'ar' ? 'sizes.name_ar' : 'sizes.name_en';
+        
+        return $query->orderBy('sizes.sort_order')
+            ->orderByRaw("COALESCE($nameColumn, sizes.name_en, sizes.name_ar)");
     }
 
     // Static methods
