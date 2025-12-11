@@ -77,15 +77,6 @@ class CartController extends Controller
     public function add(Request $request, Product $product)
     {
         try {
-            // Debug logging for CSRF issues in production
-            Log::info('🛒 Cart Add Request', [
-                'product_id' => $product->id,
-                'user_id' => auth()->id(),
-                'session_id' => Session::getId(),
-                'is_inertia' => $request->header('X-Inertia') ? true : false,
-                'csrf_token_present' => $request->header('X-CSRF-TOKEN') ? true : false,
-            ]);
-
             $request->validate([
                 'quantity' => 'required|integer|min:1',
                 'variant_id' => 'nullable|exists:product_variants,id',
@@ -93,9 +84,6 @@ class CartController extends Controller
 
             $user = auth()->user();
             if (!$user) {
-                Log::warning('🛒 Cart Add - User not authenticated', [
-                    'session_id' => Session::getId(),
-                ]);
                 // For Inertia requests, redirect to login
                 if ($request->header('X-Inertia')) {
                     return back()->withErrors(['message' => 'Please log in to add items to cart.']);
