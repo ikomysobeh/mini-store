@@ -77,6 +77,15 @@ class CartController extends Controller
     public function add(Request $request, Product $product)
     {
         try {
+            // Debug logging for CSRF issues in production
+            Log::info('🛒 Cart Add Request', [
+                'product_id' => $product->id,
+                'user_id' => auth()->id(),
+                'session_id' => Session::getId(),
+                'is_inertia' => $request->header('X-Inertia') ? true : false,
+                'csrf_token_present' => $request->header('X-CSRF-TOKEN') ? true : false,
+            ]);
+
             $request->validate([
                 'quantity' => 'required|integer|min:1',
                 'variant_id' => 'nullable|exists:product_variants,id',
@@ -84,6 +93,13 @@ class CartController extends Controller
 
             $user = auth()->user();
             if (!$user) {
+                Log::warning('🛒 Cart Add - User not authenticated', [
+                    'session_id' => Session::getId(),
+                ]);
+                // For Inertia requests, redirect to login
+                if ($request->header('X-Inertia')) {
+                    return back()->withErrors(['message' => 'Please log in to add items to cart.']);
+                }
                 return response()->json([
                     'success' => false,
                     'message' => 'Please log in to add items to cart.'
@@ -98,6 +114,9 @@ class CartController extends Controller
                 $variant = ProductVariant::with(['color', 'size'])->find($request->variant_id);
 
                 if (!$variant || $variant->product_id !== $product->id) {
+                    if ($request->header('X-Inertia')) {
+                        return back()->withErrors(['message' => 'Invalid product variant selected.']);
+                    }
                     return response()->json([
                         'success' => false,
                         'message' => 'Invalid product variant selected.'
@@ -107,12 +126,18 @@ class CartController extends Controller
                 $result = $this->addVariantToCart($cart, $variant, $quantity);
 
                 if ($result['success']) {
+                    if ($request->header('X-Inertia')) {
+                        return back()->with('success', $result['message']);
+                    }
                     return response()->json([
                         'success' => true,
                         'message' => $result['message'],
                         'cart_count' => $cart->items->sum('quantity')
                     ]);
                 } else {
+                    if ($request->header('X-Inertia')) {
+                        return back()->withErrors(['message' => $result['message']]);
+                    }
                     return response()->json([
                         'success' => false,
                         'message' => $result['message']
@@ -123,12 +148,18 @@ class CartController extends Controller
                 $result = $this->addRegularToCart($cart, $product, $quantity);
 
                 if ($result['success']) {
+                    if ($request->header('X-Inertia')) {
+                        return back()->with('success', $result['message']);
+                    }
                     return response()->json([
                         'success' => true,
                         'message' => $result['message'],
                         'cart_count' => $cart->items->sum('quantity')
                     ]);
                 } else {
+                    if ($request->header('X-Inertia')) {
+                        return back()->withErrors(['message' => $result['message']]);
+                    }
                     return response()->json([
                         'success' => false,
                         'message' => $result['message']
@@ -137,6 +168,9 @@ class CartController extends Controller
             }
 
         } catch (\Illuminate\Validation\ValidationException $e) {
+            if ($request->header('X-Inertia')) {
+                return back()->withErrors($e->errors());
+            }
             return response()->json([
                 'success' => false,
                 'message' => 'Invalid input data.',
@@ -151,6 +185,9 @@ class CartController extends Controller
                 'trace' => $e->getTraceAsString()
             ]);
 
+            if ($request->header('X-Inertia')) {
+                return back()->withErrors(['message' => 'Something went wrong. Please try again.']);
+            }
             return response()->json([
                 'success' => false,
                 'message' => 'Something went wrong. Please try again.'

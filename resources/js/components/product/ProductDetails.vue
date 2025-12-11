@@ -308,7 +308,7 @@ const showMessage = (message, type) => {
     }
 };
 
-// ✅ FIXED: Use fetch (keep backend JSON response)
+// ✅ FIXED: Use Inertia router.post (handles CSRF automatically)
 const addToCart = () => {
     requireAuth(() => {
         if (product.has_variants && !selectedVariant.value) {
@@ -319,7 +319,7 @@ const addToCart = () => {
         isAddingToCart.value = true;
         cartMessage.value = '';
 
-        const data = {
+        const data: { quantity: number; variant_id?: number } = {
             quantity: quantity.value
         };
 
@@ -327,34 +327,27 @@ const addToCart = () => {
             data.variant_id = selectedVariant.value.id;
         }
 
-        fetch(cartAddUrl(product.id), {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content,
-                'X-Requested-With': 'XMLHttpRequest',
-            },
-            body: JSON.stringify(data)
-        })
-            .then(async response => {
-                const jsonData = await response.json();
-
-                if (response.ok && jsonData.success) {
-                    showMessage(jsonData.message || t('productDetail.addedToCartSuccess'), 'success');
-                    
-                    // ✅ UPDATED: Reload cart data after success
-                    router.reload({ only: ['cartItems'] });
-                } else {
-                    showMessage(jsonData.message || t('productDetail.addToCartFailed'), 'error');
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                showMessage(t('productDetail.somethingWentWrong'), 'error');
-            })
-            .finally(() => {
+        // Use Inertia router.post - handles CSRF token automatically
+        router.post(cartAddUrl(product.id), data, {
+            preserveScroll: true,
+            preserveState: true,
+            onSuccess: (pageData) => {
+                // Check for flash success message
+                const flashSuccess = pageData.props?.flash?.success;
+                showMessage(flashSuccess || t('productDetail.addedToCartSuccess'), 'success');
                 isAddingToCart.value = false;
-            });
+            },
+            onError: (errors) => {
+                console.error('Cart error:', errors);
+                // Handle error message from backend
+                const errorMsg = errors.message || Object.values(errors)[0] || t('productDetail.addToCartFailed');
+                showMessage(errorMsg, 'error');
+                isAddingToCart.value = false;
+            },
+            onFinish: () => {
+                isAddingToCart.value = false;
+            }
+        });
     });
 };
 

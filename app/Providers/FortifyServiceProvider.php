@@ -21,6 +21,7 @@ use Inertia\Inertia;
 use Laravel\Fortify\Features;
 use Laravel\Fortify\Fortify;
 use Laravel\Fortify\Contracts\LoginResponse;
+use Laravel\Fortify\Contracts\RegisterResponse;
 
 class FortifyServiceProvider extends ServiceProvider
 {
@@ -29,6 +30,10 @@ class FortifyServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
+        // Register custom RegisterResponse to force full page reload after registration
+        // This ensures fresh CSRF token and prevents "CSRF token mismatch" errors
+        $this->app->singleton(RegisterResponse::class, \App\Http\Responses\RegisterResponse::class);
+
         // FIXED: Better LoginResponse with proper user type handling
         $this->app->instance(LoginResponse::class, new class implements LoginResponse {
             public function toResponse($request)

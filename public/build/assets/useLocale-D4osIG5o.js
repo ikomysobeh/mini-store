@@ -1,0 +1,1 @@
+import{E as s,c as a}from"./app-yiE6uSpj.js";function d(){const o=s(),c=a(()=>o.props.locale||"en"),t=r=>{const e=r.startsWith("/")?r.slice(1):r;return`/${c.value}/${e}`};return{locale:c,localizedUrl:t,productUrl:r=>t(`/products/${r}`),cartAddUrl:r=>t(`/cart/add/${r}`)}}export{d as u};
