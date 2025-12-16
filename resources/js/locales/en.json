@@ -152,7 +152,7 @@
         "firstNamePlaceholder": "Enter your first name",
         "lastName": "Last Name",
         "lastNamePlaceholder": "Enter your last name",
-        "phone": "Phone Number",
+        "phone": "WhatsApp Number",
         "fullNumber": "Full number",
         "enterPhone": "Enter phone number",
         "countryCodeHint": "Enter your country code including the + symbol (e.g., +49 for Germany)",
